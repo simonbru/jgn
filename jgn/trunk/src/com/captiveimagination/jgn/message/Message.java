@@ -29,6 +29,7 @@ public abstract class Message {
     private IP address;
     private int port;
     private int messageLength;
+    private MessageServer server;
     
     public Message() {
     	type = JGN.getType(this);
@@ -143,5 +144,23 @@ public abstract class Message {
      */
     public int getMessageLength() {
         return messageLength;
+    }
+
+    /**
+     * This is used internally to specify the server from which a message has been sent
+     * or from which it has been received on the local machine.
+     * 
+     * @param server
+     */
+    public final void setMessageServer(MessageServer server) {
+        this.server = server;
+    }
+    
+    /**
+     * @return
+     *      the local MessageServer from which this message was sent or received.
+     */
+    public final MessageServer getMessageServer() {
+        return server;
     }
 }

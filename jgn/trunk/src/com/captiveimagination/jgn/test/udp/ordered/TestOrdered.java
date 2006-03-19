@@ -33,7 +33,7 @@ public class TestOrdered {
 			}
 		});
 		server.getPlayerMessageServer().addMessageSentListener(new MessageSentListener() {
-			public void messageSent(Message message, MessageServer server) {
+			public void messageSent(Message message) {
 				System.out.println("Server Sent Message: " + message.getClass().getName());
 			}
 

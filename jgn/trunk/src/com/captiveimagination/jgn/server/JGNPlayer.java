@@ -9,7 +9,11 @@ public interface JGNPlayer {
 	
     public int getUDPPort();
     
+    public void setUDPPort(int port);
+    
 	public int getTCPPort();
+    
+    public void setTCPPort(int port);
 	
     public int getPlayerPort();
     

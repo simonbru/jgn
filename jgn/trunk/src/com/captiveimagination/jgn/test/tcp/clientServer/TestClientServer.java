@@ -64,7 +64,7 @@ public class TestClientServer {
             }
         });
         client.getPlayerMessageServer().addMessageSentListener(new MessageSentListener() {
-            public void messageSent(Message message, MessageServer server) {
+            public void messageSent(Message message) {
                 System.out.println("C> Message sent: " + message.getClass().getName());
             }
 

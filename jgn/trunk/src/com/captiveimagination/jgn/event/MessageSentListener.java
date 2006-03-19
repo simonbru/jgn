@@ -41,7 +41,7 @@ public interface MessageSentListener {
      * 
      * @param message
      */
-    public void messageSent(Message message, MessageServer sendingServer);
+    public void messageSent(Message message);
     
     /**
      * @return

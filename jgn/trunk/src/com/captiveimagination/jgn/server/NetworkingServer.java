@@ -85,17 +85,7 @@ public class NetworkingServer implements Runnable {
 	public void joinRequest(PlayerJoinRequestMessage message) throws IOException {
 		PlayerJoinResponseMessage response = serverSession.receivedJoinRequest(message);
         try {
-            if ((message.getPortTCP() == message.getRemotePort()) && (getTCPMessageServer() != null)) {
-                getTCPMessageServer().sendMessage(response, message.getRemoteAddress(), message.getPortTCP());
-            } else if ((message.getPortUDP() == message.getRemotePort()) && (getUDPMessageServer() != null)) {
-                getUDPMessageServer().sendMessage(response, message.getRemoteAddress(), message.getPortUDP());
-            } else if ((message.getPortTCP() > -1) && (getTCPMessageServer() != null)) {
-                getTCPMessageServer().sendMessage(response, message.getRemoteAddress(), message.getPortTCP());
-            } else if ((message.getPortUDP() > -1) && (getUDPMessageServer() != null)) {
-                getUDPMessageServer().sendMessage(response, message.getRemoteAddress(), message.getPortUDP());
-            } else {
-                throw new IOException("Unalbe to handle joinRequest from " + message.getRemoteAddress().toString() + ":" + message.getRemotePort());
-            }
+            message.getMessageServer().sendMessage(response, message.getRemoteAddress(), message.getRemotePort());
         } catch(IOException exc) {
             exc.printStackTrace();
             PlayerDisconnectMessage pdm = new PlayerDisconnectMessage();

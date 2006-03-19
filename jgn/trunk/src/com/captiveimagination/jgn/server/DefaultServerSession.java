@@ -29,7 +29,14 @@ public class DefaultServerSession implements ServerSession {
 			}
 		}
         IP address = message.getRemoteAddress();
-		BasicPlayer player = new BasicPlayer(playerId, address, message.getPortUDP(), message.getPortTCP());
+        int portUDP = -1;
+        int portTCP = -1;
+        if (message.getMessageServer() instanceof UDPMessageServer) {
+            portUDP = message.getRemotePort();
+        } else if (message.getMessageServer() instanceof TCPMessageServer) {
+            portTCP = message.getRemotePort();
+        }
+		BasicPlayer player = new BasicPlayer(playerId, address, portUDP, portTCP);
 		players.add(player);
 		
 		PlayerJoinResponseMessage response = new PlayerJoinResponseMessage();

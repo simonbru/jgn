@@ -1,5 +1,6 @@
 package com.captiveimagination.jgn.server;
 
+import com.captiveimagination.jgn.*;
 import com.captiveimagination.jgn.message.player.*;
 
 public interface ServerSession {
@@ -7,6 +8,7 @@ public interface ServerSession {
      * This method is invoked when a request to join the server is received.
      * 
      * @param message
+     * @param server
      * @return
      */
 	public PlayerJoinResponseMessage receivedJoinRequest(PlayerJoinRequestMessage message);

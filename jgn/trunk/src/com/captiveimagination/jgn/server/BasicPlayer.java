@@ -33,8 +33,16 @@ public class BasicPlayer implements JGNPlayer {
 		return portUDP;
 	}
     
+    public void setUDPPort(int portUDP) {
+        this.portUDP = portUDP;
+    }
+    
     public int getTCPPort() {
         return portTCP;
+    }
+    
+    public void setTCPPort(int portTCP) {
+        this.portTCP = portTCP;
     }
     
     public int getPlayerPort() {

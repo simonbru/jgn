@@ -49,6 +49,7 @@ public class TCPMessageServer extends MessageServer {
 				}
 				channel.configureBlocking(false);
 				connectionsMap.put(channel.socket().getInetAddress().getHostAddress() + ":" + channel.socket().getPort(), channel);
+                System.out.println("Putting incoming connection: " + channel.socket().getInetAddress().getHostAddress() + ":" + channel.socket().getPort());
 				connections.add(channel);
 			}
 		} catch(IOException exc) {
@@ -90,11 +91,13 @@ public class TCPMessageServer extends MessageServer {
 					receiveBuffer.rewind();
 					receiveBuffer.get(buf, 0, len);
 					Message m = JGN.receiveMessage(buf, 0, len, IP.fromInetAddress(channel.socket().getInetAddress()), channel.socket().getPort());
+                    m.setMessageServer(this);
                     // Check to see if there were any additional messages sent at the same time
                     if (m.getMessageLength() < len) {
                         int pos = m.getMessageLength();
                         while (pos < len) {
                             Message temp = JGN.receiveMessage(buf, pos, len, IP.fromInetAddress(channel.socket().getInetAddress()), channel.socket().getPort());
+                            temp.setMessageServer(this);
                             messageBuffer.add(temp);
                             pos += temp.getMessageLength();
                         }
@@ -125,6 +128,8 @@ public class TCPMessageServer extends MessageServer {
 	        message.setId(JGN.getUniqueLong());
 	        // Assign send time
 	        message.setSentStamp(getConvertedTime(remoteAddress, remotePort));
+            // Assign this server to it
+            message.setMessageServer(this);
 	        
 	        if (message instanceof OrderedMessage) {
 	        	if (((OrderedMessage)message).getOrderId() == -1) {
@@ -152,6 +157,7 @@ public class TCPMessageServer extends MessageServer {
 	private SocketChannel getConnection(IP remoteAddress, int remotePort) throws IOException {
 		SocketChannel channel = (SocketChannel)connectionsMap.get(remoteAddress.toString() + ":" + remotePort);
 		if (channel == null) {
+            System.out.println("Establishing new connection to: " + remoteAddress + ":" + remotePort);
 			// Create a new connection
 			channel = SocketChannel.open(new InetSocketAddress(remoteAddress.toString(), remotePort));
 			channel.configureBlocking(false);

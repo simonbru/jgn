@@ -176,14 +176,14 @@ public class NetworkingClient implements Runnable {
         this.serverPortTCP = serverPortTCP;
 		
 		PlayerJoinRequestMessage request = clientSession.createJoinRequest();
-        request.setPortTCP(-1);
+        /*request.setPortTCP(-1);
         request.setPortUDP(-1);
         if (messageServerTCP != null) {
             request.setPortTCP(messageServerTCP.getPort());
         }
         if (messageServerUDP != null) {
             request.setPortUDP(messageServerUDP.getPort());
-        }
+        }*/
 		sendToServer(request);
 	}
 	

@@ -66,10 +66,12 @@ public class UDPMessageServer extends MessageServer {
 			try {
 				IP address = IP.fromInetAddress(remoteAddress.getAddress());
 				Message m = JGN.receiveMessage(buf, 0, len, address, remoteAddress.getPort());
+                m.setMessageServer(this);
 				if (m.getMessageLength() < len) {
 					int pos = m.getMessageLength();
 					while (pos < len) {
 						Message temp = JGN.receiveMessage(buf, pos, len, address, remoteAddress.getPort());
+                        temp.setMessageServer(this);
 						messageBuffer.add(temp);
 						pos += temp.getMessageLength();
 					}
@@ -108,6 +110,7 @@ public class UDPMessageServer extends MessageServer {
 		if (remoteAddress == null) remoteAddress = IP.getLocalHost();
 		
 		message.setSentStamp(getConvertedTime(remoteAddress, remotePort));
+        message.setMessageServer(this);
 		try {
 			byte[] messageBytes = JGN.convertMessage(message);
 			sendBuffer.clear();

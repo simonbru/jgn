@@ -173,7 +173,7 @@ public class MessageQueue {
     
     private void sendSentMessage(MessageSentListener listener, Message message) {
         if (listener.getListenerMode() == MessageSentListener.BASIC) {
-            listener.messageSent(message, server);
+            listener.messageSent(message);
         } else if (listener.getListenerMode() == MessageSentListener.CLOSEST) {
             callMethod(listener, "messageSent", message, false);
         } else if (listener.getListenerMode() == MessageSentListener.ALL) {

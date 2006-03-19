@@ -31,8 +31,8 @@ public class EchoServer {
 		});
 		
 		server.addMessageSentListener(new MessageSentListener() {
-			public void messageSent(Message message, MessageServer server) {
-				System.out.println("S> Message sent: " + message.getClass().getName() + " (" + server.getClass().getName() + "), To: " + message.getRemoteAddress() + ":" + message.getRemotePort() + ", From: " + server.getAddress() + ":" + server.getPort());
+			public void messageSent(Message message) {
+				System.out.println("S> Message sent: " + message.getClass().getName() + " (" + server.getClass().getName() + "), To: " + message.getRemoteAddress() + ":" + message.getRemotePort() + ", From: " + message.getMessageServer().getAddress() + ":" + message.getMessageServer().getPort());
 			}
 
 			public int getListenerMode() {

@@ -47,7 +47,7 @@ public class MessageServerMonitor extends Thread {
         
         sentCount = 0;
         messageServer.addMessageSentListener(new MessageSentListener() {
-            public void messageSent(Message message, MessageServer server) {
+            public void messageSent(Message message) {
                 sentCount++;
             }
 

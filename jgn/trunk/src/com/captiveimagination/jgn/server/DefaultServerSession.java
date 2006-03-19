@@ -45,7 +45,7 @@ public class DefaultServerSession implements ServerSession {
     }
 	
 	public void expirePlayer(short playerId) {
-		Player player = getPlayer(playerId);
+		JGNPlayer player = getPlayer(playerId);
         if (player != null) {
             playerIds[player.getPlayerId()] = false;
             players.remove(player);
@@ -56,16 +56,16 @@ public class DefaultServerSession implements ServerSession {
 		return 30 * 1000;
 	}
 
-	public Player getPlayer(short playerId) {
-		Player player;
+	public JGNPlayer getPlayer(short playerId) {
+		JGNPlayer player;
 		for (int i = 0; i < players.size(); i++) {
-			player = (Player)players.get(i);
+			player = (JGNPlayer)players.get(i);
 			if (player.getPlayerId() == playerId) return player;
 		}
 		return null;
 	}
 	
-	public Player[] getPlayers() {
-		return (Player[])players.toArray(new Player[players.size()]);
+	public JGNPlayer[] getPlayers() {
+		return (JGNPlayer[])players.toArray(new JGNPlayer[players.size()]);
 	}
 }

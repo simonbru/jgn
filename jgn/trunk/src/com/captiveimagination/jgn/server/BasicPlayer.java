@@ -6,7 +6,7 @@ import com.captiveimagination.jgn.*;
  * @author Matthew D. Hicks
  *
  */
-public class BasicPlayer implements Player {
+public class BasicPlayer implements JGNPlayer {
 	private short playerId;
 	private IP address;
 	private int portUDP;

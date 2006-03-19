@@ -22,7 +22,7 @@ public class ServerPlayerMessageListener implements MessageListener {
 	
 	public void messageReceived(PlayerMessage message) {
 		// Update the player to say that it has been heard from
-		Player player = server.getPlayer(message.getPlayerId());
+		JGNPlayer player = server.getPlayer(message.getPlayerId());
         if (player != null) {
             player.heardFrom();
         }

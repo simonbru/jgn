@@ -2,7 +2,7 @@ package com.captiveimagination.jgn.server;
 
 import com.captiveimagination.jgn.*;
 
-public interface Player {
+public interface JGNPlayer {
 	public short getPlayerId();
 	
 	public IP getAddress();

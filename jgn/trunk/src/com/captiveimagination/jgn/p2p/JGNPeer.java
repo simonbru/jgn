@@ -10,14 +10,14 @@ import com.captiveimagination.jgn.*;
  * 
  * @author Matthew D. Hicks
  */
-public class Peer {
+public class JGNPeer {
 	private long peerId;
     private IP address;
     private int portUDP;
     private int portTCP;
     private long lastHeardFrom;
     
-    public Peer(long peerId, IP address, int portUDP, int portTCP) {
+    public JGNPeer(long peerId, IP address, int portUDP, int portTCP) {
     	this.peerId = peerId;
     	this.address = address;
     	this.portUDP = portUDP;

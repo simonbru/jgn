@@ -85,8 +85,19 @@ public class NetworkingServer implements Runnable {
 	public void joinRequest(PlayerJoinRequestMessage message) throws IOException {
 		PlayerJoinResponseMessage response = serverSession.receivedJoinRequest(message);
         try {
-            getPlayerMessageServer().sendMessage(response, message.getRemoteAddress(), message.getRemotePort());
+            if ((message.getPortTCP() == message.getRemotePort()) && (getTCPMessageServer() != null)) {
+                getTCPMessageServer().sendMessage(response, message.getRemoteAddress(), message.getPortTCP());
+            } else if ((message.getPortUDP() == message.getRemotePort()) && (getUDPMessageServer() != null)) {
+                getUDPMessageServer().sendMessage(response, message.getRemoteAddress(), message.getPortUDP());
+            } else if ((message.getPortTCP() > -1) && (getTCPMessageServer() != null)) {
+                getTCPMessageServer().sendMessage(response, message.getRemoteAddress(), message.getPortTCP());
+            } else if ((message.getPortUDP() > -1) && (getUDPMessageServer() != null)) {
+                getUDPMessageServer().sendMessage(response, message.getRemoteAddress(), message.getPortUDP());
+            } else {
+                throw new IOException("Unalbe to handle joinRequest from " + message.getRemoteAddress().toString() + ":" + message.getRemotePort());
+            }
         } catch(IOException exc) {
+            exc.printStackTrace();
             PlayerDisconnectMessage pdm = new PlayerDisconnectMessage();
             pdm.setPlayerId(response.getPlayerId());
             disconnectRequest(pdm);
@@ -97,7 +108,7 @@ public class NetworkingServer implements Runnable {
             sendToAllClientsExcept(request, response.getPlayerId());
             
             // Send messages to new client about currently connected players
-            Player[] players = serverSession.getPlayers();
+            JGNPlayer[] players = serverSession.getPlayers();
             for (int i = 0; i < players.length; i++) {
                 if (players[i].getPlayerId() != response.getPlayerId()) {
                     request = serverSession.createClientJoinRequest(players[i].getPlayerId());
@@ -147,7 +158,7 @@ public class NetworkingServer implements Runnable {
 	}
 	
 	public void updateExpired() {
-		Player[] players = getPlayers();
+		JGNPlayer[] players = getPlayers();
 		for (int i = 0; i < players.length; i++) {
 			if (players[i].getLastHeardFrom() + serverSession.getPlayerTimeout() < System.currentTimeMillis()) {
 				PlayerDisconnectMessage message = new PlayerDisconnectMessage();
@@ -230,7 +241,7 @@ public class NetworkingServer implements Runnable {
 	 * @return
 	 * 		returns the player corresponding to <code>playerId</code>
 	 */
-	public Player getPlayer(short playerId) {
+	public JGNPlayer getPlayer(short playerId) {
 		return serverSession.getPlayer(playerId);
 	}
 	
@@ -239,7 +250,7 @@ public class NetworkingServer implements Runnable {
 	 * 		Player[] of all the players currently connected to the
 	 * 		server.
 	 */
-	public Player[] getPlayers() {
+	public JGNPlayer[] getPlayers() {
 		return serverSession.getPlayers();
 	}
     
@@ -308,7 +319,7 @@ public class NetworkingServer implements Runnable {
     }
     
     public void sendToClient(Message message, short playerId, MessageServer server) throws IOException {
-        Player player = getPlayer(playerId);
+        JGNPlayer player = getPlayer(playerId);
         if ((server instanceof TCPMessageServer) && (player.getTCPPort() == -1)) {
             if (getUDPMessageServer() != null) {
                 server = getUDPMessageServer();
@@ -351,19 +362,13 @@ public class NetworkingServer implements Runnable {
 	 * @param message
 	 */
 	public void sendToAllClients(Message message, MessageServer messageServer) {
-		Player[] players = getPlayers();
+		JGNPlayer[] players = getPlayers();
         int port;
 		for (int i = 0; i < players.length; i++) {
-            if (messageServer instanceof TCPMessageServer) {
-                port = players[i].getTCPPort();
-            } else {
-                port = players[i].getUDPPort();
-            }
-            //System.out.println("S> sendToAllClients: " + messageServer.getClass().getName() + ", " + port + ", " + message.getClass().getName() + ", " + players[i].getAddress());
             try {
-                messageServer.sendMessage(message, players[i].getAddress(), port);
+                sendToClient(message, players[i].getPlayerId(), messageServer);
             } catch(IOException exc) {
-                System.err.println("Unable to send " + messageServer.getClass().getName() + " message to " + players[i].getAddress() + ":" + port);
+                System.err.println("Unable to send " + messageServer.getClass().getName() + " message to " + players[i].getAddress());
                 exc.printStackTrace();
                 removePlayer(players[i].getPlayerId(), null);
             }
@@ -390,17 +395,18 @@ public class NetworkingServer implements Runnable {
      * @param playerId
      */
     public void sendToAllClientsExcept(Message message, short playerId, MessageServer messageServer) {
-        Player[] players = getPlayers();
+        JGNPlayer[] players = getPlayers();
         int port;
         for (int i = 0; i < players.length; i++) {
             if (players[i].getPlayerId() != playerId) {
-                if (messageServer instanceof TCPMessageServer) {
+                /*if (messageServer instanceof TCPMessageServer) {
                     port = players[i].getTCPPort();
                 } else {
                     port = players[i].getUDPPort();
-                }
+                }*/
                 try {
-                    messageServer.sendMessage(message, players[i].getAddress(), port);
+                    //messageServer.sendMessage(message, players[i].getAddress(), port);
+                    sendToClient(message, players[i].getPlayerId());
                 } catch(IOException exc) {
                     PlayerDisconnectMessage pdm = new PlayerDisconnectMessage();
                     pdm.setPlayerId(playerId);

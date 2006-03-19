@@ -26,7 +26,7 @@ public interface ServerSession {
 	
 	public void expirePlayer(short playerId);
 	
-	public Player getPlayer(short playerId);
+	public JGNPlayer getPlayer(short playerId);
 	
-	public Player[] getPlayers();
+	public JGNPlayer[] getPlayers();
 }

@@ -121,6 +121,7 @@ public class NetworkingClient implements Runnable {
 	}
 	
 	public void updateNoop() {
+        //System.out.println("Port: " + serverPortUDP + ", " + getUDPMessageServer() + ", " + isConnected() + ", " + lastNoopUDP);
 		if ((serverPortUDP > -1) && (getUDPMessageServer() != null) && (isConnected()) && (lastNoopUDP + NOOP_DELAY < System.currentTimeMillis())) {
 			PlayerNoopMessage message = new PlayerNoopMessage();
 			message.setPlayerId(playerId);
@@ -225,6 +226,24 @@ public class NetworkingClient implements Runnable {
 			playerId = message.getPlayerId();
 		}
         
+        // Send initial noops to verify connectivity on both
+        PlayerNoopMessage nm = new PlayerNoopMessage();
+        if ((serverPortTCP > -1) && (messageServerTCP != null)) {
+            try {
+                sendToServerTCP(nm);
+            } catch (IOException exc) {
+                System.err.println("Error sending response message to server via TCP.");
+            }
+        }
+        if ((serverPortUDP > -1) && (messageServerUDP != null)) {
+            try {
+                sendToServerUDP(nm);
+            } catch(IOException exc) {
+                System.err.println("Error sending response message to server via UDP.");
+            }
+        }
+        
+        
         PlayerListener listener;
         for (int i = 0; i < playerListeners.size(); i++) {
             listener = (PlayerListener)playerListeners.get(i);
@@ -283,6 +302,7 @@ public class NetworkingClient implements Runnable {
         if (serverPortTCP == -1) {
             if (serverPortUDP != -1) {
                 sendToServerUDP(message);
+                return;
             } else {
                 System.err.println("Unable to send TCP message. Not connected to server.");
                 return;
@@ -292,8 +312,12 @@ public class NetworkingClient implements Runnable {
         if (message instanceof PlayerMessage) {
             ((PlayerMessage)message).setPlayerId(getPlayerId());
         }
-        messageServerTCP.sendMessage(message, serverAddress, serverPortTCP);
-        lastNoopTCP = System.currentTimeMillis();
+        if (messageServerTCP != null) {
+            messageServerTCP.sendMessage(message, serverAddress, serverPortTCP);
+            if (message instanceof PlayerMessage) lastNoopTCP = System.currentTimeMillis();
+        } else {
+            throw new IOException("No route to destination server. Differing protocols in use.");
+        }
     }
     
     /**
@@ -316,8 +340,12 @@ public class NetworkingClient implements Runnable {
         if (message instanceof PlayerMessage) {
             ((PlayerMessage)message).setPlayerId(getPlayerId());
         }
-        messageServerUDP.sendMessage(message, serverAddress, serverPortUDP);
-        lastNoopUDP = System.currentTimeMillis();
+        if (messageServerUDP != null) {
+            messageServerUDP.sendMessage(message, serverAddress, serverPortUDP);
+            if (message instanceof PlayerMessage) lastNoopUDP = System.currentTimeMillis();
+        } else {
+            throw new IOException("No route to destination server. Differing protocols in use.");
+        }
     }
 	
 	/**

@@ -58,19 +58,19 @@ public class NetworkingPeer implements Runnable {
 			}
 			
 			public void messageReceived(PeerMessage message) {
-				Peer peer = getPeer(message.getPeerId());
+				JGNPeer peer = getPeer(message.getPeerId());
 				if (peer != null) {
 					peer.heardFrom();
 				}
 				if (message.getRequestType() == PeerMessage.REQUEST_JOIN) {
-					peer = new Peer(message.getPeerId(), message.getRemoteAddress(), message.getPortUDP(), message.getPortTCP());
+					peer = new JGNPeer(message.getPeerId(), message.getRemoteAddress(), message.getPortUDP(), message.getPortTCP());
 					peers.add(peer);
 					
 					PeerMessage response = new PeerMessage();
 					response.setRequestType(PeerMessage.REQUEST_RESPONSE);
 					sendToPeer(message.getPeerId(), response, PEER);
 				} else if (message.getRequestType() == PeerMessage.REQUEST_RESPONSE) {
-					peer = new Peer(message.getPeerId(), message.getRemoteAddress(), message.getPortUDP(), message.getPortTCP());
+					peer = new JGNPeer(message.getPeerId(), message.getRemoteAddress(), message.getPortUDP(), message.getPortTCP());
 					peers.add(peer);
 					
 					if (peers.size() == 1) {
@@ -82,7 +82,7 @@ public class NetworkingPeer implements Runnable {
 					disconnect(peer.getPeerId());
 				} else if (message.getRequestType() == PeerMessage.REQUEST_PEERS) {
 					PeerStatusMessage status;
-					Peer[] peers = getPeers();
+					JGNPeer[] peers = getPeers();
 					for (int i = 0; i < peers.length; i++) {
 						if (peers[i].getPeerId() != message.getPeerId()) {
 							status = new PeerStatusMessage();
@@ -97,7 +97,7 @@ public class NetworkingPeer implements Runnable {
 			}
 			
 			public void messageReceived(PeerStatusMessage message) {
-				Peer peer = getPeer(message.getStatusPeerId());
+				JGNPeer peer = getPeer(message.getStatusPeerId());
 				if (peer == null) {
 					try {
 						connect(new IP(message.getStatusPeerAddress()), message.getRemotePort());
@@ -128,7 +128,7 @@ public class NetworkingPeer implements Runnable {
             messageServerTCP.update();
         }
         
-        Peer[] peers = getPeers();
+        JGNPeer[] peers = getPeers();
         
         // Send Noops
         if ((getUDPMessageServer() != null) && (lastNoopUDP + NOOP_DELAY < System.currentTimeMillis())) {
@@ -204,7 +204,7 @@ public class NetworkingPeer implements Runnable {
     }
     
     public void disconnect(long peerId) {
-    	Peer peer = getPeer(peerId);
+    	JGNPeer peer = getPeer(peerId);
     	if (messageServerTCP != null) {
     		messageServerTCP.disconnect(peer.getAddress(), peer.getPortTCP());
     	}
@@ -219,7 +219,7 @@ public class NetworkingPeer implements Runnable {
      * @param method
      */
     public void sendToPeers(Message message, int method) {
-    	Peer[] peers = getPeers();
+    	JGNPeer[] peers = getPeers();
     	for (int i = 0; i < peers.length; i++) {
     		sendToPeer(peers[i].getPeerId(), message, method);
     	}
@@ -247,7 +247,7 @@ public class NetworkingPeer implements Runnable {
 					((PeerMessage)message).setPortTCP(messageServerTCP.getPort());
 				}
 	    	}
-	    	Peer peer = getPeer(peerId);
+	    	JGNPeer peer = getPeer(peerId);
 	    	if (method == PEER) {
 	    		if (messageServerTCP != null) {
 	    			method = TCP;
@@ -271,8 +271,8 @@ public class NetworkingPeer implements Runnable {
      * @return
      * 		Array of all currently connected peers
      */
-    public Peer[] getPeers() {
-    	return (Peer[])peers.toArray(new Peer[peers.size()]);
+    public JGNPeer[] getPeers() {
+    	return (JGNPeer[])peers.toArray(new JGNPeer[peers.size()]);
     }
     
     /**
@@ -280,8 +280,8 @@ public class NetworkingPeer implements Runnable {
      * @return
      * 		The Peer connected defined by <code>peerId</code>
      */
-    public Peer getPeer(long peerId) {
-    	Peer[] peers = getPeers();
+    public JGNPeer getPeer(long peerId) {
+    	JGNPeer[] peers = getPeers();
     	for (int i = 0; i < peers.length; i++) {
     		if (peers[i].getPeerId() == peerId) {
     			return peers[i];

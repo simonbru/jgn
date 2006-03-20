@@ -24,15 +24,15 @@ public class ServerPlayerMessageListener implements MessageListener {
 	public void messageReceived(PlayerMessage message) {
         JGNPlayer player = server.getPlayer(message.getPlayerId());
         
-        // Check to see if the player has a port assigned for this message server
-        if ((message.getMessageServer() instanceof TCPMessageServer) && (player.getTCPPort() == -1)) {
-            player.setTCPPort(message.getRemotePort());
-        } else if ((message.getMessageServer() instanceof UDPMessageServer) && (player.getUDPPort() == -1)) {
-            player.setUDPPort(message.getRemotePort());
-        }
-        
-		// Update the player to say that it has been heard from
         if (player != null) {
+            // Check to see if the player has a port assigned for this message server
+            if ((message.getMessageServer() instanceof TCPMessageServer) && (player.getTCPPort() == -1)) {
+                player.setTCPPort(message.getRemotePort());
+            } else if ((message.getMessageServer() instanceof UDPMessageServer) && (player.getUDPPort() == -1)) {
+                player.setUDPPort(message.getRemotePort());
+            }
+        	
+            // Update the player to say that it has been heard from
             player.heardFrom();
         }
 	}

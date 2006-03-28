@@ -76,7 +76,7 @@ public class TCPMessageServer extends MessageServer {
         server.socket().bind(new InetSocketAddress(addr, getPort()));
 	}
 
-    public Message receiveMessage() throws IOException {
+    protected Message receiveMessage() throws IOException {
         if (messageBuffer.size() > 0) {
             Message m = (Message)messageBuffer.get(0);
             messageBuffer.remove(0);

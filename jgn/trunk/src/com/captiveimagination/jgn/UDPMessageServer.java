@@ -52,7 +52,7 @@ public class UDPMessageServer extends MessageServer {
 		certifier = new MessageCertifier(this);
 	}
 	
-	public Message receiveMessage() throws IOException {
+	protected Message receiveMessage() throws IOException {
 		if (messageBuffer.size() > 0) {
             Message m = (Message)messageBuffer.get(0);
             messageBuffer.remove(0);

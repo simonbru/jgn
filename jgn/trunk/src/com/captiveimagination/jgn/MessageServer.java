@@ -55,7 +55,7 @@ public abstract class MessageServer {
 	 * 		Responsible for receiving incoming messages. May return null if
 	 * 		no message is waiting or an error occurred.
 	 */
-	public abstract Message receiveMessage() throws IOException;
+	protected abstract Message receiveMessage() throws IOException;
 	
 	/**
 	 * Method responsible for sending a message to a remote machine.

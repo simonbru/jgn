@@ -161,4 +161,10 @@ public class BlockingUDPMessageServer extends MessageServer {
 
     public void timeSync(IP address, int port) {
     }
+
+    protected void closeChannel() {
+    	try {
+    		socket.close();
+    	} catch(Exception exc) {}
+    }
 }

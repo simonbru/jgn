@@ -182,4 +182,10 @@ public class TCPMessageServer extends MessageServer {
             exc.printStackTrace();
         }
     }
+
+    protected void closeChannel() {
+    	try {
+    		server.close();
+    	} catch(Exception exc) {}
+    }
 }

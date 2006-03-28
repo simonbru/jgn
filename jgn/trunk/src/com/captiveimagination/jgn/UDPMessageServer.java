@@ -137,4 +137,10 @@ public class UDPMessageServer extends MessageServer {
     public MessageCertifier getMessageCertifier() {
         return certifier;
     }
+
+    protected void closeChannel() {
+    	try {
+    		channel.close();
+    	} catch(Exception exc) {}
+    }
 }

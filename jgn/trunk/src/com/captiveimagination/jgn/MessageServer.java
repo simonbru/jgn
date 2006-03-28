@@ -217,5 +217,8 @@ public abstract class MessageServer {
 	 */
 	public void shutdown() {
 		keepAlive = false;
+		closeChannel();
 	}
+	
+	protected abstract void closeChannel();
 }

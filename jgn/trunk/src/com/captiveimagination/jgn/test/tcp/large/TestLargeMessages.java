@@ -25,9 +25,9 @@ public class TestLargeMessages {
 			}
 			
 			public void messageReceived(LargeMessage message) {
-				System.out.println("Received array of size: " + message.getMessageArray().length);
-				server1.shutdown();
-				server2.shutdown();
+				System.out.println("Received array of size: " + message.getMessageArray().length + " (" + message.getCount() + ")");
+				//server1.shutdown();
+				//server2.shutdown();
 			}
 
 			public int getListenerMode() {
@@ -38,9 +38,12 @@ public class TestLargeMessages {
 		server2.startUpdateThread();
 		
 		// Create and send message from server1 to server2
-		LargeMessage message = new LargeMessage();
-		message.setMessageArray(new byte[20000]);
-		
-		server1.sendMessage(message, IP.getLocalHost(), 2000);
+		for (int i = 0; i < 100; i++) {
+			LargeMessage message = new LargeMessage();
+			message.setMessageArray(new byte[2000]);
+			message.setCount(i);
+			
+			server1.sendMessage(message, IP.getLocalHost(), 2000);
+		}
 	}
 }

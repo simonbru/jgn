@@ -66,14 +66,14 @@ public abstract class MessageServer {
 	 */
 	public abstract void sendMessage(Message message, IP remoteAddress, int remotePort) throws IOException;
 	
-	public void update() {
+	public synchronized void update() {
 		// Process inbound messages and enqueue them
 		updateIncoming();
 		
 		updateEvents();
 	}
 	
-	public void updateIncoming() {
+	public synchronized void updateIncoming() {
 		try {
 			Message message;
 			while ((message = receiveMessage()) != null) {
@@ -85,7 +85,7 @@ public abstract class MessageServer {
         }
 	}
 	
-	public void updateEvents() {
+	public synchronized void updateEvents() {
 		queue.update();
 	}
 	

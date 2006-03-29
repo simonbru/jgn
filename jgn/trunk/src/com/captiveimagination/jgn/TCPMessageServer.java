@@ -34,7 +34,7 @@ public class TCPMessageServer extends MessageServer {
 		init();
 	}
 	
-	public void updateIncoming() {
+	public synchronized void updateIncoming() {
 		// Accept new incoming connections
 		SocketChannel channel;
 		try {
@@ -76,7 +76,7 @@ public class TCPMessageServer extends MessageServer {
         server.socket().bind(new InetSocketAddress(addr, getPort()));
 	}
 
-    protected Message receiveMessage() throws IOException {
+    protected synchronized Message receiveMessage() throws IOException {
         if (messageBuffer.size() > 0) {
             Message m = (Message)messageBuffer.get(0);
             messageBuffer.remove(0);

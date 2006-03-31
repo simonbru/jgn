@@ -64,7 +64,7 @@ public class MessageCertifier {
                         throw new RuntimeException(exc);
                     }
                     c.tried();
-                    queue.remove(c);
+                    //queue.remove(c);
                 } else {
                     //queue.add(c);
                 }

@@ -52,6 +52,12 @@ public class UDPMessageServer extends MessageServer {
 		certifier = new MessageCertifier(this);
 	}
 	
+	public synchronized void updateIncoming() {
+		super.updateIncoming();
+		
+		certifier.update();
+	}
+	
 	protected synchronized Message receiveMessage() throws IOException {
 		if (messageBuffer.size() > 0) {
             Message m = (Message)messageBuffer.get(0);

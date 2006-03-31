@@ -68,7 +68,13 @@ public class MessageQueue {
         Message m;
         
         // Message Received
-        while ((m = getNext()) != null) {
+        //while ((m = getNext()) != null) {
+        List temp = new ArrayList();
+        temp.addAll(queue);
+        Iterator iterator = temp.iterator();
+        while (iterator.hasNext()) {
+        	m = (Message)iterator.next();
+        	queue.remove(m);
             if (cache.contains(m.getId())) {
             	if (!(m instanceof CertifiedMessage)) {
             		System.err.println("Received duplicate id, ignoring: " + m.getId() + ", " + m.getClass().getName());
@@ -102,7 +108,13 @@ public class MessageQueue {
         }
         
         // Message Sent
-        while ((m = getNextSent()) != null) {
+        //while ((m = getNextSent()) != null) {
+        temp.clear();
+        temp.addAll(queueSent);
+        iterator = temp.iterator();
+        while (iterator.hasNext()) {
+        	m = (Message)iterator.next();
+        	queueSent.remove(m);
             for (int i = 0; i < listenersSent.size(); i++) {
                 try {
                     sendSentMessage((MessageSentListener)listenersSent.get(i), m);
@@ -137,7 +149,7 @@ public class MessageQueue {
     	return -1;
     }
     
-    private synchronized Message getNext() {
+    /*private synchronized Message getNext() {
         if (queue.size() > 0) {
             Message m = (Message)queue.get(0);
             queue.remove(0);
@@ -153,7 +165,7 @@ public class MessageQueue {
             return m;
         }
         return null;
-    }
+    }*/
     
     public int size() {
         return queue.size();

@@ -14,13 +14,13 @@ public class InternalMessageListener implements MessageListener {
 	private MessageServer messageServer;
 	
 	private long pingTime;
-	private long remoteTime;
+	//private long remoteTime;
 	private HashSet certifyQueue;
 	
 	public InternalMessageListener(MessageServer messageServer) {
 		this.messageServer = messageServer;
 		pingTime = -1;
-		remoteTime = -1;
+		//remoteTime = -1;
 		certifyQueue = new HashSet();
 	}
 	

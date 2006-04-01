@@ -44,42 +44,30 @@ public class MessageCertifier {
         Iterator iterator = temp.iterator();
         while (iterator.hasNext()) {
         	c = (Certification)iterator.next();
-        //while ((c = getNext()) != null) {
-            if ((c.getMessage().getTried() % 10 == 0) && (c.getMessage().getTried() > 0)) {
-                System.err.println("Message unable to send after: " + c.getMessage().getTried() + ", " + c.getMessage().getId());
+            if ((c.getRetryCount() % 10 == 0) && (c.getRetryCount() > 0)) {
+                System.err.println("Message unable to send after: " + c.getMessage().getTried() + ", " + c.getCertificationId()+ " "+queue.size());
             }
-            
-            if (isCertified(c.getMessage().getId())) {
-                certified.remove(new Long(c.getMessage().getId()));
+            if (isCertified(c.getCertificationId())) {
+                certified.remove(new Long(c.getCertificationId()));
                 queue.remove(c);
                 //System.out.println("message certified: " + c.getMessage().getId() + " - " + c.getMessage().getClass().getName() + " after " + c.getMessage().getTried() + " tries.");
-            } else if ((c.getMessage().getTried() >= c.getMessage().getMaxTries()) && (c.getMessage().getMaxTries() != 0)) {
+            } else if ((c.getRetryCount() >= c.getMessage().getMaxTries()) && (c.getMessage().getMaxTries() != 0)) {
                 System.err.println("Unable to send message: " + c.getMessage().getId() + " - " + c.getMessage().getClass().getName() + " after " + c.getMessage().getTried() + " tries.");
                 queue.remove(c);
             } else {
                 if (System.currentTimeMillis() > c.getLastTry() + c.getMessage().getResendTimeout()) {
                     try {
+                    	c.getMessage().setId(c.getCertificationId());
                         server.resendMessage(c.getMessage(), c.getRecipientAddress(), c.getRecipientPort());
+                        System.err.println("RESENGING "+c.getMessage().getId());
                     } catch(IOException exc) {
                         throw new RuntimeException(exc);
                     }
                     c.tried();
-                    //queue.remove(c);
-                } else {
-                    //queue.add(c);
                 }
             }
         }
     }
-    
-    /*private Certification getNext() {
-    	if (queue.size() > 0) {
-    		Certification c = (Certification)queue.get(0);
-    		queue.remove(0);
-    		return c;
-    	}
-    	return null;
-    }*/
     
     public int size() {
         return queue.size();

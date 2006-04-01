@@ -11,12 +11,16 @@ public class Certification {
 	private IP recipientAddress;
 	private int recipientPort;
 	private long lastTry;
+	private int retryCount;
+	private long certificationId;
 	
 	public Certification(CertifiedMessage message, IP recipientAddress, int recipientPort) {
 		this.message = message;
 		this.recipientAddress = recipientAddress;
 		this.recipientPort = recipientPort;
+		this.certificationId = message.getId();
 		tried();
+		retryCount = 0;
 	}
 	
 	public CertifiedMessage getMessage() {
@@ -37,5 +41,21 @@ public class Certification {
 	
 	public void tried() {
 		lastTry = System.currentTimeMillis();
+		retryCount++;
+		message.failed();
+	}
+
+	/**
+	 * @return the certificationId
+	 */
+	public long getCertificationId() {
+		return this.certificationId;
+	}
+
+	/**
+	 * @return the retryCount
+	 */
+	public int getRetryCount() {
+		return this.retryCount;
 	}
 }

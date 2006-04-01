@@ -68,7 +68,6 @@ public class MessageQueue {
         Message m;
         
         // Message Received
-        //while ((m = getNext()) != null) {
         List temp = new ArrayList();
         temp.addAll(queue);
         Iterator iterator = temp.iterator();
@@ -94,8 +93,6 @@ public class MessageQueue {
             if ((m instanceof OrderedMessage) && (!isCorrectOrder((OrderedMessage)m)) && (server instanceof UDPMessageServer)) {
                 enqueue(m);
                 cache.remove(m.getId());
-                // TODO figure out why it stops working when this system out is taken out
-                System.out.println("Not in correct order: " + ((OrderedMessage)m).getOrderId() + ", expecting: " + getNextInOrder((OrderedMessage)m));
                 continue;
             }
             for (int i = 0; i < listeners.size(); i++) {
@@ -108,7 +105,6 @@ public class MessageQueue {
         }
         
         // Message Sent
-        //while ((m = getNextSent()) != null) {
         temp.clear();
         temp.addAll(queueSent);
         iterator = temp.iterator();
@@ -139,33 +135,6 @@ public class MessageQueue {
     	}
     	return false;
     }
-    
-    private synchronized long getNextInOrder(OrderedMessage message) {
-    	String key = message.getOrderOriginator() + ":" + message.getOrderGroup();
-    	Long lastPosition = (Long)ordered.get(key);
-    	if (lastPosition != null) {
-    		return lastPosition.longValue() + 1;
-    	}
-    	return -1;
-    }
-    
-    /*private synchronized Message getNext() {
-        if (queue.size() > 0) {
-            Message m = (Message)queue.get(0);
-            queue.remove(0);
-            return m;
-        }
-        return null;
-    }
-    
-    private synchronized Message getNextSent() {
-        if (queueSent.size() > 0) {
-            Message m = (Message)queueSent.get(0);
-            queueSent.remove(0);
-            return m;
-        }
-        return null;
-    }*/
     
     public int size() {
         return queue.size();

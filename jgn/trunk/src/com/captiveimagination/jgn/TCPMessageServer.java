@@ -52,6 +52,10 @@ public class TCPMessageServer extends MessageServer {
                 System.out.println("Putting incoming connection: " + channel.socket().getInetAddress().getHostAddress() + ":" + channel.socket().getPort());
 				connections.add(channel);
 			}
+		} catch(ClosedChannelException exc) {
+			if (isKeepAlive()) {
+				exc.printStackTrace();
+			}
 		} catch(IOException exc) {
 			exc.printStackTrace();
 		}
@@ -104,6 +108,12 @@ public class TCPMessageServer extends MessageServer {
                     }
                     receiveBuffer.clear();
                     return m;
+				}
+			} catch(ClosedChannelException exc) {
+				if (isKeepAlive()) {
+					exc.printStackTrace();
+					System.err.println("Closing connection " + channel.socket().getInetAddress().getHostAddress() + ":" + channel.socket().getPort());
+					disconnect(IP.fromInetAddress(channel.socket().getInetAddress()), channel.socket().getPort());
 				}
 			} catch(Exception exc) {
 				if ((exc.getMessage() != null) && (exc.getMessage().equals("An existing connection was forcibly closed by the remote host"))) {

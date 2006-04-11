@@ -220,5 +220,9 @@ public abstract class MessageServer {
 		closeChannel();
 	}
 	
+	public boolean isKeepAlive() {
+		return keepAlive;
+	}
+	
 	protected abstract void closeChannel();
 }

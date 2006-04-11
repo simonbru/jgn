@@ -64,35 +64,41 @@ public class UDPMessageServer extends MessageServer {
             messageBuffer.remove(0);
             return m;
         }
-		InetSocketAddress remoteAddress = (InetSocketAddress)channel.receive(receiveBuffer);
-		if (remoteAddress != null) {
-			int len  = receiveBuffer.position();
-			receiveBuffer.rewind();
-			receiveBuffer.get(buf, 0, len);
-			try {
-				IP address = IP.fromInetAddress(remoteAddress.getAddress());
-				Message m = JGN.receiveMessage(buf, 0, len, address, remoteAddress.getPort());
-                m.setMessageServer(this);
-				if (m.getMessageLength() < len) {
-					int pos = m.getMessageLength();
-					while (pos < len) {
-						Message temp = JGN.receiveMessage(buf, pos, len, address, remoteAddress.getPort());
-                        temp.setMessageServer(this);
-						messageBuffer.add(temp);
-						pos += temp.getMessageLength();
+		try {
+			InetSocketAddress remoteAddress = (InetSocketAddress)channel.receive(receiveBuffer);
+			if (remoteAddress != null) {
+				int len  = receiveBuffer.position();
+				receiveBuffer.rewind();
+				receiveBuffer.get(buf, 0, len);
+				try {
+					IP address = IP.fromInetAddress(remoteAddress.getAddress());
+					Message m = JGN.receiveMessage(buf, 0, len, address, remoteAddress.getPort());
+	                m.setMessageServer(this);
+					if (m.getMessageLength() < len) {
+						int pos = m.getMessageLength();
+						while (pos < len) {
+							Message temp = JGN.receiveMessage(buf, pos, len, address, remoteAddress.getPort());
+	                        temp.setMessageServer(this);
+							messageBuffer.add(temp);
+							pos += temp.getMessageLength();
+						}
 					}
+					receiveBuffer.clear();
+					return m;
+				} catch(EOFException exc) {
+					exc.printStackTrace();
+					System.err.println(buf.length + ", " + len);
+				} catch(InvocationTargetException exc) {
+					exc.printStackTrace();
+				} catch(IllegalAccessException exc) {
+					exc.printStackTrace();
+				} catch(InstantiationException exc) {
+					exc.printStackTrace();
 				}
-				receiveBuffer.clear();
-				return m;
-			} catch(EOFException exc) {
-				exc.printStackTrace();
-				System.err.println(buf.length + ", " + len);
-			} catch(InvocationTargetException exc) {
-				exc.printStackTrace();
-			} catch(IllegalAccessException exc) {
-				exc.printStackTrace();
-			} catch(InstantiationException exc) {
-				exc.printStackTrace();
+			}
+		} catch(ClosedChannelException exc) {
+			if (isKeepAlive()) {
+				throw exc;
 			}
 		}
 		return null;

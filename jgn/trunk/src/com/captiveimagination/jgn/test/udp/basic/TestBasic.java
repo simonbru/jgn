@@ -35,7 +35,7 @@ public class TestBasic {
                 if (message.getNumbers() != null) {
                     int[] numbers = message.getNumbers();
                     for (int i = 0; i < numbers.length; i++) {
-                        System.out.print(i + " ");
+                        System.out.print(numbers[i] + " ");
                     }
                 } else {
                     System.out.println("Numbers is null!");

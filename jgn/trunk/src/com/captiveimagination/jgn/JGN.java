@@ -166,9 +166,11 @@ public class JGN {
 	            // Build MessageHandler implementation
 	            File src = new File(dynamicDirectory, name + "_MessageHandler.java");
 	            BufferedWriter writer = new BufferedWriter(new FileWriter(src));
-	            writer.write("import " + c.getName() + ";");
-	            writer.newLine();
-	            writer.newLine();
+	            if (c.getName().indexOf('.') > -1) {
+	            	writer.write("import " + c.getName() + ";");
+	            	writer.newLine();
+	            	writer.newLine();
+	            }
 	            writer.write("import java.io.*;");;
 	            writer.newLine();
 	            writer.write("import com.captiveimagination.jgn.*;");

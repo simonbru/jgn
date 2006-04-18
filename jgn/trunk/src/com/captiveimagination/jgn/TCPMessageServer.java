@@ -70,13 +70,17 @@ public class TCPMessageServer extends MessageServer {
 		SocketChannel channel;
 		try {
 			while ((channel = server.accept()) != null) {
+				/*
+				 * Check to see if the connection is already established.
+				 * If so, we need to close the old connection before establishing the new one
+				 */
 				if (connectionsMap.get(channel.socket().getInetAddress().getHostAddress() + ":" + channel.socket().getPort()) != null) {
-					channel = (SocketChannel)connectionsMap.get(channel.socket().getInetAddress().getHostAddress() + ":" + channel.socket().getPort());
+					SocketChannel temp = (SocketChannel)connectionsMap.get(channel.socket().getInetAddress().getHostAddress() + ":" + channel.socket().getPort());
 					try {
-						channel.close();
+						temp.close();
 					} catch(Throwable t) {
 					}
-					connections.remove(channel);
+					connections.remove(temp);
 				}
 				channel.configureBlocking(false);
 				connectionsMap.put(channel.socket().getInetAddress().getHostAddress() + ":" + channel.socket().getPort(), channel);

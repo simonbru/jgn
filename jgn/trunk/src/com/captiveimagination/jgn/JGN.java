@@ -161,10 +161,24 @@ public class JGN {
         try {
             String name = c.getName().substring(c.getName().lastIndexOf(".") + 1);
             
+            if (!ALWAYS_REBUILD) {
+                try {
+                    Class handler = Class.forName(name + "_MessageHandler");
+                    if (handler != null) {
+                        System.out.println(name + "_MessageHandler found in classpath, using.");
+                        handlers.put(c, handler.newInstance());
+                        return;
+                    }
+                } catch(Throwable t) {
+                    System.out.println(name + "_MessageHandler not found in the classpath.");
+                }
+            }
+            
             File build = new File(dynamicDirectory, name + "_MessageHandler.class");
             if ((ALWAYS_REBUILD) || (!build.exists())) {
 	            // Build MessageHandler implementation
 	            File src = new File(dynamicDirectory, name + "_MessageHandler.java");
+	            System.out.println("Generating: " + src.getName() + ", " + ALWAYS_REBUILD);
 	            BufferedWriter writer = new BufferedWriter(new FileWriter(src));
 	            if (c.getName().indexOf('.') > -1) {
 	            	writer.write("import " + c.getName() + ";");

@@ -224,9 +224,6 @@ public class NetworkingServer implements Runnable {
             message.setPlayerId(playerId);
         }
         
-        // Send message to all clients
-        sendToAllClientsExcept(message, message.getPlayerId());
-        
         PlayerListener listener;
         for (int i = 0; i < playerListeners.size(); i++) {
             listener = (PlayerListener)playerListeners.get(i);
@@ -236,6 +233,9 @@ public class NetworkingServer implements Runnable {
             messageServerTCP.disconnect(message.getRemoteAddress(), message.getRemotePort());
         }
         serverSession.expirePlayer(message.getPlayerId());
+        
+        // Send message to all clients
+        sendToAllClientsExcept(message, message.getPlayerId());
     }
 	
 	/**

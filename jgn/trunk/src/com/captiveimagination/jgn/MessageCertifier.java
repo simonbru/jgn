@@ -53,8 +53,8 @@ public class MessageCertifier {
     public MessageCertifier(UDPMessageServer server) {
         this.server = server;
         
-        queue = new ArrayList();
-        certified = new ArrayList();
+        queue = Collections.synchronizedList(new ArrayList());
+        certified = Collections.synchronizedList(new ArrayList());
     }
     
     public void enqueue(CertifiedMessage message, IP address, int port) {

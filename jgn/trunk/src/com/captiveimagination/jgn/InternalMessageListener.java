@@ -103,7 +103,7 @@ public class InternalMessageListener implements MessageListener {
         }
     	while (pingTime == -1) {
     		try {
-    			Thread.sleep(10);
+    			Thread.sleep(1);
     		} catch(InterruptedException exc) {
     			exc.printStackTrace();
     		}

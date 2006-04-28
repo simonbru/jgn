@@ -18,8 +18,10 @@ public class TestPing {
 		MessageServer server2 = new UDPMessageServer(IP.getLocalHost(), 1005);
         // We start the update thread - this is an alternative to calling update() in your game thread
         server2.startUpdateThread();
-		System.out.println("Ping: " + server2.ping(IP.getLocalHost(), 1000, 10000));
-		server1.shutdown();
-		server2.shutdown();
+        while (true) {
+        	System.out.println("Ping: " + (server2.ping(IP.getLocalHost(), 1000, 10000) * 1000));
+        }
+		//server1.shutdown();
+		//server2.shutdown();
 	}
 }

@@ -39,5 +39,5 @@ package com.captiveimagination.jgn.message.player;
  * 
  * @author Matthew D. Hicks
  */
-public class PlayerJoinRequestMessage extends PlayerMessage {
+public class PlayerJoinRequestMessage extends PlayerCertifiedMessage {
 }

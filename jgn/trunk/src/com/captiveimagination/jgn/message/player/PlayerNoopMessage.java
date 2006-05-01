@@ -36,5 +36,5 @@ package com.captiveimagination.jgn.message.player;
  * 
  * @author Matthew D. Hicks
  */
-public class PlayerNoopMessage extends PlayerMessage {
+public class PlayerNoopMessage extends PlayerCertifiedMessage {
 }

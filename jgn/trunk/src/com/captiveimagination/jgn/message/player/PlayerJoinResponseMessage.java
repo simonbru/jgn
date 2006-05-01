@@ -36,7 +36,7 @@ package com.captiveimagination.jgn.message.player;
  * 
  * @author Matthew D. Hicks
  */
-public class PlayerJoinResponseMessage extends PlayerMessage {
+public class PlayerJoinResponseMessage extends PlayerCertifiedMessage {
 	private boolean accepted;
 	
 	public boolean isAccepted() {

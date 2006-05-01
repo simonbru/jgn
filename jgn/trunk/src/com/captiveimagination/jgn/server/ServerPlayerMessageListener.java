@@ -57,10 +57,10 @@ public class ServerPlayerMessageListener implements MessageListener {
         
         if (player != null) {
             // Check to see if the player has a port assigned for this message server
-            if ((message.getMessageServer() instanceof TCPMessageServer) && (player.getTCPPort() == -1)) {
-                player.setTCPPort(message.getRemotePort());
-            } else if ((message.getMessageServer() instanceof UDPMessageServer) && (player.getUDPPort() == -1)) {
-                player.setUDPPort(message.getRemotePort());
+            if ((((Message)message).getMessageServer() instanceof TCPMessageServer) && (player.getTCPPort() == -1)) {
+                player.setTCPPort(((Message)message).getRemotePort());
+            } else if ((((Message)message).getMessageServer() instanceof UDPMessageServer) && (player.getUDPPort() == -1)) {
+                player.setUDPPort(((Message)message).getRemotePort());
             }
         	
             // Update the player to say that it has been heard from

@@ -202,6 +202,19 @@ public class MessageQueue {
                 }
             }
             
+            // Check to see if an interface is found first
+            Class[] interfaces = var.getClass().getInterfaces();
+            for (int j = 0; j < interfaces.length; j++) {
+            	for (int i = 0; i < m.size(); i++) {
+                    if (((Method)m.get(i)).getParameterTypes()[0] == interfaces[i]) {
+                        ((Method)m.get(i)).setAccessible(true);
+                        ((Method)m.get(i)).invoke(o, new Object[] {var});
+                        if (!callAll) return;
+                    }
+                }
+            }
+            
+            // Check to find the closest extending class
             Class c = var.getClass();
             do {
                 for (int i = 0; i < m.size(); i++) {

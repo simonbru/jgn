@@ -321,6 +321,24 @@ public class NetworkingClient implements Runnable {
         	sendToServerUDP(message);
         }
 	}
+	
+	/**
+	 * Convenience method to allow <code>type</code> to be either
+	 * MessageServer.UDP or MessageServer.TCP.
+	 * 
+	 * @param message
+	 * @param type
+	 * @throws IOException
+	 */
+	public void sendToServer(Message message, int type) throws IOException {
+		if (type == MessageServer.UDP) {
+			sendToServerUDP(message);
+		} else if (type == MessageServer.TCP) {
+			sendToServerTCP(message);
+		} else {
+			throw new RuntimeException("Expected either MessageServer.UDP or MessageServer.TCP as type.");
+		}
+	}
     
     /**
      * Sends a Message explicitly to the TCPMessageServer associated with
@@ -406,6 +424,25 @@ public class NetworkingClient implements Runnable {
      */
     public TCPMessageServer getTCPMessageServer() {
         return messageServerTCP;
+    }
+    
+    /**
+     * This convenience method allows a type to be passed
+     * defined by MessageServer.UDP or MessageServer.TCP
+     * and it will return that message server associated
+     * with the networking client.
+     * 
+     * @param type
+     * @return
+     * 		MessageServer defined by <code>type</code>
+     */
+    public MessageServer getMessageServer(int type) {
+    	if (type == MessageServer.UDP) {
+    		return getUDPMessageServer();
+    	} else if (type == MessageServer.TCP) {
+    		return getTCPMessageServer();
+    	}
+    	return null;
     }
     
     /**

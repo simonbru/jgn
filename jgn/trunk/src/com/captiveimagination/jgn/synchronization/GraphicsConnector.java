@@ -8,7 +8,7 @@ package com.captiveimagination.jgn.synchronization;
 /**
  * @author Matthew D. Hicks
  */
-public interface NetworkedGraphics {
+public interface GraphicsConnector {
 	public boolean validateSynchronizationMessage(PositionSynchronizationMessage message);
 	
 	public void applySynchronizationMessage(PositionSynchronizationMessage message);

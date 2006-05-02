@@ -294,6 +294,43 @@ public class NetworkingServer implements Runnable {
     }
     
     /**
+     * This convenience method allows a type to be passed
+     * defined by MessageServer.UDP or MessageServer.TCP
+     * and it will return that message server associated
+     * with the networking server.
+     * 
+     * @param type
+     * @return
+     * 		MessageServer defined by <code>type</code>
+     */
+    public MessageServer getMessageServer(int type) {
+    	if (type == MessageServer.UDP) {
+    		return getUDPMessageServer();
+    	} else if (type == MessageServer.TCP) {
+    		return getTCPMessageServer();
+    	}
+    	return null;
+    }
+    
+    /**
+	 * Convenience method to allow <code>type</code> to be either
+	 * MessageServer.UDP or MessageServer.TCP.
+	 * 
+	 * @param message
+	 * @param type
+	 * @throws IOException
+	 */
+	public void sendToAllClients(Message message, int type) throws IOException {
+		if (type == MessageServer.UDP) {
+			sendToAllClientsUDP(message);
+		} else if (type == MessageServer.TCP) {
+			sendToAllClientsTCP(message);
+		} else {
+			throw new RuntimeException("Expected either MessageServer.UDP or MessageServer.TCP as type.");
+		}
+	}
+    
+    /**
      * @return
      *      The local MessageServer being used to send
      *      and receive player messages. This favors

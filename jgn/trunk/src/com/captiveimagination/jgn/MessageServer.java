@@ -38,6 +38,9 @@ import com.captiveimagination.jgn.event.*;
 import com.captiveimagination.jgn.message.*;
 
 public abstract class MessageServer {
+	public static final int UDP = 1;
+	public static final int TCP = 2;
+	
 	protected IP address;
 	protected int port;
 	private MessageQueue queue;

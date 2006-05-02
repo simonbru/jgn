@@ -6,9 +6,9 @@ import com.captiveimagination.jgn.event.*;
 import com.captiveimagination.jgn.message.*;
 
 public class PositionSynchronizationListener implements MessageListener {
-	private NetworkedGraphics ng;
+	private GraphicsConnector ng;
 	
-	public PositionSynchronizationListener(NetworkedGraphics ng) {
+	public PositionSynchronizationListener(GraphicsConnector ng) {
 		this.ng = ng;
 	}
 	

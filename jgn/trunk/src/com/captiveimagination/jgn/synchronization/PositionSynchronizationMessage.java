@@ -24,6 +24,7 @@ public class PositionSynchronizationMessage extends Message implements PlayerMes
 	private float rotationX;
 	private float rotationY;
 	private float rotationZ;
+	private float rotationW;
 	
 	public long getObjectId() {
 		return objectId;
@@ -66,6 +67,12 @@ public class PositionSynchronizationMessage extends Message implements PlayerMes
 	}
 	public void setRotationZ(float rotationZ) {
 		this.rotationZ = rotationZ;
+	}
+	public float getRotationW() {
+		return rotationW;
+	}
+	public void setRotationW(float rotationW) {
+		this.rotationW = rotationW;
 	}
 	public void setPlayerId(short playerId) {
 		this.playerId = playerId;

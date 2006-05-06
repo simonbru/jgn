@@ -178,7 +178,7 @@ public class JGN {
             if ((ALWAYS_REBUILD) || (!build.exists())) {
 	            // Build MessageHandler implementation
 	            File src = new File(dynamicDirectory, name + "_MessageHandler.java");
-	            System.out.println("Generating: " + src.getName() + ", " + ALWAYS_REBUILD);
+	            //System.out.println("Generating: " + src.getName() + ", " + ALWAYS_REBUILD);
 	            BufferedWriter writer = new BufferedWriter(new FileWriter(src));
 	            if (c.getName().indexOf('.') > -1) {
 	            	writer.write("import " + c.getName() + ";");

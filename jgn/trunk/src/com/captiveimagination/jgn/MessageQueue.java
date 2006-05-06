@@ -48,6 +48,8 @@ import com.captiveimagination.jgn.message.*;
  * @author Matthew D. Hicks
  */
 public class MessageQueue {
+	private static HashMap classHierarchyCache = new HashMap();
+	
     private MessageServer server;
     private ArrayList queue;
     private ArrayList listeners;
@@ -203,32 +205,41 @@ public class MessageQueue {
             }
             
             // Check to see if an interface is found first
-            Class[] interfaces = var.getClass().getInterfaces();
-            for (int j = 0; j < interfaces.length; j++) {
+            ArrayList classes = getClassList(var.getClass());
+            for (int j = 0; j < classes.size(); j++) {
             	for (int i = 0; i < m.size(); i++) {
-                    if (((Method)m.get(i)).getParameterTypes()[0] == interfaces[j]) {
+                    if (((Method)m.get(i)).getParameterTypes()[0] == classes.get(j)) {
                         ((Method)m.get(i)).setAccessible(true);
                         ((Method)m.get(i)).invoke(o, new Object[] {var});
                         if (!callAll) return;
                     }
                 }
             }
-            
-            // Check to find the closest extending class
-            Class c = var.getClass();
-            do {
-                for (int i = 0; i < m.size(); i++) {
-                    if (((Method)m.get(i)).getParameterTypes()[0] == c) {
-                        ((Method)m.get(i)).setAccessible(true);
-                        ((Method)m.get(i)).invoke(o, new Object[] {var});
-                        if (!callAll) return;
-                    }
-                }
-            } while ((c = c.getSuperclass()) != null);
         } catch(Throwable t) {
             System.err.println("Object: " + o + ", MethodName: " + methodName + ", Var: " + var + ", callAll: " + callAll);
             t.printStackTrace();
         }
+    }
+    
+    // TODO implement caching
+    private static ArrayList getClassList(Class c) {
+    	if (classHierarchyCache.containsKey(c)) {
+    		return (ArrayList)classHierarchyCache.get(c);
+    	}
+    	
+    	ArrayList list = new ArrayList();
+    	Class[] interfaces;
+    	do {
+    		list.add(c);
+    		interfaces = c.getInterfaces();
+    		for (int i = 0; i < interfaces.length; i++) {
+    			list.add(interfaces[i]);
+    		}
+    	} while ((c = c.getSuperclass()) != null);
+    	
+    	classHierarchyCache.put(c, list);
+    	
+    	return list;
     }
     
     private void sendCertification(Message message) {

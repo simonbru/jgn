@@ -96,15 +96,6 @@ public class TestClientServer {
             
             public void messageReceived(BasicMessage message) {
                 System.out.println("C> Message received TCP: " + message.getText());
-                if (message.getText().equals("PlayerMessageTestServer")) {
-                    try {
-                        client.disconnect();
-                        client.shutdown();
-                    } catch(IOException exc) {
-                        exc.printStackTrace();
-                    }
-                	server.shutdown();
-                }
             }
 
             public int getListenerMode() {
@@ -147,7 +138,7 @@ public class TestClientServer {
 			}
         });
         
-        System.out.println("Connected: " + client.connectAndWait(IP.fromName("captiveimagination.com"), 9901, 9902, 10 * 1000));
+        System.out.println("Connected: " + client.connectAndWait(IP.getLocalHost(), 9901, 9902, 10 * 1000));
         
         BasicMessage message = new BasicMessage();
         message.setText("TCPMessageTestClient");
@@ -159,13 +150,13 @@ public class TestClientServer {
         message.setText("PlayerMessageTestClient");
         client.sendToServer(message);
         
-        /*message.setText("TCPMessageTestServer");
+        message.setText("TCPMessageTestServer");
         server.sendToAllClientsTCP(message);
         
         message.setText("UDPMessageTestServer");
         server.sendToAllClientsUDP(message);
         
         message.setText("PlayerMessageTestServer");
-        server.sendToAllClients(message);*/
+        server.sendToAllClients(message);
     }
 }

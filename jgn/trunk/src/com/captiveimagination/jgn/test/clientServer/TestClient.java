@@ -22,7 +22,8 @@ public class TestClient {
         new Thread(client).start();
         
         System.out.println("Connected: " + client.connectAndWait(null, 1000, 1001, 10000));
-        client.disconnect();
-        System.exit(0);
+        
+//        client.disconnect();
+//        System.exit(0);
     }
 }

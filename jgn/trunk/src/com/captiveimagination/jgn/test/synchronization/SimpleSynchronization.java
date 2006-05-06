@@ -15,6 +15,7 @@ import com.captiveimagination.jgn.synchronization.*;
  *
  */
 public class SimpleSynchronization extends JFrame implements GraphicsConnector, KeyListener {
+	private static final long serialVersionUID = 1L;
 	private static final long SERVER_OBJECT = 1;
 	private static final long CLIENT_OBJECT = 2;
 	

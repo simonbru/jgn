@@ -31,35 +31,76 @@
  */
 package com.captiveimagination.jgn;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 
 /**
+ * This class is a direct extension to {@link ByteArrayInputStream} and provides
+ * additional functionality.<br>
+ * <br>
+ * Features:<br>
+ * <ol>
+ * <li>The current position of the stream in wrapped <code>byte[]</code> ({@link #getPosition()})</li>
+ * <li>Get the remaining bytes from current position ({@link #getRemaining()})</li>
+ * </ol>
+ * <br>
+ * 
  * @author Matthew D. Hicks
  */
 public class CustomByteArrayInputStream extends ByteArrayInputStream {
-    private int position;
-    
-    public CustomByteArrayInputStream(byte[] buf, int offset, int length) {
-        super(buf, offset, length);
-        position = offset;
-    }
-    
-    public int read() {
-        position++;
-        return super.read();
-    }
-    
-    public int read(byte[] b) throws IOException {
-        position += b.length;
-        return super.read(b);
-    }
-    
-    public int read(byte[] b, int off, int len) {
-        position += len - off;
-        return super.read(b, off, len);
-    }
-    
-    public int getPosition() {
-        return position;
-    }
+
+	/**
+	 * Creates a <code>ByteArrayInputStream</code> so that it uses
+	 * <code>buf</code> as its buffer array. The buffer array is not copied.
+	 * The initial value of <code>pos</code> is <code>0</code> and the
+	 * initial value of <code>count</code> is the length of <code>buf</code>.
+	 * 
+	 * @param buffer
+	 *            the input buffer.
+	 */
+	public CustomByteArrayInputStream(byte[] buffer) {
+		super(buffer);
+	}
+
+	/**
+	 * Creates <code>ByteArrayInputStream</code> that uses <code>buf</code>
+	 * as its buffer array. The initial value of <code>pos</code> is
+	 * <code>offset</code> and the initial value of <code>count</code> is
+	 * the minimum of <code>offset+length</code> and <code>buf.length</code>.
+	 * The buffer array is not copied. The buffer's mark is set to the specified
+	 * offset.
+	 * 
+	 * @param buffer
+	 *            the input buffer.
+	 * @param offset
+	 *            the offset in the buffer of the first byte to read.
+	 * @param length
+	 *            the maximum number of bytes to read from the buffer.
+	 */
+	public CustomByteArrayInputStream(byte[] buffer, int offset, int length) {
+		super(buffer, offset, length);
+	}
+
+	/**
+	 * Returns the current readindex in internal wrapped byte[].<br>
+	 * 
+	 * @return position of next byte to read in wrapped buffer
+	 */
+	public int getPosition() {
+		return pos;
+	}
+
+	/**
+	 * This method returns the remaining byte from current read position (to the
+	 * end of buffer).<br>
+	 * 
+	 * @return remaining bytes.
+	 * @exception IOException
+	 *                if an I/O error occurs.
+	 */
+	public byte[] getRemaining() throws IOException {
+		byte[] remaining = new byte[available()];
+		read(remaining);
+		return remaining;
+	}
 }

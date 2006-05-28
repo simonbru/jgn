@@ -31,96 +31,51 @@
  */
 package com.captiveimagination.jgn;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.Arrays;
-
 /**
- * @author Matthew D. Hicks
+ * @author Christian Laireiter
  * 
  */
-public class IP {
-	public static final IP fromInetAddress(InetAddress address) {
-		return new IP(address.getAddress());
-	}
+public class SocketDescriptor {
 
-	public static final IP fromName(String name) throws UnknownHostException {
-		return fromInetAddress(InetAddress.getByName(name));
-	}
+	private IP ip;
 
-	public static final IP fromString(String address) {
-		String[] split = address.split("\\.");
-		byte[] bytes = new byte[split.length];
-		for (int i = 0; i < split.length; i++) {
-			int t = Integer.parseInt(split[i]);
-			if (t >= 128) {
-				bytes[i] = (byte) (t - 256);
-			} else {
-				bytes[i] = (byte) t;
-			}
-		}
-		return new IP(bytes);
-	}
+	private int port;
 
-	public static final IP getLocalHost() throws UnknownHostException {
-		return fromInetAddress(InetAddress.getLocalHost());
-	}
-
-	private byte[] ip;
-
-	private int hashCode;
-	
-	public IP(byte[] ip) {
+	public SocketDescriptor(IP ip, int port) {
 		this.ip = ip;
-		this.hashCode = Arrays.hashCode(ip);
+		this.port = port;
 	}
 
-	public byte[] getBytes() {
-		return ip;
-	}
-	
 	/**
 	 * (overridden)
+	 * 
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
 	public boolean equals(Object obj) {
-		if (obj != null && obj instanceof IP) {
-			IP other = (IP)obj;
-			return Arrays.equals(ip, other.ip);
+		if (obj != null && obj instanceof SocketDescriptor) {
+			SocketDescriptor other = (SocketDescriptor) obj;
+			return this.ip.equals(other.ip) && this.port == other.port;
 		}
 		return false;
 	}
-	
+
 	/**
 	 * (overridden)
+	 * 
 	 * @see java.lang.Object#hashCode()
 	 */
 	public int hashCode() {
-		// See constructor for generation.
-		return this.hashCode;
+		return ip.hashCode() * 31 + port;
 	}
 
-	public int[] getInts() {
-		int[] ints = new int[ip.length];
-		for (int i = 0; i < ip.length; i++) {
-			if (ip[i] < 0) {
-				ints[i] = ip[i] + 256;
-			} else {
-				ints[i] = ip[i];
-			}
-		}
-		return ints;
+	/**
+	 * @return
+	 */
+	public IP getIp() {
+		return ip;
 	}
-
-	public String toString() {
-		int[] ints = getInts();
-		StringBuffer buffer = new StringBuffer();
-		for (int i = 0; i < ints.length; i++) {
-			if (i > 0) {
-				buffer.append(".");
-			}
-			buffer.append(ints[i]);
-		}
-		return buffer.toString();
+	
+	public int getPort() {
+		return this.port;
 	}
 }

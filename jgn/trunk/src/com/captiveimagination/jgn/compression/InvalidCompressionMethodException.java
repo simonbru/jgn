@@ -39,6 +39,7 @@ package com.captiveimagination.jgn.compression;
  * @author Christian Laireiter
  */
 public class InvalidCompressionMethodException extends Exception {
+	private static final long serialVersionUID = 1L;
 
 	/**
 	 * Creates an instance.<br>

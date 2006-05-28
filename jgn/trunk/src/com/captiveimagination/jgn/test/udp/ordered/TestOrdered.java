@@ -1,7 +1,5 @@
 package com.captiveimagination.jgn.test.udp.ordered;
 
-import java.net.*;
-
 import com.captiveimagination.jgn.*;
 import com.captiveimagination.jgn.client.*;
 import com.captiveimagination.jgn.event.*;

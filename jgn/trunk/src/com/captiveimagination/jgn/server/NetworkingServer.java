@@ -421,7 +421,6 @@ public class NetworkingServer implements Runnable {
 	 */
 	public void sendToAllClients(Message message, MessageServer messageServer) {
 		JGNPlayer[] players = getPlayers();
-        int port;
 		for (int i = 0; i < players.length; i++) {
             try {
                 sendToClient(message, players[i].getPlayerId(), messageServer);
@@ -454,7 +453,6 @@ public class NetworkingServer implements Runnable {
      */
     public void sendToAllClientsExcept(Message message, short playerId, MessageServer messageServer) {
         JGNPlayer[] players = getPlayers();
-        int port;
         for (int i = 0; i < players.length; i++) {
             if (players[i].getPlayerId() != playerId) {
                 /*if (messageServer instanceof TCPMessageServer) {

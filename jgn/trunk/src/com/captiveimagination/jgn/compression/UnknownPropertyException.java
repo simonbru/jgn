@@ -39,6 +39,7 @@ package com.captiveimagination.jgn.compression;
  * @author Christian Laireiter
  */
 public class UnknownPropertyException extends Exception {
+	private static final long serialVersionUID = 1L;
 
 	/**
 	 * The compressio method which caused the exception.

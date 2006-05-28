@@ -1,7 +1,6 @@
 package com.captiveimagination.jgn.test.tcp.fileTransfer;
 
 import java.io.*;
-import java.net.*;
 
 import javax.swing.*;
 

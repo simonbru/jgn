@@ -1,7 +1,5 @@
 package com.captiveimagination.jgn.test.udp.certify;
 
-import java.net.*;
-
 import com.captiveimagination.jgn.*;
 
 /**

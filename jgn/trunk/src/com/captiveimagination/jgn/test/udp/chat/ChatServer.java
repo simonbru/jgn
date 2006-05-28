@@ -4,7 +4,6 @@
 package com.captiveimagination.jgn.test.udp.chat;
 
 import java.io.*;
-import java.net.*;
 
 import com.captiveimagination.jgn.*;
 

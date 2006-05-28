@@ -1,7 +1,5 @@
 package com.captiveimagination.jgn.test.udp.ping;
 
-import java.net.*;
-
 import com.captiveimagination.jgn.*;
 
 /**

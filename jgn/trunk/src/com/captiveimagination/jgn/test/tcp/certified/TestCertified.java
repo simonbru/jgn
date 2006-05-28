@@ -3,8 +3,6 @@
  */
 package com.captiveimagination.jgn.test.tcp.certified;
 
-import java.net.*;
-
 import com.captiveimagination.jgn.*;
 import com.captiveimagination.jgn.event.*;
 import com.captiveimagination.jgn.message.*;

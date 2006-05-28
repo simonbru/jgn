@@ -113,8 +113,6 @@ public class MessageExtractor {
 								socketDescriptor.getPort());
 						message.setMessageServer(messageServer);
 						result.add(message);
-						System.out.println("Message with "
-								+ messageBytes.length + " extracted");
 						bytesLeft = 0;
 					} else {
 						break;

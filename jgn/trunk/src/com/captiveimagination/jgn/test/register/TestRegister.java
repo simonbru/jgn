@@ -1,14 +1,11 @@
 package com.captiveimagination.jgn.test.register;
 
-import java.net.*;
-
 import com.captiveimagination.jgn.*;
 import com.captiveimagination.jgn.client.*;
 import com.captiveimagination.jgn.event.*;
 import com.captiveimagination.jgn.message.*;
 import com.captiveimagination.jgn.register.*;
 import com.captiveimagination.jgn.register.message.*;
-import com.captiveimagination.jgn.server.*;
 
 /**
  * @author Matthew D. Hicks

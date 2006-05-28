@@ -31,7 +31,6 @@
  */
 package com.captiveimagination.jgn.server;
 
-import com.captiveimagination.jgn.*;
 import com.captiveimagination.jgn.message.player.*;
 
 public interface ServerSession {

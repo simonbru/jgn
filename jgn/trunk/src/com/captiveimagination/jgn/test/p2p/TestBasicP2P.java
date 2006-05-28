@@ -1,7 +1,5 @@
 package com.captiveimagination.jgn.test.p2p;
 
-import java.net.*;
-
 import com.captiveimagination.jgn.*;
 import com.captiveimagination.jgn.p2p.*;
 import com.captiveimagination.jgn.test.*;

@@ -3,8 +3,6 @@
  */
 package com.captiveimagination.jgn.test.udp.chat;
 
-import java.net.*;
-
 import com.captiveimagination.jgn.*;
 
 /**

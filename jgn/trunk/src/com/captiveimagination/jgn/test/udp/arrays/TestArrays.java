@@ -1,7 +1,6 @@
 package com.captiveimagination.jgn.test.udp.arrays;
 
 import java.io.*;
-import java.net.*;
 
 import com.captiveimagination.jgn.*;
 import com.captiveimagination.jgn.client.*;

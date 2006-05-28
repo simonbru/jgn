@@ -38,7 +38,6 @@ import java.nio.*;
 import java.nio.channels.*;
 import java.util.*;
 
-import com.captiveimagination.jgn.compression.InvalidCompressionMethodException;
 import com.captiveimagination.jgn.message.*;
 
 /**

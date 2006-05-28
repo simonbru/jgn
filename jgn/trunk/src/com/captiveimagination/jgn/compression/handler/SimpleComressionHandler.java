@@ -29,14 +29,14 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.captiveimagination.jgn.core.compression.handler;
+package com.captiveimagination.jgn.compression.handler;
 
 import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 
-import com.captiveimagination.jgn.core.compression.CompressionHandler;
-import com.captiveimagination.jgn.core.compression.CompressionMethod;
-import com.captiveimagination.jgn.core.compression.InvalidCompressionMethodException;
+import com.captiveimagination.jgn.compression.CompressionHandler;
+import com.captiveimagination.jgn.compression.CompressionMethod;
+import com.captiveimagination.jgn.compression.InvalidCompressionMethodException;
 
 /**
  * This simple class is used for creating a {@link CompressionHandler} which is
@@ -80,7 +80,7 @@ public class SimpleComressionHandler implements CompressionHandler {
 	/**
 	 * (overridden)
 	 * 
-	 * @see com.captiveimagination.jgn.core.compression.CompressionHandler#canHandle(byte[])
+	 * @see com.captiveimagination.jgn.compression.CompressionHandler#canHandle(byte[])
 	 */
 	public boolean canHandle(byte[] compressedData) {
 		boolean result = methodId.length < compressedData.length;
@@ -93,7 +93,7 @@ public class SimpleComressionHandler implements CompressionHandler {
 	/**
 	 * (overridden)
 	 * 
-	 * @see com.captiveimagination.jgn.core.compression.Compressor#compress(byte[])
+	 * @see com.captiveimagination.jgn.compression.Compressor#compress(byte[])
 	 */
 	public byte[] compress(byte[] data) {
 		byte[] compressed = this.method.compress(data);
@@ -107,7 +107,7 @@ public class SimpleComressionHandler implements CompressionHandler {
 	/**
 	 * (overridden)
 	 * 
-	 * @see com.captiveimagination.jgn.core.compression.Compressor#decompress(byte[])
+	 * @see com.captiveimagination.jgn.compression.Compressor#decompress(byte[])
 	 */
 	public byte[] decompress(byte[] compressedData)
 			throws InvalidCompressionMethodException {
@@ -132,7 +132,7 @@ public class SimpleComressionHandler implements CompressionHandler {
 	/**
 	 * (overridden)
 	 * 
-	 * @see com.captiveimagination.jgn.core.compression.CompressionHandler#getMethod()
+	 * @see com.captiveimagination.jgn.compression.CompressionHandler#getMethod()
 	 */
 	public CompressionMethod getMethod() {
 		return this.method;

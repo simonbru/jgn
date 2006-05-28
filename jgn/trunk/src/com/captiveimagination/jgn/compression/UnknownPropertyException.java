@@ -29,23 +29,67 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.captiveimagination.jgn.core.compression.handler;
-
-import com.captiveimagination.jgn.core.compression.methods.NoneMethod;
+package com.captiveimagination.jgn.compression;
 
 /**
- * This extension to {@link SimpleComressionHandler} is solely using
- * {@link NoneMethod} for compression.<br>
+ * A named property is not available for the implementation of a
+ * {@link CompressionMethod}.<br>
+ * s
  * 
  * @author Christian Laireiter
  */
-public class NoneCompressionHandler extends SimpleComressionHandler {
+public class UnknownPropertyException extends Exception {
+
+	/**
+	 * The compressio method which caused the exception.
+	 */
+	/**
+	 * 
+	 */
+	private CompressionMethod compressionMethod;
+
+	/**
+	 * The name of the invalid property which caused this exception.
+	 */
+	private String propertyName;
 
 	/**
 	 * Creates an instance.<br>
+	 * This constructor is not to be used.
 	 */
-	public NoneCompressionHandler() {
-		super(new NoneMethod());
+	private UnknownPropertyException() {
+		// Nothing to do
+	}
+
+	/**
+	 * Creates an instance.<br>
+	 * 
+	 * @param property
+	 *            The invalid property.
+	 * @param method
+	 *            The method which caused the error.
+	 */
+	public UnknownPropertyException(String property, CompressionMethod method) {
+		this.propertyName = property;
+		this.compressionMethod = method;
+	}
+
+	/**
+	 * Returns the compression method which caused the exception.
+	 * 
+	 * @return the compression method which caused the exception.
+	 */
+	public CompressionMethod getCompressionMethod() {
+		return this.compressionMethod;
+	}
+
+	/**
+	 * Returns the name of the invalid property.
+	 * 
+	 * @return the name of the invalid property.
+	 */
+	public String getPropertyName() {
+		return this.propertyName;
 	}
 
 }

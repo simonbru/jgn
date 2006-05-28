@@ -29,14 +29,14 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.captiveimagination.jgn.core.compression.handler;
+package com.captiveimagination.jgn.compression.handler;
 
 import java.util.Vector;
 
-import com.captiveimagination.jgn.core.compression.CompressionHandler;
-import com.captiveimagination.jgn.core.compression.CompressionMethod;
-import com.captiveimagination.jgn.core.compression.InvalidCompressionMethodException;
-import com.captiveimagination.jgn.core.compression.LevelUnsupportedException;
+import com.captiveimagination.jgn.compression.CompressionHandler;
+import com.captiveimagination.jgn.compression.CompressionMethod;
+import com.captiveimagination.jgn.compression.InvalidCompressionMethodException;
+import com.captiveimagination.jgn.compression.LevelUnsupportedException;
 
 /**
  * This implementation is used to select between multiple
@@ -125,7 +125,7 @@ public class SelectiveCompressionHandler implements CompressionHandler {
 	/**
 	 * (overridden)
 	 * 
-	 * @see com.captiveimagination.jgn.core.compression.CompressionHandler#canHandle(byte[])
+	 * @see com.captiveimagination.jgn.compression.CompressionHandler#canHandle(byte[])
 	 */
 	public boolean canHandle(byte[] compressedData) {
 		// Test fallback first
@@ -141,7 +141,7 @@ public class SelectiveCompressionHandler implements CompressionHandler {
 	/**
 	 * (overridden)
 	 * 
-	 * @see com.captiveimagination.jgn.core.compression.Compressor#compress(byte[])
+	 * @see com.captiveimagination.jgn.compression.Compressor#compress(byte[])
 	 */
 	public byte[] compress(byte[] data) {
 		for (int i = 0; i < alternatives.size(); i++) {
@@ -158,7 +158,7 @@ public class SelectiveCompressionHandler implements CompressionHandler {
 	/**
 	 * (overridden)
 	 * 
-	 * @see com.captiveimagination.jgn.core.compression.Compressor#decompress(byte[])
+	 * @see com.captiveimagination.jgn.compression.Compressor#decompress(byte[])
 	 */
 	public byte[] decompress(byte[] compressedData)
 			throws InvalidCompressionMethodException {
@@ -218,7 +218,7 @@ public class SelectiveCompressionHandler implements CompressionHandler {
 	 * (overridden) Returns the {@linkplain #fallback fallback} compression
 	 * handler.<br>
 	 * 
-	 * @see com.captiveimagination.jgn.core.compression.CompressionHandler#getMethod()
+	 * @see com.captiveimagination.jgn.compression.CompressionHandler#getMethod()
 	 */
 	public CompressionMethod getMethod() {
 		return fallback.getMethod();

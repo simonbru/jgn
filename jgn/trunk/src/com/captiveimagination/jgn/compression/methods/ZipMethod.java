@@ -29,7 +29,7 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.captiveimagination.jgn.core.compression.methods;
+package com.captiveimagination.jgn.compression.methods;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -40,11 +40,11 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
-import com.captiveimagination.jgn.core.compression.CompressionMethod;
-import com.captiveimagination.jgn.core.compression.InvalidCompressionMethodException;
-import com.captiveimagination.jgn.core.compression.InvalidPropertyValueException;
-import com.captiveimagination.jgn.core.compression.LevelUnsupportedException;
-import com.captiveimagination.jgn.core.compression.UnknownPropertyException;
+import com.captiveimagination.jgn.compression.CompressionMethod;
+import com.captiveimagination.jgn.compression.InvalidCompressionMethodException;
+import com.captiveimagination.jgn.compression.InvalidPropertyValueException;
+import com.captiveimagination.jgn.compression.LevelUnsupportedException;
+import com.captiveimagination.jgn.compression.UnknownPropertyException;
 
 /**
  * This implementation uses the &quot;Huffman&quot; algorithm for compressing
@@ -92,7 +92,7 @@ public class ZipMethod implements CompressionMethod {
 	/**
 	 * (overridden)
 	 * 
-	 * @see com.captiveimagination.jgn.core.compression.Compressor#compress(byte[])
+	 * @see com.captiveimagination.jgn.compression.Compressor#compress(byte[])
 	 */
 	public byte[] compress(byte[] data) {
 		byte[] result = null;
@@ -116,7 +116,7 @@ public class ZipMethod implements CompressionMethod {
 	/**
 	 * (overridden)
 	 * 
-	 * @see com.captiveimagination.jgn.core.compression.Compressor#decompress(byte[])
+	 * @see com.captiveimagination.jgn.compression.Compressor#decompress(byte[])
 	 */
 	public byte[] decompress(byte[] compressedData)
 			throws InvalidCompressionMethodException {
@@ -149,7 +149,7 @@ public class ZipMethod implements CompressionMethod {
 	/**
 	 * (overridden)
 	 * 
-	 * @see com.captiveimagination.jgn.core.compression.CompressionMethod#getCompressionLevel()
+	 * @see com.captiveimagination.jgn.compression.CompressionMethod#getCompressionLevel()
 	 */
 	public int getCompressionLevel() {
 		return level;
@@ -158,7 +158,7 @@ public class ZipMethod implements CompressionMethod {
 	/**
 	 * (overridden)
 	 * 
-	 * @see com.captiveimagination.jgn.core.compression.CompressionMethod#getMaximumCompressionLevel()
+	 * @see com.captiveimagination.jgn.compression.CompressionMethod#getMaximumCompressionLevel()
 	 */
 	public int getMaximumCompressionLevel() {
 		return Deflater.BEST_COMPRESSION;
@@ -167,7 +167,7 @@ public class ZipMethod implements CompressionMethod {
 	/**
 	 * ENTRY_NAME (overridden)
 	 * 
-	 * @see com.captiveimagination.jgn.core.compression.CompressionMethod#getMethod()
+	 * @see com.captiveimagination.jgn.compression.CompressionMethod#getMethod()
 	 */
 	public String getMethod() {
 		return "zip";
@@ -176,7 +176,7 @@ public class ZipMethod implements CompressionMethod {
 	/**
 	 * (overridden)
 	 * 
-	 * @see com.captiveimagination.jgn.core.compression.CompressionMethod#getMethodId()
+	 * @see com.captiveimagination.jgn.compression.CompressionMethod#getMethodId()
 	 */
 	public byte[] getMethodId() {
 		try {
@@ -190,7 +190,7 @@ public class ZipMethod implements CompressionMethod {
 	/**
 	 * (overridden)
 	 * 
-	 * @see com.captiveimagination.jgn.core.compression.CompressionMethod#getProperty(java.lang.String)
+	 * @see com.captiveimagination.jgn.compression.CompressionMethod#getProperty(java.lang.String)
 	 */
 	public Object getProperty(String property) throws UnknownPropertyException {
 		throw new UnknownPropertyException(property, this);
@@ -199,7 +199,7 @@ public class ZipMethod implements CompressionMethod {
 	/**
 	 * (overridden)
 	 * 
-	 * @see com.captiveimagination.jgn.core.compression.CompressionMethod#setCompressionLevel(int)
+	 * @see com.captiveimagination.jgn.compression.CompressionMethod#setCompressionLevel(int)
 	 */
 	public void setCompressionLevel(int compressionLevel)
 			throws LevelUnsupportedException {
@@ -213,7 +213,7 @@ public class ZipMethod implements CompressionMethod {
 	/**
 	 * (overridden)
 	 * 
-	 * @see com.captiveimagination.jgn.core.compression.CompressionMethod#setProperty(java.lang.String,
+	 * @see com.captiveimagination.jgn.compression.CompressionMethod#setProperty(java.lang.String,
 	 *      java.lang.Object)
 	 */
 	public void setProperty(String property, Object value)

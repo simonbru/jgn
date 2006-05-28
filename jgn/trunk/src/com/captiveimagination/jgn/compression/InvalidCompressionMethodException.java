@@ -29,32 +29,33 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.captiveimagination.jgn.core.compression;
+package com.captiveimagination.jgn.compression;
 
 /**
- * This exception is used when a
- * {@linkplain CompressionMethod#setCompressionLevel(int) specified} level of
- * compression is not supported.<br>
+ * Exception for invalid interpreted data.<br>
+ * If a {@link CompressionMethod} should decompress a byte stream, which is not
+ * created by its implemneted algorithm, this exception is thrown.
  * 
  * @author Christian Laireiter
  */
-public class LevelUnsupportedException extends Exception {
+public class InvalidCompressionMethodException extends Exception {
 
 	/**
 	 * Creates an instance.<br>
 	 * 
-	 * @param specified
-	 *            the specified level of compression that caused the exception.
-	 * @param methodDescriptor
-	 *            MethodDescriptor descriptor which was affected.
-	 * @param cause
-	 *            If exception resulted from underlying implementation, a cause
-	 *            can be given.
 	 */
-	public LevelUnsupportedException(int specified,
-			CompressionMethod methodDescriptor, Exception cause) {
-		super("MethodDescriptor level \"" + specified
-				+ "\" is not supported by "
-				+ methodDescriptor.getMethod(), cause);
+	public InvalidCompressionMethodException() {
+		// Nothing to do
 	}
+
+	/**
+	 * Creates an instance.
+	 * 
+	 * @param description
+	 *            Description of the invalid condition.
+	 */
+	public InvalidCompressionMethodException(String description) {
+		super(description);
+	}
+
 }

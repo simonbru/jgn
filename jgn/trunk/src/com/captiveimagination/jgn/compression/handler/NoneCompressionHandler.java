@@ -29,24 +29,23 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.captiveimagination.jgn.core.compression.handler;
+package com.captiveimagination.jgn.compression.handler;
 
-import com.captiveimagination.jgn.core.compression.methods.ZMethod;
+import com.captiveimagination.jgn.compression.methods.NoneMethod;
 
 /**
  * This extension to {@link SimpleComressionHandler} is solely using
- * {@link ZMethod} for compression.<br>
+ * {@link NoneMethod} for compression.<br>
  * 
  * @author Christian Laireiter
  */
-public class ZCompressionHandler extends SimpleComressionHandler {
+public class NoneCompressionHandler extends SimpleComressionHandler {
 
 	/**
 	 * Creates an instance.<br>
-	 * 
 	 */
-	public ZCompressionHandler() {
-		super(new ZMethod());
+	public NoneCompressionHandler() {
+		super(new NoneMethod());
 	}
 
 }

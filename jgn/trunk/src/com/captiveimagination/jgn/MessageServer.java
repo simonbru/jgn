@@ -34,8 +34,8 @@ package com.captiveimagination.jgn;
 import java.io.IOException;
 import java.util.HashMap;
 
-import com.captiveimagination.jgn.core.compression.CompressionHandler;
-import com.captiveimagination.jgn.core.compression.handler.NoneCompressionHandler;
+import com.captiveimagination.jgn.compression.CompressionHandler;
+import com.captiveimagination.jgn.compression.handler.NoneCompressionHandler;
 import com.captiveimagination.jgn.event.MessageListener;
 import com.captiveimagination.jgn.event.MessageSentListener;
 import com.captiveimagination.jgn.message.CertifiedMessage;

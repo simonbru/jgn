@@ -29,67 +29,32 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.captiveimagination.jgn.core.compression;
+package com.captiveimagination.jgn.compression;
 
 /**
- * A named property is not available for the implementation of a
- * {@link CompressionMethod}.<br>
- * s
+ * This exception is used when a
+ * {@linkplain CompressionMethod#setCompressionLevel(int) specified} level of
+ * compression is not supported.<br>
  * 
  * @author Christian Laireiter
  */
-public class UnknownPropertyException extends Exception {
-
-	/**
-	 * The compressio method which caused the exception.
-	 */
-	/**
-	 * 
-	 */
-	private CompressionMethod compressionMethod;
-
-	/**
-	 * The name of the invalid property which caused this exception.
-	 */
-	private String propertyName;
-
-	/**
-	 * Creates an instance.<br>
-	 * This constructor is not to be used.
-	 */
-	private UnknownPropertyException() {
-		// Nothing to do
-	}
+public class LevelUnsupportedException extends Exception {
 
 	/**
 	 * Creates an instance.<br>
 	 * 
-	 * @param property
-	 *            The invalid property.
-	 * @param method
-	 *            The method which caused the error.
+	 * @param specified
+	 *            the specified level of compression that caused the exception.
+	 * @param methodDescriptor
+	 *            MethodDescriptor descriptor which was affected.
+	 * @param cause
+	 *            If exception resulted from underlying implementation, a cause
+	 *            can be given.
 	 */
-	public UnknownPropertyException(String property, CompressionMethod method) {
-		this.propertyName = property;
-		this.compressionMethod = method;
+	public LevelUnsupportedException(int specified,
+			CompressionMethod methodDescriptor, Exception cause) {
+		super("MethodDescriptor level \"" + specified
+				+ "\" is not supported by "
+				+ methodDescriptor.getMethod(), cause);
 	}
-
-	/**
-	 * Returns the compression method which caused the exception.
-	 * 
-	 * @return the compression method which caused the exception.
-	 */
-	public CompressionMethod getCompressionMethod() {
-		return this.compressionMethod;
-	}
-
-	/**
-	 * Returns the name of the invalid property.
-	 * 
-	 * @return the name of the invalid property.
-	 */
-	public String getPropertyName() {
-		return this.propertyName;
-	}
-
 }

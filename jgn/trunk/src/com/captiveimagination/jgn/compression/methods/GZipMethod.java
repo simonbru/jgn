@@ -1,4 +1,5 @@
 /*
+ /*
  * Copyright (c) 2005-2006 JavaGameNetworking
  * All rights reserved.
  *
@@ -29,73 +30,77 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.captiveimagination.jgn.core.compression.methods;
+package com.captiveimagination.jgn.compression.methods;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.UnsupportedEncodingException;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
-import com.captiveimagination.jgn.core.compression.CompressionMethod;
-import com.captiveimagination.jgn.core.compression.InvalidCompressionMethodException;
-import com.captiveimagination.jgn.core.compression.InvalidPropertyValueException;
-import com.captiveimagination.jgn.core.compression.LevelUnsupportedException;
-import com.captiveimagination.jgn.core.compression.UnknownPropertyException;
+import com.captiveimagination.jgn.compression.CompressionMethod;
+import com.captiveimagination.jgn.compression.InvalidCompressionMethodException;
+import com.captiveimagination.jgn.compression.InvalidPropertyValueException;
+import com.captiveimagination.jgn.compression.LevelUnsupportedException;
+import com.captiveimagination.jgn.compression.UnknownPropertyException;
 
 /**
- * This implementation performs no compression at all.<br>
+ * This method uses {@link GZIPInputStream} and {@link GZIPOutputStream} for
+ * compressing data.<br>
  * 
  * @author Christian Laireiter
  */
-public class NoneMethod implements CompressionMethod {
-
-	/**
-	 * This property specifies whether the {@link #compress(byte[])} and
-	 * {@link #decompress(byte[])} methods should create no copy of the given
-	 * data.<br>
-	 * Value class for this property is {@link Boolean}.<br>
-	 * If value is set to {@link Boolean#TRUE}, the methods directly return the
-	 * input.<br>
-	 * If value is set to {@link Boolean#FALSE}, the methods return a copy of
-	 * the input. So the original data array can be manipulated safely.<br>
-	 */
-	public final static String PROPERTY_NOCOPY = "nocopy";
-
-	/**
-	 * Store the falue for {@link #PROPERTY_NOCOPY}.<br>
-	 */
-	private boolean flag_nocopy = false;
+public class GZipMethod implements CompressionMethod {
 
 	/**
 	 * (overridden)
 	 * 
-	 * @see com.captiveimagination.jgn.core.compression.Compressor#compress(byte[])
+	 * @see com.captiveimagination.jgn.compression.Compressor#compress(byte[])
 	 */
 	public byte[] compress(byte[] data) {
-		if (flag_nocopy) {
-			return data;
+		byte[] result = null;
+		try {
+			ByteArrayOutputStream bos = new ByteArrayOutputStream();
+			GZIPOutputStream gos = new GZIPOutputStream(bos);
+			gos.write(data);
+			gos.flush();
+			gos.finish();
+			gos.close();
+			result = bos.toByteArray();
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
-		byte[] copy = new byte[data.length];
-		System.arraycopy(data, 0, copy, 0, copy.length);
-		return copy;
+		return result;
 	}
 
 	/**
 	 * (overridden)
 	 * 
-	 * @see com.captiveimagination.jgn.core.compression.Compressor#decompress(byte[])
+	 * @see com.captiveimagination.jgn.compression.Compressor#decompress(byte[])
 	 */
 	public byte[] decompress(byte[] compressedData)
 			throws InvalidCompressionMethodException {
-		if (flag_nocopy) {
-			return compressedData;
+		byte[] result = null;
+		try {
+			GZIPInputStream gis = new GZIPInputStream(new ByteArrayInputStream(
+					compressedData));
+			ByteArrayOutputStream bos = new ByteArrayOutputStream();
+			byte[] tmp = new byte[8192];
+			int read;
+			while (gis.available() > 0 && ((read = gis.read(tmp)) > 0)) {
+				bos.write(tmp, 0, read);
+			}
+			result = bos.toByteArray();
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
-		byte[] copy = new byte[compressedData.length];
-		System.arraycopy(compressedData, 0, copy, 0, copy.length);
-		return copy;
+		return result;
 	}
 
 	/**
 	 * (overridden)
 	 * 
-	 * @see com.captiveimagination.jgn.core.compression.CompressionMethod#getCompressionLevel()
+	 * @see com.captiveimagination.jgn.compression.CompressionMethod#getCompressionLevel()
 	 */
 	public int getCompressionLevel() {
 		return 0;
@@ -104,7 +109,7 @@ public class NoneMethod implements CompressionMethod {
 	/**
 	 * (overridden)
 	 * 
-	 * @see com.captiveimagination.jgn.core.compression.CompressionMethod#getMaximumCompressionLevel()
+	 * @see com.captiveimagination.jgn.compression.CompressionMethod#getMaximumCompressionLevel()
 	 */
 	public int getMaximumCompressionLevel() {
 		return 0;
@@ -113,16 +118,16 @@ public class NoneMethod implements CompressionMethod {
 	/**
 	 * (overridden)
 	 * 
-	 * @see com.captiveimagination.jgn.core.compression.CompressionMethod#getMethod()
+	 * @see com.captiveimagination.jgn.compression.CompressionMethod#getMethod()
 	 */
 	public String getMethod() {
-		return "none";
+		return "gzip";
 	}
 
 	/**
 	 * (overridden)
 	 * 
-	 * @see com.captiveimagination.jgn.core.compression.CompressionMethod#getMethodId()
+	 * @see com.captiveimagination.jgn.compression.CompressionMethod#getMethodId()
 	 */
 	public byte[] getMethodId() {
 		try {
@@ -136,19 +141,16 @@ public class NoneMethod implements CompressionMethod {
 	/**
 	 * (overridden)
 	 * 
-	 * @see com.captiveimagination.jgn.core.compression.CompressionMethod#getProperty(java.lang.String)
+	 * @see com.captiveimagination.jgn.compression.CompressionMethod#getProperty(java.lang.String)
 	 */
 	public Object getProperty(String property) throws UnknownPropertyException {
-		if (PROPERTY_NOCOPY.equals(property)) {
-			return Boolean.valueOf(flag_nocopy);
-		}
 		throw new UnknownPropertyException(property, this);
 	}
 
 	/**
 	 * (overridden)
 	 * 
-	 * @see com.captiveimagination.jgn.core.compression.CompressionMethod#setCompressionLevel(int)
+	 * @see com.captiveimagination.jgn.compression.CompressionMethod#setCompressionLevel(int)
 	 */
 	public void setCompressionLevel(int level) throws LevelUnsupportedException {
 		if (level != 0) {
@@ -159,18 +161,12 @@ public class NoneMethod implements CompressionMethod {
 	/**
 	 * (overridden)
 	 * 
-	 * @see com.captiveimagination.jgn.core.compression.CompressionMethod#setProperty(java.lang.String,
+	 * @see com.captiveimagination.jgn.compression.CompressionMethod#setProperty(java.lang.String,
 	 *      java.lang.Object)
 	 */
 	public void setProperty(String property, Object value)
 			throws UnknownPropertyException, InvalidPropertyValueException {
-		if (PROPERTY_NOCOPY.equals(property)) {
-			if (!(value instanceof Boolean)) {
-				throw new InvalidPropertyValueException();
-			}
-			flag_nocopy = Boolean.TRUE.equals(value);
-		} else
-			throw new UnknownPropertyException(property, this);
+		throw new UnknownPropertyException(property, this);
 	}
 
 }

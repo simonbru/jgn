@@ -42,7 +42,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Vector;
 
-import com.captiveimagination.jgn.core.compression.InvalidCompressionMethodException;
+import com.captiveimagination.jgn.compression.InvalidCompressionMethodException;
 import com.captiveimagination.jgn.message.Message;
 
 /**

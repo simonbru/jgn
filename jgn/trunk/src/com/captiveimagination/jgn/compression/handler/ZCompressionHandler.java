@@ -29,33 +29,24 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.captiveimagination.jgn.core.compression;
+package com.captiveimagination.jgn.compression.handler;
+
+import com.captiveimagination.jgn.compression.methods.ZMethod;
 
 /**
- * Exception for invalid interpreted data.<br>
- * If a {@link CompressionMethod} should decompress a byte stream, which is not
- * created by its implemneted algorithm, this exception is thrown.
+ * This extension to {@link SimpleComressionHandler} is solely using
+ * {@link ZMethod} for compression.<br>
  * 
  * @author Christian Laireiter
  */
-public class InvalidCompressionMethodException extends Exception {
+public class ZCompressionHandler extends SimpleComressionHandler {
 
 	/**
 	 * Creates an instance.<br>
 	 * 
 	 */
-	public InvalidCompressionMethodException() {
-		// Nothing to do
-	}
-
-	/**
-	 * Creates an instance.
-	 * 
-	 * @param description
-	 *            Description of the invalid condition.
-	 */
-	public InvalidCompressionMethodException(String description) {
-		super(description);
+	public ZCompressionHandler() {
+		super(new ZMethod());
 	}
 
 }

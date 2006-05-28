@@ -29,23 +29,36 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.captiveimagination.jgn.core.compression;
+package com.captiveimagination.jgn.compression;
 
 /**
- * This exception is thrown by
- * {@link CompressionMethod#setProperty(String, Object)} if the given value does
- * not fit to the property.<br>
+ * A <code>Compressor</code> is used for compressing <code>byte[]</code><br>
  * 
  * @author Christian Laireiter
  */
-public class InvalidPropertyValueException extends Exception {
+public interface Compressor {
 
 	/**
-	 * Creates an instance.<br>
+	 * This method actually compresses the given <code>data</code>.<br>
 	 * 
+	 * @param data
+	 *            data to compress.
+	 * @return compressed data.
 	 */
-	public InvalidPropertyValueException() {
-		// Nothing to do
-	}
+	byte[] compress(byte[] data);
+
+	/**
+	 * This method decompresses a <code>byte[]</code> which has been
+	 * compressed by {@link #compress(byte[])}.<br>
+	 * 
+	 * @param compressedData
+	 *            compressed data to decompress.
+	 * @return decompressed data.
+	 * @throws InvalidCompressionMethodException
+	 *             If the given data has not been compressed by the implemented
+	 *             compression algorithm.<br>
+	 */
+	byte[] decompress(byte[] compressedData)
+			throws InvalidCompressionMethodException;
 
 }

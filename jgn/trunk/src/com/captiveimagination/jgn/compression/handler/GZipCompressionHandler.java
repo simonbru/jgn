@@ -29,37 +29,22 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.captiveimagination.jgn.core.compression.handler;
+package com.captiveimagination.jgn.compression.handler;
 
-import com.captiveimagination.jgn.core.compression.LevelUnsupportedException;
-import com.captiveimagination.jgn.core.compression.methods.ZipMethod;
+import com.captiveimagination.jgn.compression.methods.GZipMethod;
 
 /**
  * This extension to {@link SimpleComressionHandler} is solely using
- * {@link ZipMethod} for compression.<br>
+ * {@link GZipMethod} for compression.<br>
  * 
  * @author Christian Laireiter
  */
-public class ZipCompressionHandler extends SimpleComressionHandler {
+public class GZipCompressionHandler extends SimpleComressionHandler {
 
 	/**
 	 * Creates an instance.<br>
-	 */
-	public ZipCompressionHandler() {
-		super(new ZipMethod());
+	 */ 
+	public GZipCompressionHandler() {
+		super(new GZipMethod());
 	}
-
-	/**
-	 * Creates an instance.<br>
-	 * 
-	 * @param level
-	 *            specifies the compression level to use.
-	 * @throws LevelUnsupportedException
-	 *             If specified compression level is unavailable.
-	 * @see ZipMethod
-	 */
-	public ZipCompressionHandler(int level) throws LevelUnsupportedException {
-		super(new ZipMethod(level));
-	}
-
 }

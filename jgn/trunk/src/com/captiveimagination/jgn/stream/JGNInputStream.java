@@ -66,7 +66,7 @@ public class JGNInputStream extends InputStream implements MessageListener {
 						cache.remove(0);
 						System.out.println("Exceeded, continuing!");
 					}
-					return b;
+					return b & 0xff;
 				} else if (endOfStream) {
 					System.out.println("End of stream!");
 					break;

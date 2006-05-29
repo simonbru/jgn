@@ -3,7 +3,7 @@
  *
  * Created: May 28, 2006
  */
-package com.captiveimagination.jgn.test.compression;
+package com.captiveimagination.jgn.test.udp.compression;
 
 import java.io.*;
 

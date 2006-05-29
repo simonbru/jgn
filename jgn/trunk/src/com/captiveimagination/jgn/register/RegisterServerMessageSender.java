@@ -35,6 +35,7 @@ import java.io.*;
 
 import com.captiveimagination.jgn.*;
 import com.captiveimagination.jgn.register.message.*;
+import com.captiveimagination.jgn.update.*;
 
 /**
  * Sends messages to the registry to update the status of this server.

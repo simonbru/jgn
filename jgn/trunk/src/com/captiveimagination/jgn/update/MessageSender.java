@@ -29,59 +29,30 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.captiveimagination.jgn.util;
-
-import java.io.*;
-
-import com.captiveimagination.jgn.*;
-import com.captiveimagination.jgn.message.*;
+package com.captiveimagination.jgn.update;
 
 /**
- * Simple utility to send a file over JGN with guaranteed delivery,
- * guaranteed order, and over UDP.
+ * MessageSender should be implemented by
+ * applications utilizing Updater. The
+ * MessageSender is used to determine how
+ * many times a message should be sent per
+ * cycle and sendMessage() is called to
+ * send the message.
  * 
  * @author Matthew D. Hicks
  */
-public class FileTransfer {
-	private File file;
-	private int bufferLength;
-	private short group;
-	
-	public FileTransfer(File file, int bufferLength) {
-		this.file = file;
-		this.bufferLength = bufferLength;
-		group = (short)Math.round(Math.random() * Short.MAX_VALUE);
-	}
-	
-	public void transfer(MessageServer server, IP remoteAddress, int remotePort) throws IOException {
-		FileInputStream fis = new FileInputStream(file);
-		FileTransferMessage message;
-		String name = file.getName();
-		String path = file.getPath();
-		byte[] buf = new byte[bufferLength];
-		int len;
-		while ((len = fis.read(buf)) != -1) {
-			message = new FileTransferMessage();
-			message.setFileName(name);
-			message.setFilePath(path);
-			message.setOrderGroup(group);
-			if (bufferLength > len) {
-				byte[] tmp = new byte[len];
-				System.arraycopy(buf, 0, tmp, 0, len);
-				message.setBytes(tmp);
-			} else {
-				message.setBytes(buf);
-			}
-			server.sendMessage(message, remoteAddress, remotePort);
-			buf = new byte[bufferLength];
-		}
-        message = new FileTransferMessage();
-        message.setFileName(name);
-        message.setFilePath(path);
-        message.setBytes(new byte[0]);
-        message.setLastMessage(true);
-        message.setOrderGroup(group);
-        server.sendMessage(message, remoteAddress, remotePort);
-        fis.close();
-	}
+public interface MessageSender {
+    /**
+     * @return
+     *      The number of times sendMessage() should be called per updater cycle.
+     */
+    public int getUpdatesPerCycle();
+    
+    /**
+     * This method is called <code>updatesPerCycle</code> numbers of times per
+     * cycle.
+     */
+    public void sendMessage();
+    
+    public boolean isEnabled();
 }

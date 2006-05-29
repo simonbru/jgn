@@ -40,10 +40,10 @@ import com.captiveimagination.jgn.event.MessageListener;
 import com.captiveimagination.jgn.event.MessageSentListener;
 import com.captiveimagination.jgn.message.CertifiedMessage;
 import com.captiveimagination.jgn.message.Message;
+import com.captiveimagination.jgn.stream.*;
 
 public abstract class MessageServer {
 	public static final int TCP = 2;
-
 	public static final int UDP = 1;
 
 	protected IP address;
@@ -53,16 +53,13 @@ public abstract class MessageServer {
 	 * packages prior to be send.<br>
 	 */
 	private CompressionHandler compressionHandler;
-
 	private InternalMessageListener internalMessageListener;
-
 	private boolean keepAlive;
-
 	protected int port;
-
 	private MessageQueue queue;
-
 	private HashMap timeConversion;
+	private HashMap inputStreams;
+	private HashMap outputStreams;
 
 	public MessageServer(IP address, int port) {
 		this.address = address;
@@ -72,6 +69,8 @@ public abstract class MessageServer {
 		keepAlive = true;
 
 		timeConversion = new HashMap();
+		inputStreams = new HashMap();
+		outputStreams = new HashMap();
 
 		// Add Receipt Listener to certify messages
 		internalMessageListener = new InternalMessageListener(this);
@@ -264,6 +263,44 @@ public abstract class MessageServer {
 		internalMessageListener.timeSync(remoteAddress, remotePort);
 	}
 
+	public JGNInputStream getInputStream(IP remoteIp, int remotePort) throws StreamInUseException {
+		return getInputStream(remoteIp, remotePort, 0);
+	}
+	
+	public JGNInputStream getInputStream(IP remoteIp, int remotePort, int streamId) throws StreamInUseException {
+		String key = remoteIp.toString() + ":" + remotePort + ":" + streamId;
+		if (inputStreams.containsKey(key)) {
+			throw new StreamInUseException("The stream for " + remoteIp.toString() + ":" + remotePort + " with the id of " + streamId + " is already open.");
+		}
+		JGNInputStream stream = new JGNInputStream(this, remoteIp, remotePort, streamId);
+		inputStreams.put(key, stream);
+		addMessageListener(stream);
+		return stream;
+	}
+	
+	public void closeInputStream(JGNInputStream stream) {
+		removeMessageListener(stream);
+		inputStreams.remove(stream.getRemoteIp().toString() + ":" + stream.getRemotePort() + ":" + stream.getStreamId());
+	}
+	
+	public JGNOutputStream getOutputStream(IP remoteIp, int remotePort) throws StreamInUseException {
+		return getOutputStream(remoteIp, remotePort, 0);
+	}
+	
+	public JGNOutputStream getOutputStream(IP remoteIp, int remotePort, int streamId) throws StreamInUseException {
+		String key = remoteIp.toString() + ":" + remotePort + ":" + streamId;
+		if (outputStreams.containsKey(key)) {
+			throw new StreamInUseException("The stream for " + remoteIp.toString() + ":" + remotePort + " with the id of " + streamId + " is already open.");
+		}
+		JGNOutputStream stream = new JGNOutputStream(this, remoteIp, remotePort, streamId);
+		outputStreams.put(key, stream);
+		return stream;
+	}
+	
+	public void closeOutputStream(JGNOutputStream stream) {
+		outputStreams.remove(stream.getRemoteIp().toString() + ":" + stream.getRemotePort() + ":" + stream.getStreamId());
+	}
+	
 	public synchronized void update() {
 		// Process inbound messages and enqueue them
 		updateIncoming();

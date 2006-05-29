@@ -9,6 +9,7 @@ import com.captiveimagination.jgn.*;
 import com.captiveimagination.jgn.client.*;
 import com.captiveimagination.jgn.server.*;
 import com.captiveimagination.jgn.synchronization.*;
+import com.captiveimagination.jgn.update.*;
 
 /**
  * @author Matthew D. Hicks

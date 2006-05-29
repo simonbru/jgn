@@ -38,6 +38,7 @@ import java.util.zip.*;
 
 import com.captiveimagination.jgn.dynamic.*;
 import com.captiveimagination.jgn.message.*;
+import com.captiveimagination.jgn.message.stream.*;
 
 /**
  * This is the base class for JavaGameNetworking.
@@ -891,7 +892,7 @@ public class JGN {
             }
             
             registerMessage(Receipt.class, Short.MIN_VALUE);
-            registerMessage(FileTransferMessage.class, (short)(Short.MIN_VALUE / 2));
+            registerMessage(StreamMessage.class, (short)(Short.MIN_VALUE / 2));
             registerMessage(PingMessage.class, (short)((Short.MIN_VALUE / 4) + 1));
             registerMessage(PongMessage.class, (short)((Short.MIN_VALUE / 4) + 2));
             registerMessage(TimeSyncMessage.class, (short)((Short.MIN_VALUE / 4) + 3));

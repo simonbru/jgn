@@ -31,12 +31,47 @@
  */
 package com.captiveimagination.jgn;
 
-import java.io.*;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 
-import com.captiveimagination.jgn.message.*;
+import com.captiveimagination.jgn.message.Message;
 
+/**
+ * Specifies methods for custom (de)serialization operations.<br>
+ * If a developer needs (or wants) an own way of how his {@link Message} objects
+ * (classes) are converted into a binary represenentation, he may register a
+ * specific {@link Class} to such a message handler.<br>
+ * 
+ * @see JGN#setHandler(Class, MessageHandler)
+ * 
+ * @author Matthew D. Hicks
+ */
 public interface MessageHandler {
-    public Message receiveMessage(DataInputStream dis) throws IOException;
-    
-    public void sendMessage(Message message, DataOutputStream dos) throws IOException;
+
+	/**
+	 * Theis method extracts a {@link Message} object of the given stream.<br>
+	 * 
+	 * @param dis
+	 *            Stream which contains a serialized message object which can be
+	 *            interpreted by the implementation.<br>
+	 * @return The message object contained in the stream.
+	 * @throws IOException
+	 *             on I/O Errors.
+	 */
+	public Message receiveMessage(DataInputStream dis) throws IOException;
+
+	/**
+	 * This method write the specified <code>message</code> into the given
+	 * outputstream.
+	 * 
+	 * @param message
+	 *            the message object to be serialized.
+	 * @param dos
+	 *            stream which receives the binary representation.
+	 * @throws IOException
+	 *             on I/O Errors.
+	 */
+	public void sendMessage(Message message, DataOutputStream dos)
+			throws IOException;
 }

@@ -32,18 +32,37 @@
 package com.captiveimagination.jgn;
 
 /**
- * @author Christian Laireiter
+ * Since &quot;JGN&quot; has its own {@link IP} representation, it is helpful to
+ * have an own socket representation as well.<br>
+ * This class takes an {@link IP} object as well as a port number.<br>
+ * The most important is: it implements {@link Object#equals(Object)} and
+ * {@link Object#hashCode()} for the use with collections and hashing mechanism.<br>
  * 
+ * @author Christian Laireiter
  */
 public class SocketDescriptor {
 
+	/**
+	 * Stores the IP of the represented socket.<br>
+	 */
 	private IP ip;
 
+	/**
+	 * Stores the port number of the represented socket.<br>
+	 */
 	private int port;
 
-	public SocketDescriptor(IP ip, int port) {
-		this.ip = ip;
-		this.port = port;
+	/**
+	 * Creates an instance.
+	 * 
+	 * @param socketIP
+	 *            The IP of the socket
+	 * @param SocketPort
+	 *            The port of the socket.
+	 */
+	public SocketDescriptor(IP socketIP, int SocketPort) {
+		this.ip = socketIP;
+		this.port = SocketPort;
 	}
 
 	/**
@@ -60,22 +79,29 @@ public class SocketDescriptor {
 	}
 
 	/**
+	 * Returns the {@link IP} of the socket.
+	 * 
+	 * @return the {@link IP} of the socket.
+	 */
+	public IP getIp() {
+		return ip;
+	}
+
+	/**
+	 * Returns the port number of the socket.
+	 * 
+	 * @return the port number of the socket.
+	 */
+	public int getPort() {
+		return this.port;
+	}
+
+	/**
 	 * (overridden)
 	 * 
 	 * @see java.lang.Object#hashCode()
 	 */
 	public int hashCode() {
 		return ip.hashCode() * 31 + port;
-	}
-
-	/**
-	 * @return
-	 */
-	public IP getIp() {
-		return ip;
-	}
-	
-	public int getPort() {
-		return this.port;
 	}
 }

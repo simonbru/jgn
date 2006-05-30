@@ -36,18 +36,47 @@ import java.net.UnknownHostException;
 import java.util.Arrays;
 
 /**
- * @author Matthew D. Hicks
+ * This class is a &quot;JGN&quot; internal abstraction (representation) of a
+ * computers network ip-address.<br>
  * 
+ * @author Matthew D. Hicks
  */
 public class IP {
+
+	/**
+	 * This convenience method creates an ip object of a specified adress
+	 * object.<br>
+	 * 
+	 * @param address
+	 *            Java adress representation.
+	 * @return &quot;JGN&quot; internal representation.
+	 */
 	public static final IP fromInetAddress(InetAddress address) {
 		return new IP(address.getAddress());
 	}
 
+	/**
+	 * This convenience method creates an ip object for the specified host name.<br>
+	 * 
+	 * @param name
+	 *            name of the host, of which the ip should be obtained.
+	 * @return ip object for the specified host.
+	 * @throws UnknownHostException
+	 *             If the host cannot be found.
+	 */
 	public static final IP fromName(String name) throws UnknownHostException {
 		return fromInetAddress(InetAddress.getByName(name));
 	}
 
+	/**
+	 * This method creates an ip object from an adress which is coded in a
+	 * {@link String}<br>
+	 * Pattern: Something like "192.168.13.22"
+	 * 
+	 * @param address
+	 *            string coded ip address
+	 * @return ip object for the specified address.
+	 */
 	public static final IP fromString(String address) {
 		String[] split = address.split("\\.");
 		byte[] bytes = new byte[split.length];
@@ -62,37 +91,80 @@ public class IP {
 		return new IP(bytes);
 	}
 
+	/**
+	 * Convenience method for obtaining an ip object for the local host.<br>
+	 * 
+	 * @see InetAddress#getLocalHost()
+	 * @return ip object for the local host.
+	 * @throws UnknownHostException
+	 *             Is thrown by {@link InetAddress#getLocalHost()}.
+	 */
 	public static final IP getLocalHost() throws UnknownHostException {
 		return fromInetAddress(InetAddress.getLocalHost());
 	}
 
+	/**
+	 * The hashcode for this object.<br>
+	 * Stored in this field to prevent multiple hashcode calculation.
+	 */
+	private int hashCode;
+
+	/**
+	 * The bytes an ip address is made of.
+	 */
 	private byte[] ip;
 
-	private int hashCode;
-	
-	public IP(byte[] ip) {
-		this.ip = ip;
-		this.hashCode = Arrays.hashCode(ip);
+	/**
+	 * Creates an instace.<br>
+	 * 
+	 * @param ipAddress
+	 *            binary representation of the ip address.
+	 */
+	public IP(byte[] ipAddress) {
+		this.ip = ipAddress;
+		this.hashCode = Arrays.hashCode(ipAddress);
 	}
 
-	public byte[] getBytes() {
-		return ip;
-	}
-	
 	/**
 	 * (overridden)
+	 * 
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
 	public boolean equals(Object obj) {
 		if (obj != null && obj instanceof IP) {
-			IP other = (IP)obj;
+			IP other = (IP) obj;
 			return Arrays.equals(ip, other.ip);
 		}
 		return false;
 	}
-	
+
+	/**
+	 * Returns the binary representation of the ip address.
+	 * 
+	 * @return the binary representation of the ip address.
+	 */
+	public byte[] getBytes() {
+		// Returns a close, so external manipulation is impossible. 
+		return (byte[])ip.clone();
+	}
+
+	/**
+	 * Returns {@link #getBytes()} as an <code>int[]</code>.
+	 * 
+	 * @return {@link #getBytes()} as an <code>int[]</code>.
+	 */
+	public int[] getInts() {
+		int[] ints = new int[ip.length];
+		for (int i = 0; i < ip.length; i++) {
+			// create unsigned value
+			ints[i] = ip[i] & 0xFF;
+		}
+		return ints;
+	}
+
 	/**
 	 * (overridden)
+	 * 
 	 * @see java.lang.Object#hashCode()
 	 */
 	public int hashCode() {
@@ -100,18 +172,12 @@ public class IP {
 		return this.hashCode;
 	}
 
-	public int[] getInts() {
-		int[] ints = new int[ip.length];
-		for (int i = 0; i < ip.length; i++) {
-			if (ip[i] < 0) {
-				ints[i] = ip[i] + 256;
-			} else {
-				ints[i] = ip[i];
-			}
-		}
-		return ints;
-	}
-
+	/**
+	 * (overridden)<br>
+	 * Constructs something like &quot;192.168.22.13&quot;.s
+	 * 
+	 * @see java.lang.Object#toString()
+	 */
 	public String toString() {
 		int[] ints = getInts();
 		StringBuffer buffer = new StringBuffer();

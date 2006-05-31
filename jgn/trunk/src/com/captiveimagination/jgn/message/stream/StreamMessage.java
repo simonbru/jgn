@@ -13,6 +13,7 @@ import com.captiveimagination.jgn.message.*;
 public class StreamMessage extends OrderedMessage {
 	private int streamId;
 	private byte[] data;
+	private int dataLength;
 	
 	public void setStreamId(int streamId) {
 		this.streamId = streamId;
@@ -28,6 +29,14 @@ public class StreamMessage extends OrderedMessage {
 	
 	public byte[] getData() {
 		return data;
+	}
+	
+	public void setDataLength(int dataLength) {
+		this.dataLength = dataLength;
+	}
+	
+	public int getDataLength() {
+		return dataLength;
 	}
 	
 	public long getResendTimeout() {

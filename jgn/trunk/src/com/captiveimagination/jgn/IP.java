@@ -117,12 +117,12 @@ public class IP {
 	/**
 	 * Creates an instace.<br>
 	 * 
-	 * @param ipAddress
+	 * @param ip
 	 *            binary representation of the ip address.
 	 */
-	public IP(byte[] ipAddress) {
-		this.ip = ipAddress;
-		this.hashCode = Arrays.hashCode(ipAddress);
+	public IP(byte[] ip) {
+		this.ip = ip;
+		this.hashCode = ip.hashCode();
 	}
 
 	/**

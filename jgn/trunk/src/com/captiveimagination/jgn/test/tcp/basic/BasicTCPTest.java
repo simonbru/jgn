@@ -43,8 +43,8 @@ public class BasicTCPTest {
         // Now lets send a message from server2 to server1
         BasicMessage message = new BasicMessage();
         message.setText("Hello Server1!");
-        long time = System.nanoTime();
+        long time = JGN.getNanoTime();
         server2.sendMessage(message, IP.getLocalHost(), 1000);
-        System.out.println("Took: " + ((System.nanoTime() - time) / 1000000) + "ms to send the message.");
+        System.out.println("Took: " + ((JGN.getNanoTime() - time) / 1000000) + "ms to send the message.");
     }
 }

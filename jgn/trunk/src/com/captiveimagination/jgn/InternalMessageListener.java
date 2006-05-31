@@ -67,7 +67,7 @@ public class InternalMessageListener implements MessageListener {
                 throw new RuntimeException(exc);
             }
         } else if (message instanceof PongMessage) {
-        	pingTime = System.nanoTime();
+        	pingTime = JGN.getNanoTime();
         } else if (message instanceof TimeSyncMessage) {
         	TimeSyncMessage m = (TimeSyncMessage)message;
         	long conversion = m.getLocalTime() - System.currentTimeMillis();
@@ -95,7 +95,7 @@ public class InternalMessageListener implements MessageListener {
     	pingTime = -1;
     	long maxWait = System.currentTimeMillis() + timeout;
     	PingMessage message = new PingMessage();
-    	long time = System.nanoTime();
+    	long time = JGN.getNanoTime();
         try {
             messageServer.sendMessage(message, remoteAddress, remotePort);
         } catch(IOException exc) {

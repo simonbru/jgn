@@ -36,6 +36,8 @@ import java.lang.reflect.*;
 import java.util.*;
 import java.util.zip.*;
 
+import sun.misc.*;
+
 import com.captiveimagination.jgn.dynamic.*;
 import com.captiveimagination.jgn.message.*;
 import com.captiveimagination.jgn.message.stream.*;
@@ -70,7 +72,7 @@ public class JGN {
         init();
         // Verify Class c extends Message
         if (!Message.class.isAssignableFrom(c)) {
-            throw new ClassCastException(c.getCanonicalName() + " does not extend " + Message.class.getCanonicalName());
+            throw new ClassCastException(c.getName() + " does not extend " + Message.class.getName());
         }
         
         // Introspect class for getters and setters
@@ -127,7 +129,7 @@ public class JGN {
             throw new ClassCastException(exc.getMessage());
         }*/
         if ((registered.get(new Short(type)) != null) && (registered.get(new Short(type)) != c)) {
-        	throw new RuntimeException("Message Type " + type + " already registered to " + ((Class)registered.get(new Short(type))).getCanonicalName() + " and trying to register same id to " + c.getCanonicalName());
+        	throw new RuntimeException("Message Type " + type + " already registered to " + ((Class)registered.get(new Short(type))).getName() + " and trying to register same id to " + c.getName());
         }
         registered.put(new Short(type), c);
         // If JDT is found then generate classes to handle message creation
@@ -351,7 +353,7 @@ public class JGN {
 	                } else if (setType == String[].class) {
 	                    writer.write("array" + i);
 	                } else {
-	                    throw new RuntimeException("Unknown class type for setter (JGN.set): " + setType.getCanonicalName());
+	                    throw new RuntimeException("Unknown class type for setter (JGN.set): " + setType.getName());
 	                }
 	                writer.write(");");
 	                writer.newLine();
@@ -573,7 +575,7 @@ public class JGN {
     public static final byte[] convertMessage(Message m) throws IOException, IllegalArgumentException, IllegalAccessException, InvocationTargetException {
     	init();
     	if (!registered.containsValue(m.getClass())) {
-    		throw new RuntimeException(m.getClass().getCanonicalName() + " must be registered before use via JGN.registerMessage.");
+    		throw new RuntimeException(m.getClass().getName() + " must be registered before use via JGN.registerMessage.");
     	}
     	
     	ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -722,7 +724,7 @@ public class JGN {
             }
             setter.invoke(message, new Object[] {array});
         } else {
-            throw new RuntimeException("Unknown class type for setter (JGN.set): " + setType.getCanonicalName());
+            throw new RuntimeException("Unknown class type for setter (JGN.set): " + setType.getName());
         }
     }
     
@@ -747,7 +749,7 @@ public class JGN {
         } else if (returnType == String.class) {
             String s = (String)getter.invoke(message, new Object[0]);
             if (s == null) {
-                System.out.println("Null value: " + message.getClass().getCanonicalName() + "." + getter.getName());
+                System.out.println("Null value: " + message.getClass().getName() + "." + getter.getName());
             }
             dos.writeUTF(s);
         } else if (returnType == Boolean[].class) {
@@ -853,7 +855,7 @@ public class JGN {
                 dos.writeUTF(array[i]);
             }
         } else {
-            throw new RuntimeException("Unknown class type for getter (JGN.get): " + returnType.getCanonicalName());
+            throw new RuntimeException("Unknown class type for getter (JGN.get): " + returnType.getName());
         }
     }
     
@@ -966,25 +968,7 @@ public class JGN {
         handlers.put(messageClass, handler);
     }
 
-    private static Deflater d = new Deflater(Deflater.HUFFMAN_ONLY);
-    private static byte[] compressionBuffer = new byte[512 * 2000];
-    public static synchronized final byte[] compress(byte[] b) {
-    	// TODO Default to HUFFMAN, but allow for others in the future
-    	d.setInput(b);
-    	int length = d.deflate(compressionBuffer);
-    	byte[] temp = new byte[length];
-    	System.arraycopy(compressionBuffer, 0, temp, 0, length);
-    	return temp;
-    }
-    
-    private static Inflater i = new Inflater();
-    private static byte[] uncompressionBuffer = new byte[512 * 2000];
-    public static synchronized final byte[] uncompress(byte[] b) throws DataFormatException {
-    	// TODO Default to HUFFMAN, but allow for others in the future
-    	i.setInput(b);
-    	int length = i.inflate(uncompressionBuffer);
-    	byte[] temp = new byte[length];
-    	System.arraycopy(uncompressionBuffer, 0, temp, 0, length);
-    	return temp;
+    public static final long getNanoTime() {
+    	return System.currentTimeMillis() * 1000000L;
     }
 }

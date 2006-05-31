@@ -36,11 +36,11 @@ public class StressTCPTest {
             
             public void messageReceived(BasicMessage message) {
                 if (count == 0) {
-                    time = System.nanoTime();
+                    time = JGN.getNanoTime();
                 }
                 count++;
                 if (count >= MAX) {
-                    System.out.println("Completed receive of " + MAX + " messages in " + ((System.nanoTime() - time) / 1000000));
+                    System.out.println("Completed receive of " + MAX + " messages in " + ((JGN.getNanoTime() - time) / 1000000));
                     server1.shutdown();
                     server2.shutdown();
                 }
@@ -52,12 +52,12 @@ public class StressTCPTest {
         });
         
         // Now lets send a message from server2 to server1
-        long time = System.nanoTime();
+        long time = JGN.getNanoTime();
         BasicMessage message = new BasicMessage();
         for (int i = 0; i < MAX; i++) {
             message.setText("Hello Server1: " + i);
             server2.sendMessage(message, IP.getLocalHost(), 1000);
         }
-        System.out.println("Took: " + ((System.nanoTime() - time) / 1000000) + "ms to send " + MAX + " messages.");
+        System.out.println("Took: " + ((JGN.getNanoTime() - time) / 1000000) + "ms to send " + MAX + " messages.");
     }
 }

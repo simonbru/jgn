@@ -98,17 +98,13 @@ public class TCPMessageServer extends MessageServer {
 
 	private SocketChannel getConnection(IP remoteAddress, int remotePort)
 			throws IOException {
-		SocketChannel channel = (SocketChannel) connectionsMap
-				.get(remoteAddress.toString() + ":" + remotePort);
+		SocketChannel channel = (SocketChannel) connectionsMap.get(remoteAddress.toString() + ":" + remotePort);
 		if (channel == null) {
-			System.out.println("Establishing new connection to: "
-					+ remoteAddress + ":" + remotePort);
+			System.out.println("Establishing new connection to: " + remoteAddress + ":" + remotePort);
 			// Create a new connection
-			channel = SocketChannel.open(new InetSocketAddress(remoteAddress
-					.toString(), remotePort));
+			channel = SocketChannel.open(new InetSocketAddress(remoteAddress.toString(), remotePort));
 			channel.configureBlocking(false);
-			connectionsMap.put(remoteAddress.toString() + ":" + remotePort,
-					channel);
+			connectionsMap.put(remoteAddress.toString() + ":" + remotePort, channel);
 			connections.add(channel);
 		}
 		return channel;

@@ -33,6 +33,8 @@ package com.captiveimagination.jgn.update;
 
 import java.util.*;
 
+import com.captiveimagination.jgn.*;
+
 /**
  * Updater is an a thread that can be configured
  * to send messages on a specific schedule particularly
@@ -91,13 +93,13 @@ public class Updater extends Thread {
                         frequency = (recycle / cycle.length);
                     }
                 }
-                time = System.nanoTime();
+                time = JGN.getNanoTime();
                 delay = 0;
                 int missed = 0;
                 for (int i = 0; i < cycle.length; i++) {
                     if ((keepAlive) && (cycle[i].isEnabled())) cycle[i].sendMessage();
                     delay += frequency * 1000000;
-                    wait = time - System.nanoTime() + delay;
+                    wait = time - JGN.getNanoTime() + delay;
                     if (wait > 0) {
                         Thread.sleep(wait / 1000000);
                     } else {

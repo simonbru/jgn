@@ -20,9 +20,9 @@ public class TestCertify {
 		
 		// Show use of send and wait feature
 		BasicCertifiedMessage message = new BasicCertifiedMessage();
-		long time = System.nanoTime();
+		long time = JGN.getNanoTime();
 		System.out.println("Certified: " + server2.sendCertified(message, IP.getLocalHost(), 1000, 10 * 1000));
-		System.out.println("Returned after " + ((System.nanoTime() - time) / 1000000) + " milliseconds.");
+		System.out.println("Returned after " + ((JGN.getNanoTime() - time) / 1000000) + " milliseconds.");
 		
 		// NOTE: you can also just fire and forget this message as it will automatically resend if necessary
 		

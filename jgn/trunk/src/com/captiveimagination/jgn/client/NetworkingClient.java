@@ -230,7 +230,7 @@ public class NetworkingClient implements Runnable {
 	public boolean connectAndWait(IP serverAddress, int serverPortUDP, int serverPortTCP, long maxWait) throws InterruptedException, IOException {
 		connect(serverAddress, serverPortUDP, serverPortTCP);
 		
-		maxWait = System.nanoTime() + (maxWait * 1000000);
+		maxWait = JGN.getNanoTime() + (maxWait * 1000000);
 		while (playerId == -1) {
 			update();    // just in case the update thread is being blocked
 			try {
@@ -238,7 +238,7 @@ public class NetworkingClient implements Runnable {
 			} catch(InterruptedException exc) {
 				exc.printStackTrace();
 			}
-			if (System.nanoTime() > maxWait) break;
+			if (JGN.getNanoTime() > maxWait) break;
 		}
 		if (playerId == -1) {
 			return false;

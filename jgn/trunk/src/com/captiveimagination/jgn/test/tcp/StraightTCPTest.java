@@ -8,6 +8,8 @@ import java.net.*;
 import java.nio.*;
 import java.nio.channels.*;
 
+import com.captiveimagination.jgn.*;
+
 public class StraightTCPTest {
     public static void main(String[] args) throws Exception {
         startReceiver();
@@ -23,7 +25,7 @@ public class StraightTCPTest {
                     server.configureBlocking(false);
                     server.socket().bind(new InetSocketAddress(InetAddress.getLocalHost(), 1000));
                     SocketChannel channel = null;
-                    ByteBuffer buffer = ByteBuffer.allocate(512 * 1000);
+                    ByteBuffer buffer = ByteBuffer.allocate(512);
                     byte[] buf = new byte[512 * 1000];
                     long time = 0;
                     while (true) {
@@ -32,7 +34,7 @@ public class StraightTCPTest {
                             channel = server.accept();
                             if (channel != null) {
                                 channel.configureBlocking(false);
-                                time = System.nanoTime();
+                                time = JGN.getNanoTime();
                             }
                         } else if (channel.read(buffer) > 0) {
                             int len = buffer.position();
@@ -51,7 +53,7 @@ public class StraightTCPTest {
                                     packets++;
                                     String s = new String(bytes);
                                     if (s.equals("Testing 1000")) {
-                                        System.out.println("Took " + ((System.nanoTime() - time) / 1000000) + "ms to receive " + packets + " packets.");
+                                        System.out.println("Took " + ((JGN.getNanoTime() - time) / 1000000) + "ms to receive " + packets + " packets.");
                                         System.exit(0);
                                     }
                                     //System.out.println("Received: " + s);
@@ -76,9 +78,9 @@ public class StraightTCPTest {
                 try {
                     SocketChannel channel = SocketChannel.open(new InetSocketAddress(InetAddress.getLocalHost(), 1000));
                     channel.configureBlocking(false);
-                    ByteBuffer buffer = ByteBuffer.allocate(512 * 1000);
+                    ByteBuffer buffer = ByteBuffer.allocate(512);
                     byte[] buf;
-                    long time = System.nanoTime();
+                    long time = JGN.getNanoTime();
                     for (int i = 0; i < 1000; i++) {
                         ByteArrayOutputStream baos = new ByteArrayOutputStream();
                         DataOutputStream dos = new DataOutputStream(baos);
@@ -93,7 +95,7 @@ public class StraightTCPTest {
                         channel.write(buffer);
                         Thread.sleep(5);
                     }
-                    System.out.println("Took " + ((System.nanoTime() - time) / 1000000) + "ms to send.");
+                    System.out.println("Took " + ((JGN.getNanoTime() - time) / 1000000) + "ms to send.");
                 } catch(Throwable t) {
                     t.printStackTrace();
                 }

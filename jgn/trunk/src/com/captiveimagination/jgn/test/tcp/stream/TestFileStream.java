@@ -22,14 +22,14 @@ public class TestFileStream {
 		new Thread() {
 			public void run() {
 				try {
-					FileOutputStream out = new FileOutputStream(new File("test.gif"));
+					FileOutputStream out = new FileOutputStream(new File("test.exe"));
 					byte[] b = new byte[512];
 					int total = 0;
 					int len;
 					while ((len = is.read(b)) > -1) {
 						out.write(b, 0, len);
 						total += len;
-						System.out.println("Received: " + len);
+						//System.out.println("Received: " + len);
 					}
 					out.flush();
 					is.close();
@@ -45,13 +45,14 @@ public class TestFileStream {
 		new Thread() {
 			public void run() {
 				try {
-					InputStream in = getClass().getClassLoader().getResourceAsStream("com/captiveimagination/jgn/test/tcp/stream/tomcat.gif");
+					InputStream in = getClass().getClassLoader().getResourceAsStream("com/captiveimagination/jgn/test/tcp/stream/test.exe");
 					byte[] b = new byte[512];
 					int total = 0;
 					int len;
 					while ((len = in.read(b)) > -1) {
 						os.write(b, 0, len);
 						total += len;
+						try { Thread.sleep(5); } catch (InterruptedException exc) {}
 					}
 					os.flush();
 					in.close();

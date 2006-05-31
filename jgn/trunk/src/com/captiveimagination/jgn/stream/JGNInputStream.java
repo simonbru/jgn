@@ -26,6 +26,7 @@ public class JGNInputStream extends InputStream implements MessageListener {
 	private int streamId;
 	
 	private List cache;
+	private List cacheLengths;
 	private int position;
 	private boolean endOfStream;
 	
@@ -36,6 +37,7 @@ public class JGNInputStream extends InputStream implements MessageListener {
 		this.streamId = streamId;
 		
 		cache = Collections.synchronizedList(new ArrayList());
+		cacheLengths = Collections.synchronizedList(new ArrayList());
 		position = 0;
 		endOfStream = false;
 	}
@@ -61,14 +63,13 @@ public class JGNInputStream extends InputStream implements MessageListener {
 				if (cache.size() > 0) {
 					byte[] buf = (byte[])cache.get(0);
 					int b = buf[position++];
-					if (position >= buf.length) {
+					if (position >= ((Integer)cacheLengths.get(0)).intValue()) {
 						position = 0;
 						cache.remove(0);
-						System.out.println("Exceeded, continuing!");
+						cacheLengths.remove(0);
 					}
 					return b & 0xff;
 				} else if (endOfStream) {
-					System.out.println("End of stream!");
 					break;
 				}
 				Thread.sleep(5);
@@ -76,7 +77,6 @@ public class JGNInputStream extends InputStream implements MessageListener {
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
-		System.out.println("Returning -1!!!!!");
 		return -1;
 	}
 
@@ -88,6 +88,7 @@ public class JGNInputStream extends InputStream implements MessageListener {
 			if (message.getData() == null) {
 				endOfStream = true;
 			} else {
+				cacheLengths.add(new Integer(message.getDataLength()));
 				cache.add(message.getData());
 			}
 		}

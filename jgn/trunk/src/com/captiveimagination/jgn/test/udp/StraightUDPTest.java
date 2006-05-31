@@ -5,6 +5,8 @@ import java.net.*;
 import java.nio.*;
 import java.nio.channels.*;
 
+import com.captiveimagination.jgn.*;
+
 /**
  * @author Matthew D. Hicks
  *
@@ -54,7 +56,7 @@ public class StraightUDPTest {
                                     packets++;
                                     String s = new String(bytes);
                                     if (s.equals("Testing 1000")) {
-                                        System.out.println("Took " + ((System.nanoTime() - time) / 1000000) + "ms to receive " + packets + " packets.");
+                                        System.out.println("Took " + ((JGN.getNanoTime() - time) / 1000000) + "ms to receive " + packets + " packets.");
                                         System.exit(0);
                                     }
                                 }
@@ -81,7 +83,7 @@ public class StraightUDPTest {
                     //channel.socket().connect(new InetSocketAddress(InetAddress.getLocalHost(), 1000));
                     ByteBuffer buffer = ByteBuffer.allocate(512 * 1000);
                     byte[] buf;
-                    long time = System.nanoTime();
+                    long time = JGN.getNanoTime();
                     for (int i = 0; i < 1000; i++) {
                         ByteArrayOutputStream baos = new ByteArrayOutputStream();
                         DataOutputStream dos = new DataOutputStream(baos);
@@ -97,7 +99,7 @@ public class StraightUDPTest {
                         channel.send(buffer, new InetSocketAddress(InetAddress.getLocalHost(), 1000));
                         Thread.sleep(5);
                     }
-                    System.out.println("Took " + ((System.nanoTime() - time) / 1000000) + "ms to send.");
+                    System.out.println("Took " + ((JGN.getNanoTime() - time) / 1000000) + "ms to send.");
                 } catch(Throwable t) {
                     t.printStackTrace();
                 }

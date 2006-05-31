@@ -66,13 +66,12 @@ public class JGNOutputStream extends OutputStream {
 			position = 0;
 		}
 		buffer[position++] = (byte)b;
-		if (b == -1) {
-			System.out.println("Output is -1!" + (byte)b);
-		}
 	}
 
 	public void flush() throws IOException {
+		message.setDataLength(position);
 		message.setData(buffer);
+		//System.out.println("Sending: " + position);
 		server.sendMessage(message, remoteIp, remotePort);
 	}
 	

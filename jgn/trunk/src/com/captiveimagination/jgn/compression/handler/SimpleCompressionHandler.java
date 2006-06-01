@@ -44,7 +44,7 @@ import com.captiveimagination.jgn.compression.InvalidCompressionMethodException;
  * 
  * @author Christian Laireiter
  */
-public class SimpleComressionHandler implements CompressionHandler {
+public class SimpleCompressionHandler implements CompressionHandler {
 
 	/**
 	 * This instance is used for compression.
@@ -62,7 +62,7 @@ public class SimpleComressionHandler implements CompressionHandler {
 	 * @param compressionMethod
 	 *            Method to use.
 	 */
-	public SimpleComressionHandler(CompressionMethod compressionMethod) {
+	public SimpleCompressionHandler(CompressionMethod compressionMethod) {
 		assert compressionMethod != null;
 		this.method = compressionMethod;
 		try {

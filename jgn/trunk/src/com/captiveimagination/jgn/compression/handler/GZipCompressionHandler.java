@@ -34,12 +34,12 @@ package com.captiveimagination.jgn.compression.handler;
 import com.captiveimagination.jgn.compression.methods.GZipMethod;
 
 /**
- * This extension to {@link SimpleComressionHandler} is solely using
+ * This extension to {@link SimpleCompressionHandler} is solely using
  * {@link GZipMethod} for compression.<br>
  * 
  * @author Christian Laireiter
  */
-public class GZipCompressionHandler extends SimpleComressionHandler {
+public class GZipCompressionHandler extends SimpleCompressionHandler {
 
 	/**
 	 * Creates an instance.<br>

@@ -34,12 +34,12 @@ package com.captiveimagination.jgn.compression.handler;
 import com.captiveimagination.jgn.compression.methods.ZMethod;
 
 /**
- * This extension to {@link SimpleComressionHandler} is solely using
+ * This extension to {@link SimpleCompressionHandler} is solely using
  * {@link ZMethod} for compression.<br>
  * 
  * @author Christian Laireiter
  */
-public class ZCompressionHandler extends SimpleComressionHandler {
+public class ZCompressionHandler extends SimpleCompressionHandler {
 
 	/**
 	 * Creates an instance.<br>

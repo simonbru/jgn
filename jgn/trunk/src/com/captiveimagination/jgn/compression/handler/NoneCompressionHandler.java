@@ -34,12 +34,12 @@ package com.captiveimagination.jgn.compression.handler;
 import com.captiveimagination.jgn.compression.methods.NoneMethod;
 
 /**
- * This extension to {@link SimpleComressionHandler} is solely using
+ * This extension to {@link SimpleCompressionHandler} is solely using
  * {@link NoneMethod} for compression.<br>
  * 
  * @author Christian Laireiter
  */
-public class NoneCompressionHandler extends SimpleComressionHandler {
+public class NoneCompressionHandler extends SimpleCompressionHandler {
 
 	/**
 	 * Creates an instance.<br>

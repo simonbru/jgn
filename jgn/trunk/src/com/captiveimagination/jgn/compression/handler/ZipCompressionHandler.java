@@ -35,12 +35,12 @@ import com.captiveimagination.jgn.compression.LevelUnsupportedException;
 import com.captiveimagination.jgn.compression.methods.ZipMethod;
 
 /**
- * This extension to {@link SimpleComressionHandler} is solely using
+ * This extension to {@link SimpleCompressionHandler} is solely using
  * {@link ZipMethod} for compression.<br>
  * 
  * @author Christian Laireiter
  */
-public class ZipCompressionHandler extends SimpleComressionHandler {
+public class ZipCompressionHandler extends SimpleCompressionHandler {
 
 	/**
 	 * Creates an instance.<br>

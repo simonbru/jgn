@@ -23,7 +23,7 @@ public interface Converter {
 	/**
 	 * Represents an empty byte array with a length of 0.
 	 */
-	public static final byte[] EMPTY_ARRAY = new byte[0];
+	public static final Object[] EMPTY_ARRAY = new Object[0];
 	
 	/**
 	 * Defines the mappings of classes to converters.

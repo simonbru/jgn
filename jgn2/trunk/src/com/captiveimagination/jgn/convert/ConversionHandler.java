@@ -21,29 +21,29 @@ import com.captiveimagination.jgn.*;
 public class ConversionHandler {
 	private static final MethodComparator methodComparator = new MethodComparator();
 	
-	private ArrayList<Converter> converters;
-	private ArrayList<Method> getters;
-	private ArrayList<Method> setters;
+	private Converter[] converters;
+	private Method[] getters;
+	private Method[] setters;
 	private Class messageClass;
 	
-	private ConversionHandler(ArrayList<Converter> converters, ArrayList<Method> getters, ArrayList<Method> setters, Class messageClass) {
+	private ConversionHandler(Converter[] converters, Method[] getters, Method[] setters, Class messageClass) {
 		this.converters = converters;
 		this.getters = getters;
 		this.setters = setters;
 		this.messageClass = messageClass;
 	}
 	
-	public Message receiveMessage(ByteBuffer buffer) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, IOException {
+	public Message receiveMessage(ByteBuffer buffer) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, IOException, SecurityException, NoSuchMethodException {
 		Message message = (Message)messageClass.newInstance();
-		for (int i = 0; i < converters.size(); i++) {
-			converters.get(i).set(message, setters.get(i), buffer);
+		for (int i = 0; i < converters.length; i++) {
+			converters[i].set(message, setters[i], buffer);
 		}
 		return message;
 	}
 	
 	public void sendMessage(Message message, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException, IOException {
-		for (int i = 0; i < converters.size(); i++) {
-			converters.get(i).get(message, getters.get(i), buffer);
+		for (int i = 0; i < converters.length; i++) {
+			converters[i].get(message, getters[i], buffer);
 		}
 	}
 	
@@ -77,12 +77,14 @@ public class ConversionHandler {
 			Converter converter = Converter.CONVERTERS.get(getter.getReturnType());
 			if (converter != null) {
 				converters.add(converter);
+				getter.setAccessible(true);
+				setter.setAccessible(true);
 				getters.add(getter);
 				setters.add(setter);
 			}
 		}
 		
-		return new ConversionHandler(converters, getters, setters, messageClass);
+		return new ConversionHandler(converters.toArray(new Converter[converters.size()]), getters.toArray(new Method[getters.size()]), setters.toArray(new Method[setters.size()]), messageClass);
 	}
 	
 	private static final void initConverters() {

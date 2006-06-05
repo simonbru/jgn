@@ -10,5 +10,11 @@ public class TestTCP {
 		SelectionKey key = ssc.register(selector, SelectionKey.OP_ACCEPT);
 		// Attach the message server to the key
 		//key.attach(messageServer);
+		while (true) {
+			if (selector.selectNow() > 0) {
+				SelectionKey testKey = selector.selectedKeys().iterator().next();
+				System.out.println("Received event on " + testKey);
+			}
+		}
 	}
 }

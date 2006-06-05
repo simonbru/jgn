@@ -1,5 +1,6 @@
 import java.net.*;
 import java.nio.channels.*;
+import java.util.Iterator;
 
 public class TestTCP {
 	public static void main(String[] args) throws Exception {
@@ -35,9 +36,24 @@ public class TestTCP {
 		// Attach the message server to the key
 		//key.attach(messageServer);
 		while (true) {
-			if (selector.selectNow() > 0) {
-				SelectionKey testKey = selector.selectedKeys().iterator().next();
-				System.out.println("Received event on " + testKey);
+         
+         int selectedKeys = selector.selectNow();
+         System.out.println("server->selectedKeys="+selectedKeys);
+         
+			if (selectedKeys > 0) {
+				Iterator<SelectionKey> keys= selector.selectedKeys().iterator();
+                while(keys.hasNext())
+                {
+                   SelectionKey activeKey = keys.next();
+                   keys.remove();
+                   
+                   if(activeKey.isAcceptable())
+                      System.out.println("key:acceptable");
+                   if(activeKey.isReadable())
+                      System.out.println("key:readable");
+                   if(activeKey.isWritable())
+                      System.out.println("key:writable");
+                }
 			}
 			Thread.sleep(1000);
 		}

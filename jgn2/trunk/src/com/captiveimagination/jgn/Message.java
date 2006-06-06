@@ -38,11 +38,11 @@ package com.captiveimagination.jgn;
  */
 public class Message
 {
-   public static final int PRIORITY_CRITICAL = 0;
-   public static final int PRIORITY_HIGH     = 1;
+   public static final int PRIORITY_CRITICAL = 4;
+   public static final int PRIORITY_HIGH     = 3;
    public static final int PRIORITY_NORMAL   = 2;
-   public static final int PRIORITY_LOW      = 3;
-   public static final int PRIORITY_TRIVIAL  = 4;
+   public static final int PRIORITY_LOW      = 1;
+   public static final int PRIORITY_TRIVIAL  = 0;
 
    public int getPriority()
    {

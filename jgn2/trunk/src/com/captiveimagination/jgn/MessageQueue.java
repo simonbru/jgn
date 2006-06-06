@@ -21,6 +21,11 @@ public class MessageQueue
    {
       int p = m.getPriority();
 
+      if (p < Message.PRIORITY_TRIVIAL)
+         throw new IllegalStateException();
+      if (p > Message.PRIORITY_CRITICAL)
+         throw new IllegalStateException();
+
       synchronized (lists[p])
       {
          lists[p].addLast(m);
@@ -29,7 +34,7 @@ public class MessageQueue
 
    public Message poll()
    {
-      for (int i = 0; i < lists.length; i++)
+      for (int i = lists.length - 1; i >= 0; i--)
       {
          synchronized (lists[i])
          {

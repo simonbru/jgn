@@ -29,39 +29,34 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Created: Jun 5, 2006
+ * Created: Jun 6, 2006
  */
-package com.captiveimagination.jgn;
-
-import java.io.*;
-import java.net.*;
-import java.nio.channels.*;
+package com.captiveimagination.jgn.queue;
 
 /**
+ * QueueFullException may be thrown if the MessageQueue
+ * is full and an attempt is made to add an additional
+ * message object.
+ * 
  * @author Matthew D. Hicks
+ * @author Skip M. B. Balk
  */
-public class NonBlockingTCPMessageServer extends MessageServer {
-	private Selector selector;
+public class QueueFullException extends RuntimeException {
+	private static final long serialVersionUID = 1L;
 
-	public NonBlockingTCPMessageServer(InetSocketAddress address) throws IOException {
-		super(address);
-
-		// Create Selector
-		selector = Selector.open();
-
-		// Setup Server Socket
-		ServerSocketChannel ssc = ServerSocketChannel.open();
-		ssc.socket().bind(address);
-		ssc.configureBlocking(false);
-		ssc.register(selector, SelectionKey.OP_ACCEPT);
+	public QueueFullException() {
+		super();
 	}
 
-	protected void processIncoming() {
+	public QueueFullException(String msg) {
+		super(msg);
 	}
 
-	public void sendMessage(Message message, InetSocketAddress address) {
+	public QueueFullException(String msg, Throwable cause) {
+		super(msg, cause);
 	}
 
-	public void close() {
+	public QueueFullException(Throwable cause) {
+		super(cause);
 	}
 }

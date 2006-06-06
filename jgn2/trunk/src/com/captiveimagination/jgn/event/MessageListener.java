@@ -29,54 +29,60 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Created: Jun 3, 2006
+ * Created: Jun 6, 2006
  */
-package com.captiveimagination.jgn;
+package com.captiveimagination.jgn.event;
+
+import com.captiveimagination.jgn.*;
 
 /**
- * Message is the foundation for all communication in JGN.
- * Extending classes simply need to add getter/setters for
- * their Messages and the data will be serialized across
- * when a message is sent.
+ * MessageListener receives events for both messages that are
+ * received and messages that are sent.
  * 
- * @author Skip M. B. Balk
  * @author Matthew D. Hicks
  */
-public abstract class Message {
-	public static final int PRIORITY_CRITICAL = 4;
-	public static final int PRIORITY_HIGH = 3;
-	public static final int PRIORITY_NORMAL = 2;
-	public static final int PRIORITY_LOW = 1;
-	public static final int PRIORITY_TRIVIAL = 0;
-	
-	private int priority;
-	
-	public Message() {
-		this.priority = PRIORITY_NORMAL;
-	}
-
+public interface MessageListener {
 	/**
-	 * Priority
+	 * Simply invokes the messageReceived(Message) or
+	 * messageSent(Message) methods when an event is
+	 * received.
+	 */
+	public static final int TYPE_BASIC = 1;
+	/**
+	 * Attempts to find the closest matching method
+	 * for the type of Message that has been sent
+	 * or received.
+	 */
+	public static final int TYPE_CLOSEST = 2;
+	/**
+	 * Cycles from the closest matches down invoking
+	 * every method for the received or sent event
+	 * that the Message corresponds to.
+	 */
+	public static final int TYPE_ALL = 3;
+	
+	/**
+	 * This method is invoked when a message has been
+	 * received.
+	 * 
+	 * @param message
+	 */
+	public void messageReceived(Message message);
+	
+	/**
+	 * This method is invoked when a message has been
+	 * sent.
+	 * 
+	 * @param message
+	 */
+	public void messageSent(Message message);
+	
+	/**
+	 * The type defines the style of method matching that
+	 * must occur when attempting to invoke a messageReceived
+	 * or messageSent event. 
 	 * 
 	 * @return
-	 * 		the priority of this Message object
 	 */
-	public int getPriority() {
-		return priority;
-	}
-	
-	/**
-	 * The priority defines how the message is
-	 * handled inside the queue for sending and
-	 * receiving of messages. A high priority message
-	 * that exists in the queue at the same time
-	 * as a low priority message even if the low
-	 * priority message was received first, should
-	 * be polled before the lower priority message.
-	 * 
-	 * @param priority
-	 */
-	public void setPriority(int priority) {
-		this.priority = priority;
-	}
+	public int getType();
 }

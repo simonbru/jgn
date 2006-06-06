@@ -31,15 +31,68 @@
  *
  * Created: Jun 6, 2006
  */
-package com.captiveimagination.jgn;
+package com.captiveimagination.jgn.queue;
+
+import java.util.LinkedList;
+
+import com.captiveimagination.jgn.*;
 
 /**
- *  @author Skip M. B. Balk
+ * @author Skip M. B. Balk
  */
-public interface MessageQueue {
-	public void add(Message m);
+public class MessagePriorityQueue implements MessageQueue {
+	LinkedList<Message>[] lists;
 
-	public Message poll();
+	public MessagePriorityQueue() {
+		this(1024);
+	}
 
-	public boolean isEmpty();
+	public MessagePriorityQueue(int max) {
+		this.max = max;
+		lists = new LinkedList[5];
+		for (int i = 0; i < lists.length; i++) {
+			lists[i] = new LinkedList<Message>();
+		}
+	}
+
+	private final int max;
+	private volatile int size = 0;
+
+	public void add(Message m) {
+		if (m == null) throw new NullPointerException("Message must not be null");
+
+		int p = m.getPriority();
+
+		if (p < Message.PRIORITY_TRIVIAL || p > Message.PRIORITY_CRITICAL)
+			throw new IllegalStateException("Invalid priority: " + m.getPriority());
+
+		if (size == max)
+			throw new QueueFullException("Queue reached max size: "+max);
+
+		synchronized (lists[p]) {
+			lists[p].addLast(m);
+		}
+
+		size++;
+	}
+	
+	public Message poll() {
+		if (isEmpty()) return null;
+
+		for (int i = lists.length - 1; i >= 0; i--) {
+			synchronized (lists[i]) {
+				if (lists[i].isEmpty()) continue;
+
+				Message m = lists[i].removeFirst();
+				size--;
+				return m;
+			}
+		}
+
+		return null;
+	}
+
+	public boolean isEmpty() {
+		return size == 0;
+	}
 }

@@ -38,7 +38,7 @@ import java.util.LinkedList;
 /**
  * @author Riven
  */
-public class MessagePriorityQueue {
+public class MessagePriorityQueue implements MessageQueue {
 	LinkedList<Message>[] lists;
 
 	public MessagePriorityQueue() {

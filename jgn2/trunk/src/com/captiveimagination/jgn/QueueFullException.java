@@ -4,6 +4,9 @@
 
 package com.captiveimagination.jgn;
 
+/**
+ * @author Skip M. B. Balk
+ */
 public class QueueFullException extends RuntimeException {
 	public QueueFullException() {
 		super();

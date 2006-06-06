@@ -33,6 +33,9 @@
  */
 package com.captiveimagination.jgn;
 
+/**
+ *  @author Skip M. B. Balk
+ */
 public interface MessageQueue {
 	public void add(Message m);
 

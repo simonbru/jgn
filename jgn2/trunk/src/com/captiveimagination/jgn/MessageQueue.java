@@ -41,7 +41,9 @@ public class MessageQueue {
             if (lists[i].isEmpty())
                continue;
 
-            return lists[i].getFirst();
+            Message m = lists[i].getFirst();
+            size--;
+            return m;
          }
       }
 

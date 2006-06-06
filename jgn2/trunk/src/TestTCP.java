@@ -40,26 +40,20 @@ public class TestTCP {
          int selectedKeys = selector.selectNow();
          System.out.println("server->selectedKeys="+selectedKeys);
          
-			if (selectedKeys > 0) {
 				Iterator<SelectionKey> keys= selector.selectedKeys().iterator();
                 while(keys.hasNext())
                 {
                    SelectionKey activeKey = keys.next();
                    keys.remove();
                    
-                   if(activeKey.isAcceptable()) {
-                	   if (activeKey.channel() instanceof ServerSocketChannel) {
-                		   ServerSocketChannel channel = (ServerSocketChannel)activeKey.channel();
-                		   SocketChannel socket = channel.accept();
-                		   System.out.println("socket created: " + socket);
-                	   }
-                   }
+                   System.out.println("key="+activeKey.channel());
+                   if(activeKey.isAcceptable())
+                      System.out.println("-acceptable");
                    if(activeKey.isReadable())
-                      System.out.println("key:readable");
+                      System.out.println("-readable");
                    if(activeKey.isWritable())
-                      System.out.println("key:writable");
+                      System.out.println("-writable");
                 }
-			}
 			Thread.sleep(1000);
 		}
 	}

@@ -49,8 +49,8 @@ public class MessagePriorityQueue {
 
 		int p = m.getPriority();
 
-		if (p < Message.PRIORITY_TRIVIAL || p > Message.PRIORITY_CRITICAL) throw new IllegalStateException("Invalid priority: " + m
-				.getPriority());
+		if (p < Message.PRIORITY_TRIVIAL || p > Message.PRIORITY_CRITICAL)
+			throw new IllegalStateException("Invalid priority: " + m.getPriority());
 
 		synchronized (lists[p]) {
 			lists[p].addLast(m);

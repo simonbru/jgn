@@ -29,54 +29,39 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Created: Jun 3, 2006
+ * Created: Jun 6, 2006
  */
 package com.captiveimagination.jgn;
 
+import java.net.*;
+
+import com.captiveimagination.jgn.event.*;
+
 /**
- * Message is the foundation for all communication in JGN.
- * Extending classes simply need to add getter/setters for
- * their Messages and the data will be serialized across
- * when a message is sent.
+ * Connections define the communication layer
+ * between the local machine and the remote
+ * machine.
  * 
- * @author Skip M. B. Balk
  * @author Matthew D. Hicks
  */
-public abstract class Message {
-	public static final int PRIORITY_CRITICAL = 4;
-	public static final int PRIORITY_HIGH = 3;
-	public static final int PRIORITY_NORMAL = 2;
-	public static final int PRIORITY_LOW = 1;
-	public static final int PRIORITY_TRIVIAL = 0;
+public abstract class Connection {
+	private InetSocketAddress address;
+	private GameNetwork network;
 	
-	private int priority;
-	
-	public Message() {
-		this.priority = PRIORITY_NORMAL;
-	}
-
-	/**
-	 * Priority
-	 * 
-	 * @return
-	 * 		the priority of this Message object
-	 */
-	public int getPriority() {
-		return priority;
+	public Connection(InetSocketAddress address, GameNetwork network) {
+		this.address = address;
+		this.network = network;
 	}
 	
 	/**
-	 * The priority defines how the message is
-	 * handled inside the queue for sending and
-	 * receiving of messages. A high priority message
-	 * that exists in the queue at the same time
-	 * as a low priority message even if the low
-	 * priority message was received first, should
-	 * be polled before the lower priority message.
+	 * Sends a message to the remote machine
+	 * that this connection is associated to.
 	 * 
-	 * @param priority
+	 * @param message
 	 */
-	public void setPriority(int priority) {
-		this.priority = priority;
+	public abstract void sendMessage(Message message);
+	
+	public void addMessageListener(MessageListener listener) {
+		
 	}
 }

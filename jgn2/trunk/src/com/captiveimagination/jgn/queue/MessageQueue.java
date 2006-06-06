@@ -29,54 +29,43 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Created: Jun 3, 2006
+ * Created: Jun 6, 2006
  */
-package com.captiveimagination.jgn;
+package com.captiveimagination.jgn.queue;
+
+import com.captiveimagination.jgn.*;
 
 /**
- * Message is the foundation for all communication in JGN.
- * Extending classes simply need to add getter/setters for
- * their Messages and the data will be serialized across
- * when a message is sent.
+ * MessageQueue implementations can be 
  * 
- * @author Skip M. B. Balk
  * @author Matthew D. Hicks
  */
-public abstract class Message {
-	public static final int PRIORITY_CRITICAL = 4;
-	public static final int PRIORITY_HIGH = 3;
-	public static final int PRIORITY_NORMAL = 2;
-	public static final int PRIORITY_LOW = 1;
-	public static final int PRIORITY_TRIVIAL = 0;
-	
-	private int priority;
-	
-	public Message() {
-		this.priority = PRIORITY_NORMAL;
-	}
+public interface MessageQueue {
+	/**
+	 * Adds a Message object to this queue.
+	 * 
+	 * @param m
+	 */
+	public void add(Message message);
 
 	/**
-	 * Priority
+	 * <code>poll</code> gets the highest priority
+	 * Message from the queue and removes it before
+	 * returning.
 	 * 
 	 * @return
-	 * 		the priority of this Message object
+	 * 		Highest priority Message FIFO'd to come out
+	 * 		or <code>null</code> if the queue is empty
 	 */
-	public int getPriority() {
-		return priority;
-	}
-	
+	public Message poll();
+
 	/**
-	 * The priority defines how the message is
-	 * handled inside the queue for sending and
-	 * receiving of messages. A high priority message
-	 * that exists in the queue at the same time
-	 * as a low priority message even if the low
-	 * priority message was received first, should
-	 * be polled before the lower priority message.
+	 * <code>isEmpty</code> is a very fast check to
+	 * see the state of the queue.
 	 * 
-	 * @param priority
+	 * @return
+	 * 		boolean representation of empty state of
+	 * 		this MessageQueue.
 	 */
-	public void setPriority(int priority) {
-		this.priority = priority;
-	}
+	public boolean isEmpty();
 }

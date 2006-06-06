@@ -8,61 +8,60 @@ public class TestTCP {
 			public void run() {
 				try {
 					serverThread();
-				} catch(Exception exc) {
+				} catch (Exception exc) {
 					exc.printStackTrace();
 				}
 			}
 		};
 		server.start();
-		
+
 		Thread client = new Thread() {
 			public void run() {
 				try {
 					clientThread();
-				} catch(Exception exc) {
+				} catch (Exception exc) {
 					exc.printStackTrace();
 				}
 			}
 		};
 		client.start();
 	}
-	
+
 	public static void serverThread() throws Exception {
 		Selector selector = Selector.open();
 		ServerSocketChannel ssc = ServerSocketChannel.open();
-		ssc.socket().bind(new InetSocketAddress(InetAddress.getLocalHost(), 1000));
+		ssc.socket()
+				.bind(new InetSocketAddress(InetAddress.getLocalHost(), 1000));
 		ssc.configureBlocking(false);
 		SelectionKey key = ssc.register(selector, SelectionKey.OP_ACCEPT);
 		// Attach the message server to the key
-		//key.attach(messageServer);
+		// key.attach(messageServer);
 		while (true) {
-         
-         int selectedKeys = selector.selectNow();
-         System.out.println("server->selectedKeys="+selectedKeys);
-         
-				Iterator<SelectionKey> keys= selector.selectedKeys().iterator();
-                while(keys.hasNext())
-                {
-                   SelectionKey activeKey = keys.next();
-                   keys.remove();
-                   
-                   System.out.println("key="+activeKey.channel());
-                   if(activeKey.isAcceptable())
-                      System.out.println("-acceptable");
-                   if(activeKey.isReadable())
-                      System.out.println("-readable");
-                   if(activeKey.isWritable())
-                      System.out.println("-writable");
-                }
+
+			int selectedKeys = selector.selectNow();
+			System.out.println("server->selectedKeys=" + selectedKeys);
+
+			Iterator<SelectionKey> keys = selector.selectedKeys().iterator();
+			while (keys.hasNext()) {
+				SelectionKey activeKey = keys.next();
+				keys.remove();
+
+				System.out.println("key=" + activeKey.channel());
+				if (activeKey.isAcceptable()) System.out.println("-acceptable");
+				if (activeKey.isReadable()) System.out.println("-readable");
+				if (activeKey.isWritable()) System.out.println("-writable");
+			}
 			Thread.sleep(1000);
 		}
 	}
-	
+
 	public static void clientThread() throws Exception {
 		Selector selector = Selector.open();
 		SocketChannel channel = SocketChannel.open();
-		channel.socket().bind(new InetSocketAddress(InetAddress.getLocalHost(), 2000));
-		channel.socket().connect(new InetSocketAddress(InetAddress.getLocalHost(), 1000), 5000);
+		channel.socket()
+				.bind(new InetSocketAddress(InetAddress.getLocalHost(), 2000));
+		channel.socket().connect(new InetSocketAddress(InetAddress
+				.getLocalHost(), 1000), 5000);
 		System.out.println("Connection established...I think....");
 	}
 }

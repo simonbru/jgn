@@ -20,8 +20,7 @@ public class MattTest {
 
 		ByteBuffer bb = ByteBuffer.allocate(1000);
 
-		ConversionHandler handler = ConversionHandler
-				.getConversionHandler(Test.class);
+		ConversionHandler handler = ConversionHandler.getConversionHandler(Test.class);
 		int max = 1000000;
 		long bytes = 0;
 		long time = System.nanoTime();
@@ -34,7 +33,6 @@ public class MattTest {
 			// System.out.println("Equals: " + test.equals(t2));
 		}
 		long finalTime = (System.nanoTime() - time) / 1000000;
-		System.out
-				.println("Took: " + finalTime + " ms for " + bytes + " bytes");
+		System.out.println("Took: " + finalTime + " ms for " + bytes + " bytes");
 	}
 }

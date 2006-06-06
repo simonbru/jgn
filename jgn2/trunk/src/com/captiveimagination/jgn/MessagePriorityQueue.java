@@ -36,7 +36,7 @@ package com.captiveimagination.jgn;
 import java.util.LinkedList;
 
 /**
- * @author Riven
+ * @author Skip M. B. Balk
  */
 public class MessagePriorityQueue implements MessageQueue {
 	LinkedList<Message>[] lists;

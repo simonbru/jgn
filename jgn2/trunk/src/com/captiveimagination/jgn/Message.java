@@ -34,6 +34,7 @@
 package com.captiveimagination.jgn;
 
 /**
+ * @author Skip M. B. Balk
  * @author Matthew D. Hicks
  */
 public class Message {

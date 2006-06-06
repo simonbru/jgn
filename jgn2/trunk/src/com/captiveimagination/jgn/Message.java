@@ -36,6 +36,16 @@ package com.captiveimagination.jgn;
 /**
  * @author Matthew D. Hicks
  */
-public class Message {
+public class Message
+{
+   public static final int PRIORITY_CRITICAL = 0;
+   public static final int PRIORITY_HIGH     = 1;
+   public static final int PRIORITY_NORMAL   = 2;
+   public static final int PRIORITY_LOW      = 3;
+   public static final int PRIORITY_TRIVIAL  = 4;
 
+   public int getPriority()
+   {
+      return PRIORITY_CRITICAL;
+   }
 }

@@ -47,8 +47,13 @@ public class TestTCP {
                    SelectionKey activeKey = keys.next();
                    keys.remove();
                    
-                   if(activeKey.isAcceptable())
-                      System.out.println("key:acceptable");
+                   if(activeKey.isAcceptable()) {
+                	   if (activeKey.channel() instanceof ServerSocketChannel) {
+                		   ServerSocketChannel channel = (ServerSocketChannel)activeKey.channel();
+                		   SocketChannel socket = channel.accept();
+                		   System.out.println("socket created: " + socket);
+                	   }
+                   }
                    if(activeKey.isReadable())
                       System.out.println("key:readable");
                    if(activeKey.isWritable())

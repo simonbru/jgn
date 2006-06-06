@@ -37,7 +37,7 @@ public class MessageQueue {
 			synchronized (lists[i]) {
 				if (lists[i].isEmpty()) continue;
 
-				Message m = lists[i].getFirst();
+				Message m = lists[i].removeFirst();
 				size--;
 				return m;
 			}

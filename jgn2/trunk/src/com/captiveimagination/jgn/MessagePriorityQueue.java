@@ -42,12 +42,18 @@ public class MessagePriorityQueue implements MessageQueue {
 	LinkedList<Message>[] lists;
 
 	public MessagePriorityQueue() {
+		this(1024);
+	}
+
+	public MessagePriorityQueue(int max) {
+		this.max = max;
 		lists = new LinkedList[5];
 		for (int i = 0; i < lists.length; i++) {
 			lists[i] = new LinkedList<Message>();
 		}
 	}
 
+	private final int max;
 	private volatile int size = 0;
 
 	/**
@@ -61,6 +67,9 @@ public class MessagePriorityQueue implements MessageQueue {
 
 		if (p < Message.PRIORITY_TRIVIAL || p > Message.PRIORITY_CRITICAL)
 			throw new IllegalStateException("Invalid priority: " + m.getPriority());
+
+		if (size == max)
+			throw new FullQueueException("Queue reached max size: "+max);
 
 		synchronized (lists[p]) {
 			lists[p].addLast(m);

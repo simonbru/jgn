@@ -49,10 +49,63 @@ public abstract class Message {
 	public static final int PRIORITY_LOW = 1;
 	public static final int PRIORITY_TRIVIAL = 0;
 	
+	private short typeId;
+	private long id;
 	private int priority;
 	
 	public Message() {
+		// Assign default priority
 		this.priority = PRIORITY_NORMAL;
+		
+		// Generate unique id
+		id = Math.round(Math.random() * Long.MAX_VALUE);
+        id += Math.round(Math.random() * Long.MIN_VALUE);
+	}
+	
+	/**
+	 * Unique message type id that differentiates one
+	 * message class from another.
+	 * 
+	 * @return
+	 * 		typeId
+	 */
+	public short getTypeId() {
+		return typeId;
+	}
+	
+	/**
+	 * Sets the typeId for this message. This is done
+	 * automatically when the Message is registered, so
+	 * this should never be invoked manually.
+	 * 
+	 * @param typeId
+	 */
+	public void setTypeId(short typeId) {
+		this.typeId = typeId;
+	}
+	
+	/**
+	 * Unique message id from this message server that
+	 * is generated on instantiation.
+	 * 
+	 * @return
+	 */
+	public long getId() {
+		return id;
+	}
+	
+	/**
+	 * Unique message id from this message server that
+	 * is generated on instantiation. This method is
+	 * invoked on instantiation and overridden when a
+	 * message is received from a remote client to keep
+	 * the id as is sent, so this should never be called
+	 * externally.
+	 * 
+	 * @param id
+	 */
+	public void setId(long id) {
+		this.id = id;
 	}
 
 	/**

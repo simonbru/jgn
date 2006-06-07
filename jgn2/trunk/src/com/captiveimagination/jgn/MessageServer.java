@@ -51,27 +51,22 @@ public abstract class MessageServer {
 		return address;
 	}
 
-	protected abstract void processIncoming();
-
+	public abstract MessageClient connect(InetSocketAddress address);
+	
+	public abstract void sendMessage(MessageClient client, Message message);
+	
+	public abstract boolean disconnect(MessageClient client);
+	
 	/**
-	 * Should be called internally by processIncoming when a new Message
-	 * arrives.
-	 * @param message
+	 * Closes all open connections to remote clients
 	 */
-	protected void receivedMessage(Message message) {
-
-	}
-
-	public abstract void sendMessage(Message message, InetSocketAddress address);
-
-	/**
-	 * Should be called internally by sendMessage when a message has been
-	 * successfully sent.
-	 * @param message
-	 */
-	protected void sentMessage(Message message) {
-
-	}
-
 	public abstract void close();
+	
+	protected abstract void updateIncoming();
+	
+	protected abstract void updateOutgoing();
+	
+	protected abstract void updateEvents();
+	
+	protected abstract void updateConnections();
 }

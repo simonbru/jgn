@@ -43,25 +43,6 @@ import com.captiveimagination.jgn.*;
  */
 public interface MessageListener {
 	/**
-	 * Simply invokes the messageReceived(Message) or
-	 * messageSent(Message) methods when an event is
-	 * received.
-	 */
-	public static final int TYPE_BASIC = 1;
-	/**
-	 * Attempts to find the closest matching method
-	 * for the type of Message that has been sent
-	 * or received.
-	 */
-	public static final int TYPE_CLOSEST = 2;
-	/**
-	 * Cycles from the closest matches down invoking
-	 * every method for the received or sent event
-	 * that the Message corresponds to.
-	 */
-	public static final int TYPE_ALL = 3;
-	
-	/**
 	 * This method is invoked when a message has been
 	 * received.
 	 * 
@@ -76,13 +57,4 @@ public interface MessageListener {
 	 * @param message
 	 */
 	public void messageSent(Message message);
-	
-	/**
-	 * The type defines the style of method matching that
-	 * must occur when attempting to invoke a messageReceived
-	 * or messageSent event. 
-	 * 
-	 * @return
-	 */
-	public int getType();
 }

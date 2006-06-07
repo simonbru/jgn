@@ -33,12 +33,37 @@
  */
 package com.captiveimagination.jgn;
 
+import java.net.*;
+
+import com.captiveimagination.jgn.event.*;
+
 /**
- * GameNetwork represents the foundation of JGN and allows
- * direct access to the majority of functionality within
- * the API.
+ * MessageClient defines the communication layer
+ * between the local machine and the remote
+ * machine.
  * 
  * @author Matthew D. Hicks
  */
-public class GameNetwork {
+public class MessageClient {
+	private InetSocketAddress address;
+	private MessageServer server;
+	
+	public MessageClient(InetSocketAddress address, MessageServer server) {
+		this.address = address;
+		this.server = server;
+	}
+	
+	/**
+	 * Sends a message to the remote machine
+	 * that this connection is associated to.
+	 * 
+	 * @param message
+	 */
+	public void sendMessage(Message message) {
+		// TODO call off to send from the server
+	}
+	
+	public void addMessageListener(MessageListener listener) {
+		
+	}
 }

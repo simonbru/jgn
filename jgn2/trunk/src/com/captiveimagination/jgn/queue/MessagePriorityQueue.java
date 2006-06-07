@@ -38,11 +38,16 @@ import java.util.LinkedList;
 import com.captiveimagination.jgn.*;
 
 /**
+ * @author Matthew D. Hicks
  * @author Skip M. B. Balk
  */
 public class MessagePriorityQueue implements MessageQueue {
-	LinkedList<Message>[] lists;
-
+	// TODO add functionality for RealtimeMessage
+	// TODO HashMap<short,short> <-- short for message type id, short for order id
+	private LinkedList<Message>[] lists;
+	private final int max;
+	private volatile int size = 0;
+	
 	public MessagePriorityQueue() {
 		this(1024);
 	}
@@ -54,9 +59,6 @@ public class MessagePriorityQueue implements MessageQueue {
 			lists[i] = new LinkedList<Message>();
 		}
 	}
-
-	private final int max;
-	private volatile int size = 0;
 
 	public void add(Message m) {
 		if (m == null) throw new NullPointerException("Message must not be null");

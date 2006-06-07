@@ -41,19 +41,9 @@ import com.captiveimagination.jgn.*;
  * @author Matthew D. Hicks
  */
 public class MessageAdapter implements MessageListener {
-	private int type;
-	
-	public MessageAdapter(int type) {
-		this.type = type;
-	}
-	
 	public void messageReceived(Message message) {
 	}
 
 	public void messageSent(Message message) {
-	}
-
-	public int getType() {
-		return type;
 	}
 }

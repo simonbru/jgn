@@ -115,7 +115,7 @@ public class ConversionHandler {
 		return new ConversionHandler(converters.toArray(new Converter[converters.size()]), getters.toArray(new Method[getters.size()]), setters.toArray(new Method[setters.size()]), messageClass);
 	}
 	
-	private static final void initConverters() {
+	public static final void initConverters() {
 		if (Converter.CONVERTERS.size() == 0) {
 			Converter.CONVERTERS.put(boolean.class, new BooleanConverter());
 			Converter.CONVERTERS.put(byte.class, new ByteConverter());
@@ -127,6 +127,7 @@ public class ConversionHandler {
 			Converter.CONVERTERS.put(double.class, new DoubleConverter());
 			
 			Converter.CONVERTERS.put(String.class, new StringConverter());
+			Converter.CONVERTERS.put(String[].class, new StringArrayConverter());
 			
 			Converter.CONVERTERS.put(boolean[].class, new BooleanArrayConverter());
 			Converter.CONVERTERS.put(byte[].class, new ByteArrayConverter());

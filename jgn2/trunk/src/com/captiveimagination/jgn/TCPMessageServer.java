@@ -29,72 +29,74 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Created: Jun 5, 2006
+ * Created: Jun 7, 2006
  */
 package com.captiveimagination.jgn;
 
 import java.io.*;
 import java.net.*;
+import java.nio.channels.*;
+import java.util.*;
 
 /**
- * MessageServer is the abstract foundation from which all sending and receiving
- * of Messages occur.
  * @author Matthew D. Hicks
  */
-public abstract class MessageServer {
-	private InetSocketAddress address;
-
-	public MessageServer(InetSocketAddress address) {
-		this.address = address;
+public class TCPMessageServer extends MessageServer {
+	private Selector selector;
+	
+	public TCPMessageServer(InetSocketAddress address) throws IOException {
+		super(address);
+		selector = Selector.open();
+		
+		ServerSocketChannel ssc = ServerSocketChannel.open();
+		ssc.socket().bind(address);
+		ssc.configureBlocking(false);
+		ssc.register(selector, SelectionKey.OP_ACCEPT);
 	}
 
-	/**
-	 * @return
-	 * 		the InetSocketAddress representing the remote host
-	 * 		machine
-	 */
-	public InetSocketAddress getSocketAddress() {
-		return address;
+	public MessageClient connect(InetSocketAddress address) {
+		return null;
 	}
 
-	/**
-	 * Establishes a connection the remote host distinguished by
-	 * <code>address</code>.
-	 * 
-	 * @param address
-	 * @return
-	 * 		MessageClient representing the connection to the remote
-	 * 		server
-	 */
-	public abstract MessageClient connect(InetSocketAddress address);
+	public void sendMessage(MessageClient client, Message message) {
+	}
+
+	public boolean disconnect(MessageClient client) {
+		return false;
+	}
+
+	public void close() {
+	}
 	
-	/**
-	 * Sends a message to an established connection.
-	 * 
-	 * @param client
-	 * @param message
-	 */
-	public abstract void sendMessage(MessageClient client, Message message);
+	public void updateTraffic() throws IOException {
+		int selectedKeys = selector.selectNow();
+		System.out.println("server->selectedKeys=" + selectedKeys);
+
+		Iterator<SelectionKey> keys = selector.selectedKeys().iterator();
+		while (keys.hasNext()) {
+			SelectionKey activeKey = keys.next();
+			keys.remove();
+			
+			if (activeKey.isAcceptable()) {
+				accept(activeKey.channel());
+			} else if (activeKey.isReadable()) {
+				read(activeKey.channel());
+			} else if (activeKey.isWritable()) {
+				write(activeKey.channel());
+			}
+		}
+	}
 	
-	/**
-	 * Disconnects from the referenced <code>client</code> and sends
-	 * a notification to the remote host informing of the break in
-	 * communication.
-	 * 
-	 * @param client
-	 * @return
-	 * 		true if the disconnect was graceful
-	 */
-	public abstract boolean disconnect(MessageClient client);
+	private void accept(SelectableChannel channel) {
+		// TODO accept connection
+		// TODO call off to ConnectionListener
+	}
 	
-	/**
-	 * Closes all open connections to remote clients
-	 */
-	public abstract void close();
+	private void read(SelectableChannel channel) {
+		// TODO read the incoming message
+	}
 	
-	public abstract void updateTraffic() throws IOException;
-	
-	public void updateEvents() {
-		// TODO implement
+	private void write(SelectableChannel channel) {
+		// TODO writable...
 	}
 }

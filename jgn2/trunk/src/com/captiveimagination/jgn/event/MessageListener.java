@@ -34,6 +34,7 @@
 package com.captiveimagination.jgn.event;
 
 import com.captiveimagination.jgn.*;
+import com.captiveimagination.jgn.message.*;
 
 /**
  * MessageListener receives events for both messages that are

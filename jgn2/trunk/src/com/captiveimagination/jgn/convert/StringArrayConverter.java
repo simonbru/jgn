@@ -38,6 +38,7 @@ import java.lang.reflect.*;
 import java.nio.*;
 
 import com.captiveimagination.jgn.*;
+import com.captiveimagination.jgn.message.*;
 
 /**
  * @author Matthew D. Hicks
@@ -50,13 +51,41 @@ public class StringArrayConverter implements Converter {
 	public void set(Message message, Method setter, ByteBuffer buffer)
 			throws IllegalArgumentException, IllegalAccessException,
 			InvocationTargetException, IOException {
-		throw new RuntimeException("String[] conversion not yet implemented!");
+		int length = buffer.getInt();
+		String[] array = null;
+		if (length != -1) {
+			array = new String[length];
+			byte[] b;
+			for (int i = 0; i < length; i++) {
+				int l = buffer.getInt();
+				if (l == -1) continue;
+				b = new byte[l];
+				buffer.get(b);
+				array[i] = new String(b, "UTF-8");
+			}
+		}
+		setter.invoke(message, new Object[] {array});
 	}
 
 	public void get(Message message, Method getter, ByteBuffer buffer)
 			throws IllegalArgumentException, IllegalAccessException,
 			InvocationTargetException, IOException {
-		throw new RuntimeException("String[] conversion not yet implemented!");
+		String[] array = (String[])getter.invoke(message, EMPTY_ARRAY);
+		if (array == null) {
+			buffer.putInt(-1);
+		} else {
+			buffer.putInt(array.length);
+			for (String s : array) {
+				//buffer.put(b);
+				if (s == null) {
+					buffer.putInt(-1);
+				} else {
+					byte[] b = s.getBytes("UTF-8");
+					buffer.putInt(b.length);
+					buffer.put(b);
+				}
+			}
+		}
 	}
 
 }

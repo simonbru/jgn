@@ -29,59 +29,71 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Created: Jun 6, 2006
+ * Created: Jun 10, 2006
  */
-package com.captiveimagination.jgn;
+package com.captiveimagination.jgn.test.basic;
 
 import java.net.*;
+import java.nio.channels.*;
 
+import com.captiveimagination.jgn.*;
 import com.captiveimagination.jgn.event.*;
 import com.captiveimagination.jgn.message.*;
-import com.captiveimagination.jgn.queue.*;
+import com.captiveimagination.jgn.tcp.*;
 
 /**
- * MessageClient defines the communication layer
- * between the local machine and the remote
- * machine.
- * 
  * @author Matthew D. Hicks
  */
-public class MessageClient {
-	private InetSocketAddress address;
-	private MessageServer server;
-	private MessageQueue outgoingQueue;				// Waiting to be sent via updateTraffic()
-	
-	public MessageClient(InetSocketAddress address, MessageServer server) {
-		this.address = address;
-		this.server = server;
-		outgoingQueue = new MessagePriorityQueue();
+public class TestMessageServer {
+	public static void main(String[] args) throws Exception {
+		JGN.register(BasicMessage.class);
+		final MessageServer server = new TCPMessageServer(new InetSocketAddress(InetAddress.getLocalHost(), 1000));
+		server.addConnectionListener(new ConnectionListener() {
+			public void connected(MessageClient client) {
+				System.out.println("Connected: " + client);
+			}
+
+			public void negotiationComplete(MessageClient client) {
+				System.out.println("Negotiation completed successfully with: " + client);
+			}
+			
+			public void disconnected(MessageClient client) {
+				System.out.println("Disconnected: " + client);
+			}
+		});
+		server.addMessageListener(new MessageListener() {
+			public void messageReceived(Message message) {
+				System.out.println("Message Received: " + message);
+			}
+
+			public void messageSent(Message message) {
+				System.out.println("Message Sent: " + message);
+			}
+			
+		});
+		Thread t = new Thread() {
+			public void run() {
+				try {
+					while (true) {
+						server.update();
+						Thread.sleep(500);
+					}
+				} catch(Exception exc) {
+					exc.printStackTrace();
+				}
+			}
+		};
+		t.start();
+		clientThread();
 	}
 	
-	/**
-	 * Sends a message to the remote machine
-	 * that this connection is associated to.
-	 * The Message is submitted to the outgoing
-	 * queue and processed from the associated
-	 * MessageServer's updateTraffic method.
-	 * 
-	 * @param message
-	 */
-	public void sendMessage(Message message) {
-		outgoingQueue.add(message);
-	}
-	
-	/**
-	 * Represents the MessageQueue containing all messages that
-	 * need to be sent to this client.
-	 * 
-	 * @return
-	 * 		MessageQueue instance of outgoingQueue
-	 */
-	public MessageQueue getOutgoingQueue() {
-		return outgoingQueue;
-	}
-	
-	public void addMessageListener(MessageListener listener) {
-		
+	public static void clientThread() throws Exception {
+		Selector selector = Selector.open();
+		SocketChannel channel = SocketChannel.open();
+		channel.socket()
+				.bind(new InetSocketAddress(InetAddress.getLocalHost(), 2000));
+		channel.socket().connect(new InetSocketAddress(InetAddress
+				.getLocalHost(), 1000), 5000);
+		System.out.println("Connection established...I think....");
 	}
 }

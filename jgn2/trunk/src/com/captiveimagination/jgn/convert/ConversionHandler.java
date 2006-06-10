@@ -39,6 +39,7 @@ import java.nio.*;
 import java.util.*;
 
 import com.captiveimagination.jgn.*;
+import com.captiveimagination.jgn.message.*;
 
 /**
  * ConversionHandlers exist to process incoming
@@ -75,7 +76,7 @@ public class ConversionHandler {
 		}
 	}
 	
-	public static final ConversionHandler getConversionHandler(Class messageClass) {
+	public static final synchronized ConversionHandler getConversionHandler(Class<? extends Message> messageClass) {
 		initConverters();
 		
 		// Introspect Class

@@ -39,6 +39,7 @@ import java.nio.*;
 import java.util.*;
 
 import com.captiveimagination.jgn.*;
+import com.captiveimagination.jgn.message.*;
 
 /**
  * Converter defines the methods necessary to convert from a ByteBuffer

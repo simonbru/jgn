@@ -33,7 +33,7 @@
  */
 package com.captiveimagination.jgn.event;
 
-import com.captiveimagination.jgn.*;
+import com.captiveimagination.jgn.message.*;
 
 /**
  * Convenience implementation around MessageListener

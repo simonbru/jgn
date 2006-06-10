@@ -1,4 +1,5 @@
 import com.captiveimagination.jgn.*;
+import com.captiveimagination.jgn.message.*;
 
 public class Test extends Message {
 	// String v;

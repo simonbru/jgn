@@ -29,74 +29,18 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Created: Jun 7, 2006
+ * Created: Jun 10, 2006
  */
-package com.captiveimagination.jgn;
-
-import java.io.*;
-import java.net.*;
-import java.nio.channels.*;
-import java.util.*;
+package com.captiveimagination.jgn.message;
 
 /**
+ * A custom Message implementing UniqueMessage will be assigned a unique
+ * identifier when the message is sent and can be differentiated by getId()
+ * on the Message. If the Message does not implement this getId() will not
+ * be passed across or generated internally when the message is sent.
+ * 
  * @author Matthew D. Hicks
  */
-public class TCPMessageServer extends MessageServer {
-	private Selector selector;
-	
-	public TCPMessageServer(InetSocketAddress address) throws IOException {
-		super(address);
-		selector = Selector.open();
-		
-		ServerSocketChannel ssc = ServerSocketChannel.open();
-		ssc.socket().bind(address);
-		ssc.configureBlocking(false);
-		ssc.register(selector, SelectionKey.OP_ACCEPT);
-	}
+public interface UniqueMessage {
 
-	public MessageClient connect(InetSocketAddress address) {
-		return null;
-	}
-
-	public void sendMessage(MessageClient client, Message message) {
-	}
-
-	public boolean disconnect(MessageClient client) {
-		return false;
-	}
-
-	public void close() {
-	}
-	
-	public void updateTraffic() throws IOException {
-		int selectedKeys = selector.selectNow();
-		System.out.println("server->selectedKeys=" + selectedKeys);
-
-		Iterator<SelectionKey> keys = selector.selectedKeys().iterator();
-		while (keys.hasNext()) {
-			SelectionKey activeKey = keys.next();
-			keys.remove();
-			
-			if (activeKey.isAcceptable()) {
-				accept(activeKey.channel());
-			} else if (activeKey.isReadable()) {
-				read(activeKey.channel());
-			} else if (activeKey.isWritable()) {
-				write(activeKey.channel());
-			}
-		}
-	}
-	
-	private void accept(SelectableChannel channel) {
-		// TODO accept connection
-		// TODO call off to ConnectionListener
-	}
-	
-	private void read(SelectableChannel channel) {
-		// TODO read the incoming message
-	}
-	
-	private void write(SelectableChannel channel) {
-		// TODO writable...
-	}
 }

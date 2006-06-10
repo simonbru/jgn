@@ -1,7 +1,7 @@
 import java.nio.*;
 
-import com.captiveimagination.jgn.Message;
 import com.captiveimagination.jgn.convert.*;
+import com.captiveimagination.jgn.message.*;
 
 /**
  * MattTest.java Created: Jun 3, 2006

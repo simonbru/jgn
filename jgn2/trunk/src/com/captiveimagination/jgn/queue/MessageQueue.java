@@ -34,6 +34,7 @@
 package com.captiveimagination.jgn.queue;
 
 import com.captiveimagination.jgn.*;
+import com.captiveimagination.jgn.message.*;
 
 /**
  * MessageQueue implementations can be 

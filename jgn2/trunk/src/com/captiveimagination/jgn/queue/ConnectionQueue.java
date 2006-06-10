@@ -29,41 +29,50 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Created: Jun 3, 2006
+ * Created: Jun 10, 2006
  */
-package com.captiveimagination.jgn.convert;
+package com.captiveimagination.jgn.queue;
 
-import java.lang.reflect.*;
-import java.nio.*;
+import java.util.*;
 
 import com.captiveimagination.jgn.*;
-import com.captiveimagination.jgn.message.*;
 
 /**
+ * ConnectionQueue is a thread-safe queue for containing MesageClients until
+ * they can be processed by the ConnectionListeners.
+ * 
  * @author Matthew D. Hicks
  */
-public class IntegerArrayConverter implements Converter {
-	public void set(Message message, Method setter, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
-		int length = buffer.getInt();
-		int[] array = null;
-		if (length != -1) {
-			array = new int[length];
-			for (int i = 0; i < length; i++) {
-				array[i] = buffer.getInt();
-			}
-		}
-		setter.invoke(message, new Object[] {array});
+public class ConnectionQueue {
+	private LinkedList<MessageClient> queue;
+	private volatile int size = 0;
+	
+	public ConnectionQueue() {
+		queue = new LinkedList<MessageClient>();
 	}
 
-	public void get(Message message, Method getter, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
-		int[] array = (int[])getter.invoke(message, EMPTY_ARRAY);
-		if (array == null) {
-			buffer.putInt(-1);
-		} else {
-			buffer.putInt(array.length);
-			for (int b : array) {
-				buffer.putInt(b);
-			}
+	public void add(MessageClient c) {
+		if (c == null) throw new NullPointerException("MessageClient must not be null");
+
+
+		synchronized (queue) {
+			queue.addLast(c);
 		}
+
+		size++;
+	}
+	
+	public MessageClient poll() {
+		if (isEmpty()) return null;
+
+		synchronized (queue) {
+			MessageClient c = queue.removeFirst();
+			if (c != null) size--;
+			return c;
+		}
+	}
+
+	public boolean isEmpty() {
+		return size == 0;
 	}
 }

@@ -31,7 +31,7 @@
  *
  * Created: Jun 3, 2006
  */
-package com.captiveimagination.jgn;
+package com.captiveimagination.jgn.message;
 
 /**
  * Message is the foundation for all communication in JGN.
@@ -43,50 +43,30 @@ package com.captiveimagination.jgn;
  * @author Matthew D. Hicks
  */
 public abstract class Message {
-	public static final int PRIORITY_CRITICAL = 4;
-	public static final int PRIORITY_HIGH = 3;
-	public static final int PRIORITY_NORMAL = 2;
-	public static final int PRIORITY_LOW = 1;
-	public static final int PRIORITY_TRIVIAL = 0;
+	public static final byte PRIORITY_CRITICAL = 4;
+	public static final byte PRIORITY_HIGH = 3;
+	public static final byte PRIORITY_NORMAL = 2;
+	public static final byte PRIORITY_LOW = 1;
+	public static final byte PRIORITY_TRIVIAL = 0;
 	
-	private short typeId;
 	private long id;
-	private int priority;
+	private byte priority;
 	
 	public Message() {
 		// Assign default priority
 		this.priority = PRIORITY_NORMAL;
 		
 		// Generate unique id
-		id = Math.round(Math.random() * Long.MAX_VALUE);
-        id += Math.round(Math.random() * Long.MIN_VALUE);
-	}
-	
-	/**
-	 * Unique message type id that differentiates one
-	 * message class from another.
-	 * 
-	 * @return
-	 * 		typeId
-	 */
-	public short getTypeId() {
-		return typeId;
-	}
-	
-	/**
-	 * Sets the typeId for this message. This is done
-	 * automatically when the Message is registered, so
-	 * this should never be invoked manually.
-	 * 
-	 * @param typeId
-	 */
-	public void setTypeId(short typeId) {
-		this.typeId = typeId;
+		if (this instanceof UniqueMessage) {
+			id = Math.round(Math.random() * Long.MAX_VALUE);
+			id += Math.round(Math.random() * Long.MIN_VALUE);
+		}
 	}
 	
 	/**
 	 * Unique message id from this message server that
-	 * is generated on instantiation.
+	 * is generated on instantiation if the message implements
+	 * UniqueMessage.
 	 * 
 	 * @return
 	 */
@@ -96,7 +76,8 @@ public abstract class Message {
 	
 	/**
 	 * Unique message id from this message server that
-	 * is generated on instantiation. This method is
+	 * is generated on instantiation. (if the message
+	 * implements UniqueMessage). This method is
 	 * invoked on instantiation and overridden when a
 	 * message is received from a remote client to keep
 	 * the id as is sent, so this should never be called
@@ -114,7 +95,7 @@ public abstract class Message {
 	 * @return
 	 * 		the priority of this Message object
 	 */
-	public int getPriority() {
+	public byte getPriority() {
 		return priority;
 	}
 	
@@ -129,7 +110,7 @@ public abstract class Message {
 	 * 
 	 * @param priority
 	 */
-	public void setPriority(int priority) {
+	public void setPriority(byte priority) {
 		this.priority = priority;
 	}
 }

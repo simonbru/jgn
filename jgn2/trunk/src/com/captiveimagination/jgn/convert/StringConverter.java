@@ -38,6 +38,7 @@ import java.lang.reflect.*;
 import java.nio.*;
 
 import com.captiveimagination.jgn.*;
+import com.captiveimagination.jgn.message.*;
 
 /**
  * @author Matthew D. Hicks

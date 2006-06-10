@@ -29,41 +29,43 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Created: Jun 3, 2006
+ * Created: Jun 10, 2006
  */
-package com.captiveimagination.jgn.convert;
-
-import java.lang.reflect.*;
-import java.nio.*;
+package com.captiveimagination.jgn.event;
 
 import com.captiveimagination.jgn.*;
-import com.captiveimagination.jgn.message.*;
 
 /**
+ * ConnectionListener implementations can be added
+ * to any MessageServer to be notified when a
+ * connection has been established or lost.
+ * 
  * @author Matthew D. Hicks
  */
-public class IntegerArrayConverter implements Converter {
-	public void set(Message message, Method setter, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
-		int length = buffer.getInt();
-		int[] array = null;
-		if (length != -1) {
-			array = new int[length];
-			for (int i = 0; i < length; i++) {
-				array[i] = buffer.getInt();
-			}
-		}
-		setter.invoke(message, new Object[] {array});
-	}
-
-	public void get(Message message, Method getter, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
-		int[] array = (int[])getter.invoke(message, EMPTY_ARRAY);
-		if (array == null) {
-			buffer.putInt(-1);
-		} else {
-			buffer.putInt(array.length);
-			for (int b : array) {
-				buffer.putInt(b);
-			}
-		}
-	}
+public interface ConnectionListener {
+	/**
+	 * This method is invoked when a connection has
+	 * been successfully established with a MessageClient
+	 * 
+	 * @param client
+	 */
+	public void connected(MessageClient client);
+	
+	/**
+	 * This method is invoked when a connection has
+	 * been successfully established and the negotiation
+	 * process has completed successfully.
+	 * 
+	 * @param client
+	 */
+	public void negotiationComplete(MessageClient client);
+	
+	/**
+	 * This method is invoked when a connection has
+	 * been disconnected either gracefully or via
+	 * timeout.
+	 * 
+	 * @param client
+	 */
+	public void disconnected(MessageClient client);
 }

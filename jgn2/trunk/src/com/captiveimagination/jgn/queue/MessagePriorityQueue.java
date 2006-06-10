@@ -36,6 +36,7 @@ package com.captiveimagination.jgn.queue;
 import java.util.LinkedList;
 
 import com.captiveimagination.jgn.*;
+import com.captiveimagination.jgn.message.*;
 
 /**
  * @author Matthew D. Hicks

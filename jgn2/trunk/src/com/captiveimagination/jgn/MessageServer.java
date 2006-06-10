@@ -35,6 +35,11 @@ package com.captiveimagination.jgn;
 
 import java.io.*;
 import java.net.*;
+import java.util.*;
+
+import com.captiveimagination.jgn.event.*;
+import com.captiveimagination.jgn.message.*;
+import com.captiveimagination.jgn.queue.*;
 
 /**
  * MessageServer is the abstract foundation from which all sending and receiving
@@ -43,9 +48,34 @@ import java.net.*;
  */
 public abstract class MessageServer {
 	private InetSocketAddress address;
+	private MessageQueue incomingMessages;			// Waiting for MessageListener handling
+	private MessageQueue outgoingMessages;			// Waiting for MessageListener handling
+	private ConnectionQueue incomingConnections;	// Waiting for ConnectionListener handling
+	private ArrayList<ConnectionListener> connectionListeners;
+	private ArrayList<MessageListener> messageListeners;
 
 	public MessageServer(InetSocketAddress address) {
 		this.address = address;
+		incomingMessages = new MessagePriorityQueue();
+		outgoingMessages = new MessagePriorityQueue();
+		incomingConnections = new ConnectionQueue();
+		connectionListeners = new ArrayList<ConnectionListener>();
+		messageListeners = new ArrayList<MessageListener>();
+		
+		addConnectionListener(InternalListener.getInstance());
+		addMessageListener(InternalListener.getInstance());
+	}
+	
+	protected MessageQueue getIncomingMessageQueue() {
+		return incomingMessages;
+	}
+	
+	protected MessageQueue getOutgoingMessageQueue() {
+		return outgoingMessages;
+	}
+	
+	protected ConnectionQueue getIncomingConnectionQueue() {
+		return incomingConnections;
 	}
 
 	/**
@@ -58,43 +88,125 @@ public abstract class MessageServer {
 	}
 
 	/**
-	 * Establishes a connection the remote host distinguished by
+	 * Establishes a connection to the remote host distinguished by
 	 * <code>address</code>.
 	 * 
 	 * @param address
 	 * @return
-	 * 		MessageClient representing the connection to the remote
-	 * 		server
+	 * 		MessageClient will only be returned if a connection has
+	 * 		already been established to this client, otherwise, it
+	 * 		will always return null.
 	 */
 	public abstract MessageClient connect(InetSocketAddress address);
-	
-	/**
-	 * Sends a message to an established connection.
-	 * 
-	 * @param client
-	 * @param message
-	 */
-	public abstract void sendMessage(MessageClient client, Message message);
-	
-	/**
-	 * Disconnects from the referenced <code>client</code> and sends
-	 * a notification to the remote host informing of the break in
-	 * communication.
-	 * 
-	 * @param client
-	 * @return
-	 * 		true if the disconnect was graceful
-	 */
-	public abstract boolean disconnect(MessageClient client);
 	
 	/**
 	 * Closes all open connections to remote clients
 	 */
 	public abstract void close();
 	
+	/**
+	 * Processing incoming/outgoing traffic for this MessageServer
+	 * implementation. Should handle incoming connections, incoming
+	 * messages, and outgoing messages.
+	 * 
+	 * @throws IOException
+	 */
 	public abstract void updateTraffic() throws IOException;
 	
-	public void updateEvents() {
-		// TODO implement
+	/**
+	 * Handles processing events for incoming/outgoing messages sending to
+	 * the registered listeners for both the MessageServer and MessageClients
+	 * associated as well as the incoming established connection events.
+	 */
+	public synchronized void updateEvents() {
+		// Process incoming connections first
+		while (!incomingConnections.isEmpty()) {
+			MessageClient client = incomingConnections.poll();
+			synchronized (connectionListeners) {
+				for (ConnectionListener listener : connectionListeners) {
+					listener.connected(client);
+				}
+			}
+		}
+		
+		// Process incoming Messages to the listeners
+		while (!incomingMessages.isEmpty()) {
+			Message message = incomingMessages.poll();
+			synchronized (messageListeners) {
+				for (MessageListener listener : messageListeners) {
+					listener.messageReceived(message);
+				}
+			}
+		}
+
+		// Process outgoing Messages to the listeners
+		while (!outgoingMessages.isEmpty()) {
+			Message message = outgoingMessages.poll();
+			synchronized (messageListeners) {
+				for (MessageListener listener : messageListeners) {
+					listener.messageSent(message);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Convenience method to call updateTraffic() and updateEvents().
+	 * This is only necessary if you aren't explicitly calling these
+	 * methods already.
+	 * 
+	 * @throws IOException
+	 */
+	public void update() throws IOException {
+		updateTraffic();
+		updateEvents();
+	}
+	
+	/**
+	 * Adds a ConnectionListener to this MessageServer
+	 * 
+	 * @param listener
+	 */
+	public void addConnectionListener(ConnectionListener listener) {
+		synchronized (connectionListeners) {
+			connectionListeners.add(listener);
+		}
+	}
+	
+	/**
+	 * Removes a ConnectionListener from this MessageServer
+	 * 
+	 * @param listener
+	 * @return
+	 * 		true if the listener was contained in the list
+	 */
+	public boolean removeConnectionListener(ConnectionListener listener) {
+		synchronized (connectionListeners) {
+			return connectionListeners.remove(listener);
+		}
+	}
+	
+	/**
+	 * Adds a MessageListener to this MessageServer
+	 * 
+	 * @param listener
+	 */
+	public void addMessageListener(MessageListener listener) {
+		synchronized (messageListeners) {
+			messageListeners.add(listener);
+		}
+	}
+	
+	/**
+	 * Removes a MessageListener from this MessageServer
+	 * 
+	 * @param listener
+	 * @return
+	 * 		true if the listener was contained in the list
+	 */
+	public boolean removeMessageListener(MessageListener listener) {
+		synchronized (messageListeners) {
+			return messageListeners.remove(listener);
+		}
 	}
 }

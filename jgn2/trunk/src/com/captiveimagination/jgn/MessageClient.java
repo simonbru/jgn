@@ -57,6 +57,10 @@ public class MessageClient {
 		outgoingQueue = new MessagePriorityQueue();
 	}
 	
+	public InetSocketAddress getAddress() {
+		return address;
+	}
+	
 	/**
 	 * Sends a message to the remote machine
 	 * that this connection is associated to.

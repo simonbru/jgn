@@ -56,15 +56,12 @@ public class TCPMessageServer extends MessageServer {
 		ssc.register(selector, SelectionKey.OP_ACCEPT);
 	}
 
-	public MessageClient connect(InetSocketAddress address) {
-		return null;
-	}
-
 	public void close() {
 		// TODO call disconnect on all MessageClients and then shutdown Selector
 	}
 	
 	public synchronized void updateTraffic() throws IOException {
+		// Handle Accept, Read, and Write
 		if (selector.selectNow() > 0) {
 			Iterator<SelectionKey> keys = selector.selectedKeys().iterator();
 			while (keys.hasNext()) {
@@ -76,8 +73,20 @@ public class TCPMessageServer extends MessageServer {
 					read(activeKey.channel());
 				} else if (activeKey.isWritable()) {
 					write(activeKey.channel());
+				} else if (activeKey.isConnectable()) {
+					connect((SocketChannel)activeKey.channel());
 				}
 			}
+		}
+		
+		// Handle Outgoing Connections
+		while (!getOutgoingConnectionQueue().isEmpty()) {
+			MessageClient client = getOutgoingConnectionQueue().poll();
+			SocketChannel channel = SocketChannel.open();
+			channel.configureBlocking(false);
+			SelectionKey key = channel.register(selector, SelectionKey.OP_CONNECT | SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+			key.attach(client);
+			channel.connect(client.getAddress());
 		}
 	}
 	
@@ -103,5 +112,11 @@ public class TCPMessageServer extends MessageServer {
 			// TODO writable...
 			System.out.println("Incoming write?");	
 		}
+	}
+	
+	private void connect(SocketChannel channel) throws IOException {
+		channel.finishConnect();
+		MessageClient client = (MessageClient)channel.keyFor(selector).attachment();
+		getIncomingConnectionQueue().add(client);
 	}
 }

@@ -93,4 +93,18 @@ public class JGN {
 	public static final ConversionHandler getConverter(Class<? extends Message> c) {
 		return converters.get(c);
 	}
+
+	public static final LocalRegistrationMessage generateRegistrationMessage() {
+		LocalRegistrationMessage message = new LocalRegistrationMessage();
+		Short[] shorts = (Short[])registry.keySet().toArray(new Short[registry.keySet().size()]);
+		short[] ids = new short[shorts.length];
+		String[] names = new String[shorts.length];
+		for (int i = 0; i < shorts.length; i++) {
+			ids[i] = shorts[i];
+			names[i] = registry.get(shorts[i]).getName();
+		}
+		message.setIds(ids);
+		message.setMessageClasses(names);
+		return message;
+	}
 }

@@ -54,6 +54,11 @@ public class InternalListener implements MessageListener, ConnectionListener {
 	
 	public void messageReceived(Message message) {
 	}
+	
+	public void messageReceived(LocalRegistrationMessage message) {
+		System.out.println("Received local registration message: " + message);
+		// TODO handle the local registration message
+	}
 
 	public void messageSent(Message message) {
 	}
@@ -65,15 +70,13 @@ public class InternalListener implements MessageListener, ConnectionListener {
 		return instance;
 	}
 
-	
 	public void connected(MessageClient client) {
-		// TODO send out negotiation messages
+		// Send the registration message
+		client.sendMessage(JGN.generateRegistrationMessage());
 	}
-	
 
 	public void negotiationComplete(MessageClient client) {	
 	}
-	
 
 	public void disconnected(MessageClient client) {
 	}

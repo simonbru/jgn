@@ -84,16 +84,21 @@ public class TestMessageServer {
 			}
 		};
 		t.start();
-		clientThread();
-	}
-	
-	public static void clientThread() throws Exception {
-		Selector selector = Selector.open();
-		SocketChannel channel = SocketChannel.open();
-		channel.socket()
-				.bind(new InetSocketAddress(InetAddress.getLocalHost(), 2000));
-		channel.socket().connect(new InetSocketAddress(InetAddress
-				.getLocalHost(), 1000), 5000);
-		System.out.println("Connection established...I think....");
+		
+		final MessageServer server2 = new TCPMessageServer(new InetSocketAddress(InetAddress.getLocalHost(), 2000));
+		Thread t2 = new Thread() {
+			public void run() {
+				try {
+					while (true) {
+						server2.update();
+						Thread.sleep(500);
+					}
+				} catch(Exception exc) {
+					exc.printStackTrace();
+				}
+			}
+		};
+		t2.start();
+		server2.connect(new InetSocketAddress(InetAddress.getLocalHost(), 1000));
 	}
 }

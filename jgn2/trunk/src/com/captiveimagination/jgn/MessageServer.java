@@ -51,6 +51,7 @@ public abstract class MessageServer {
 	private MessageQueue incomingMessages;			// Waiting for MessageListener handling
 	private MessageQueue outgoingMessages;			// Waiting for MessageListener handling
 	private ConnectionQueue incomingConnections;	// Waiting for ConnectionListener handling
+	private ConnectionQueue outgoingConnections;	// Connection that needs to be established
 	private ArrayList<ConnectionListener> connectionListeners;
 	private ArrayList<MessageListener> messageListeners;
 
@@ -59,6 +60,7 @@ public abstract class MessageServer {
 		incomingMessages = new MessagePriorityQueue();
 		outgoingMessages = new MessagePriorityQueue();
 		incomingConnections = new ConnectionQueue();
+		outgoingConnections = new ConnectionQueue();
 		connectionListeners = new ArrayList<ConnectionListener>();
 		messageListeners = new ArrayList<MessageListener>();
 		
@@ -78,6 +80,10 @@ public abstract class MessageServer {
 		return incomingConnections;
 	}
 
+	protected ConnectionQueue getOutgoingConnectionQueue() {
+		return outgoingConnections;
+	}
+	
 	/**
 	 * @return
 	 * 		the InetSocketAddress representing the remote host
@@ -89,15 +95,20 @@ public abstract class MessageServer {
 
 	/**
 	 * Establishes a connection to the remote host distinguished by
-	 * <code>address</code>.
+	 * <code>address</code>. This method simply queues the connection
+	 * to be established and is handled by the updateTraffic method.
 	 * 
 	 * @param address
 	 * @return
 	 * 		MessageClient will only be returned if a connection has
 	 * 		already been established to this client, otherwise, it
-	 * 		will always return null.
+	 * 		will always return null as this is a non-blocking method.
 	 */
-	public abstract MessageClient connect(InetSocketAddress address);
+	public MessageClient connect(InetSocketAddress address) {
+		// TODO check if this address has already been registered
+		outgoingConnections.add(new MessageClient(address, this));
+		return null;
+	}
 	
 	/**
 	 * Closes all open connections to remote clients
@@ -149,7 +160,7 @@ public abstract class MessageServer {
 			}
 		}
 	}
-
+	
 	/**
 	 * Convenience method to call updateTraffic() and updateEvents().
 	 * This is only necessary if you aren't explicitly calling these

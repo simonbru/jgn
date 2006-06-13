@@ -29,23 +29,21 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Created: Jun 10, 2006
+ * Created: Jun 12, 2006
  */
-package com.captiveimagination.jgn.test.basic;
+package com.captiveimagination.jgn.event;
 
 import com.captiveimagination.jgn.message.*;
 
 /**
+ * Convenience implementation around DynamicMessageListener
+ * 
  * @author Matthew D. Hicks
  */
-public class BasicMessage extends Message {
-	private int value;
-
-	public int getValue() {
-		return value;
+public class DynamicMessageAdapter implements DynamicMessageListener {
+	public void messageReceived(Message message) {
 	}
 
-	public void setValue(int value) {
-		this.value = value;
+	public void messageSent(Message message) {
 	}
 }

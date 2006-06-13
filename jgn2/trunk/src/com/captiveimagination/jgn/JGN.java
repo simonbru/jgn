@@ -33,6 +33,9 @@
  */
 package com.captiveimagination.jgn;
 
+import java.io.*;
+import java.lang.reflect.*;
+import java.nio.*;
 import java.util.*;
 
 import com.captiveimagination.jgn.convert.*;
@@ -46,6 +49,7 @@ import com.captiveimagination.jgn.message.*;
  */
 public class JGN {
 	private static final HashMap<Short,Class<? extends Message>> registry = new HashMap<Short,Class<? extends Message>>();
+	private static final HashMap<Class<? extends Message>,Short> registryReverse = new HashMap<Class<? extends Message>,Short>();
 	private static final HashMap<Class<? extends Message>,ConversionHandler> converters = new HashMap<Class<? extends Message>,ConversionHandler>();
 	static {
 		// Certain messages must be known before negotiation so this is explicitly done here
@@ -58,7 +62,7 @@ public class JGN {
 	 * 
 	 * @param c
 	 */
-	public static final void register(Class<? extends Message> c) {
+	public static final synchronized void register(Class<? extends Message> c) {
 		if (registry.containsValue(c)) {
 			return;
 		}
@@ -73,6 +77,7 @@ public class JGN {
 	private static final void register(Class<? extends Message> c, short id) {
 		converters.put(c, ConversionHandler.getConversionHandler(c));
         registry.put(id, c);
+        registryReverse.put(c, id);
 	}
 	
 	private static final short generateId() {
@@ -80,7 +85,7 @@ public class JGN {
         id += Math.round(Math.random() * Short.MIN_VALUE);
         return id;
 	}
-	
+		
 	/**
 	 * Request the ConversionHandler associated with this Message class.
 	 * 
@@ -92,6 +97,14 @@ public class JGN {
 	 */
 	public static final ConversionHandler getConverter(Class<? extends Message> c) {
 		return converters.get(c);
+	}
+	
+	public static final short getMessageTypeId(Class<? extends Message> c) {
+		return registryReverse.get(c);
+	}
+	
+	public static final Class<? extends Message> getMessageTypeClass(short typeId) {
+		return registry.get(typeId);
 	}
 
 	public static final LocalRegistrationMessage generateRegistrationMessage() {

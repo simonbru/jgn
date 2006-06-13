@@ -49,6 +49,10 @@ import com.captiveimagination.jgn.message.*;
  */
 public class ConversionHandler {
 	private static final MethodComparator methodComparator = new MethodComparator();
+	public static final HashSet<String> ignore = new HashSet<String>();
+	static {
+		ignore.add("getId");
+	}
 	
 	private Converter[] converters;
 	private Method[] getters;
@@ -79,6 +83,8 @@ public class ConversionHandler {
 	public static final synchronized ConversionHandler getConversionHandler(Class<? extends Message> messageClass) {
 		initConverters();
 		
+		// TODO if the message implements UniqueMessage then we need to associate the getId first
+		
 		// Introspect Class
 		ArrayList<Converter> converters = new ArrayList<Converter>();
 		ArrayList<Method> getters = new ArrayList<Method>();
@@ -88,7 +94,8 @@ public class ConversionHandler {
 		Collections.addAll(methods, ms);
 		Collections.sort(methods, methodComparator);
 		for (Method getter : methods) {
-			if (!getter.getName().startsWith("get")) continue;
+			if (!getter.getName().startsWith("get")) continue;	// Make sure it's a getter
+			if (ignore.contains(getter.getName())) continue;	// Methods to be ignored
 			
 			String name = getter.getName().substring(3);
 			Method setter = null;

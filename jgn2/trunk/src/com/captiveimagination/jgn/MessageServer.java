@@ -34,9 +34,12 @@
 package com.captiveimagination.jgn;
 
 import java.io.*;
+import java.lang.reflect.*;
 import java.net.*;
+import java.nio.*;
 import java.util.*;
 
+import com.captiveimagination.jgn.convert.*;
 import com.captiveimagination.jgn.event.*;
 import com.captiveimagination.jgn.message.*;
 import com.captiveimagination.jgn.queue.*;
@@ -47,41 +50,37 @@ import com.captiveimagination.jgn.queue.*;
  * @author Matthew D. Hicks
  */
 public abstract class MessageServer {
+	private static HashMap<Class,ArrayList<Class>> classHierarchyCache = new HashMap<Class,ArrayList<Class>>();
+	
 	private InetSocketAddress address;
-	private MessageQueue incomingMessages;			// Waiting for MessageListener handling
-	private MessageQueue outgoingMessages;			// Waiting for MessageListener handling
 	private ConnectionQueue incomingConnections;	// Waiting for ConnectionListener handling
-	private ConnectionQueue outgoingConnections;	// Connection that needs to be established
+	private ConnectionQueue negotiatedConnections;	// Waiting for ConnectionListener handling
 	private ArrayList<ConnectionListener> connectionListeners;
 	private ArrayList<MessageListener> messageListeners;
+	private List<MessageClient> clients;
 
 	public MessageServer(InetSocketAddress address) {
 		this.address = address;
-		incomingMessages = new MessagePriorityQueue();
-		outgoingMessages = new MessagePriorityQueue();
 		incomingConnections = new ConnectionQueue();
-		outgoingConnections = new ConnectionQueue();
+		negotiatedConnections = new ConnectionQueue();
 		connectionListeners = new ArrayList<ConnectionListener>();
 		messageListeners = new ArrayList<MessageListener>();
+		clients = Collections.synchronizedList(new LinkedList<MessageClient>());
 		
 		addConnectionListener(InternalListener.getInstance());
 		addMessageListener(InternalListener.getInstance());
 	}
 	
-	protected MessageQueue getIncomingMessageQueue() {
-		return incomingMessages;
-	}
-	
-	protected MessageQueue getOutgoingMessageQueue() {
-		return outgoingMessages;
-	}
-	
 	protected ConnectionQueue getIncomingConnectionQueue() {
 		return incomingConnections;
 	}
-
-	protected ConnectionQueue getOutgoingConnectionQueue() {
-		return outgoingConnections;
+	
+	protected ConnectionQueue getNegotiatedConnectionQueue() {
+		return negotiatedConnections;
+	}
+	
+	protected List<MessageClient> getMessageClients() {
+		return clients;
 	}
 	
 	/**
@@ -93,20 +92,56 @@ public abstract class MessageServer {
 		return address;
 	}
 
+	public MessageClient getMessageClient(InetSocketAddress address) {
+		for (MessageClient client : getMessageClients()) {
+			if (client.getAddress().equals(address)) return client;
+		}
+		return null;
+	}
+	
 	/**
 	 * Establishes a connection to the remote host distinguished by
-	 * <code>address</code>. This method simply queues the connection
-	 * to be established and is handled by the updateTraffic method.
+	 * <code>address</code>. This method is non-blocking.
 	 * 
 	 * @param address
 	 * @return
 	 * 		MessageClient will only be returned if a connection has
 	 * 		already been established to this client, otherwise, it
 	 * 		will always return null as this is a non-blocking method.
+	 * @throws IOException
 	 */
-	public MessageClient connect(InetSocketAddress address) {
-		// TODO check if this address has already been registered
-		outgoingConnections.add(new MessageClient(address, this));
+	public abstract MessageClient connect(InetSocketAddress address) throws IOException;
+	
+	/**
+	 * Exactly the same as connect, but blocks for <code>timeout</code> in milliseconds
+	 * for the connection to be established and returned. If the connection is already
+	 * established it will be immediately returned.
+	 * 
+	 * <b>WARNING</b>: Do not execute this method in the same thread as is doing the
+	 * update calls or you will end up with a timeout every time.
+	 * 
+	 * @param address
+	 * @param timeout
+	 * @return
+	 * 		MessageClient for the connection that is established.
+	 * @throws IOException
+	 * @throws InterruptedException 
+	 */
+	public MessageClient connectAndWait(InetSocketAddress address, int timeout) throws IOException, InterruptedException {
+		MessageClient client = connect(address);
+		if (client != null) {
+			return client;
+		}
+		client = getMessageClient(address);
+		long time = System.currentTimeMillis();
+		while (System.currentTimeMillis() < time + timeout) {
+			if (client.isConnected()) {
+				return client;
+			}
+			Thread.sleep(10);
+		}
+		// Last attempt before failing
+		if (client.isConnected()) return client;
 		return null;
 	}
 	
@@ -141,21 +176,51 @@ public abstract class MessageServer {
 		}
 		
 		// Process incoming Messages to the listeners
-		while (!incomingMessages.isEmpty()) {
-			Message message = incomingMessages.poll();
-			synchronized (messageListeners) {
-				for (MessageListener listener : messageListeners) {
-					listener.messageReceived(message);
+		for (MessageClient client : clients) {
+			MessageQueue incomingMessages = client.getIncomingMessageQueue();
+			while (!incomingMessages.isEmpty()) {
+				Message message = incomingMessages.poll();
+				synchronized (client.getMessageListeners()) {
+					for (MessageListener listener : client.getMessageListeners()) {
+						//listener.messageReceived(message);
+						sendToListener(message, listener, true);
+					}
+				}
+				synchronized (messageListeners) {
+					for (MessageListener listener : messageListeners) {
+						//listener.messageReceived(message);
+						sendToListener(message, listener, true);
+					}
 				}
 			}
 		}
 
 		// Process outgoing Messages to the listeners
-		while (!outgoingMessages.isEmpty()) {
-			Message message = outgoingMessages.poll();
-			synchronized (messageListeners) {
-				for (MessageListener listener : messageListeners) {
-					listener.messageSent(message);
+		for (MessageClient client : clients) {
+			MessageQueue outgoingMessages = client.getOutgoingMessageQueue();
+			while (!outgoingMessages.isEmpty()) {
+				Message message = outgoingMessages.poll();
+				synchronized (client.getMessageListeners()) {
+					for (MessageListener listener : client.getMessageListeners()) {
+						//listener.messageReceived(message);'
+						sendToListener(message, listener, false);
+					}
+				}
+				synchronized (messageListeners) {
+					for (MessageListener listener : messageListeners) {
+						listener.messageSent(message);
+						sendToListener(message, listener, false);
+					}
+				}
+			}
+		}
+
+		// Process incoming negiated connections
+		while (!negotiatedConnections.isEmpty()) {
+			MessageClient client = negotiatedConnections.poll();
+			synchronized (connectionListeners) {
+				for (ConnectionListener listener : connectionListeners) {
+					listener.negotiationComplete(client);
 				}
 			}
 		}
@@ -220,4 +285,74 @@ public abstract class MessageServer {
 			return messageListeners.remove(listener);
 		}
 	}
+
+	protected ByteBuffer convertMessage(Message message, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException, IOException {
+		ConversionHandler handler = JGN.getConverter(message.getClass());
+		handler.sendMessage(message, buffer);
+		// TODO pass the byte buffer through any MessageProcessors associated with this message
+		return buffer;
+	}
+	
+	private static final void sendToListener(Message message, MessageListener listener, boolean received) {
+		if (received) {
+			if (listener instanceof DynamicMessageListener) {
+				callMethod(listener, "messageReceived", message, false);
+			} else {
+				listener.messageReceived(message);
+			}
+		} else {
+			if (listener instanceof DynamicMessageListener) {
+				callMethod(listener, "messageSent", message, false);
+			} else {
+				listener.messageSent(message);
+			}
+		}
+	}
+	
+	private static void callMethod(MessageListener listener, String methodName, Message message, boolean callAll) {
+        try {
+            Method[] allMethods = listener.getClass().getMethods();
+            ArrayList<Method> m = new ArrayList<Method>();
+            for (int i = 0; i < allMethods.length; i++) {
+                if ((allMethods[i].getName().equals(methodName)) && (allMethods[i].getParameterTypes().length == 1)) {
+                    m.add(allMethods[i]);
+                }
+            }
+            
+            // Check to see if an interface is found first
+            ArrayList classes = getClassList(message.getClass());
+            for (int j = 0; j < classes.size(); j++) {
+            	for (int i = 0; i < m.size(); i++) {
+                    if (((Method)m.get(i)).getParameterTypes()[0] == classes.get(j)) {
+                        ((Method)m.get(i)).setAccessible(true);
+                        ((Method)m.get(i)).invoke(listener, new Object[] {message});
+                        if (!callAll) return;
+                    }
+                }
+            }
+        } catch(Throwable t) {
+            System.err.println("Object: " + listener + ", MethodName: " + methodName + ", Var: " + message + ", callAll: " + callAll);
+            t.printStackTrace();
+        }
+    }
+	
+	private static ArrayList getClassList(Class c) {
+    	if (classHierarchyCache.containsKey(c)) {
+    		return (ArrayList)classHierarchyCache.get(c);
+    	}
+    	
+    	ArrayList<Class> list = new ArrayList<Class>();
+    	Class[] interfaces;
+    	do {
+    		list.add(c);
+    		interfaces = c.getInterfaces();
+    		for (int i = 0; i < interfaces.length; i++) {
+    			list.add(interfaces[i]);
+    		}
+    	} while ((c = c.getSuperclass()) != null);
+    	
+    	classHierarchyCache.put(c, list);
+    	
+    	return list;
+    }
 }

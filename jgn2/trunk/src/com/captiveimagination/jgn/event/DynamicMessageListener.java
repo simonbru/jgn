@@ -29,23 +29,24 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Created: Jun 10, 2006
+ * Created: Jun 12, 2006
  */
-package com.captiveimagination.jgn.test.basic;
-
-import com.captiveimagination.jgn.message.*;
+package com.captiveimagination.jgn.event;
 
 /**
+ * A listener implementing DynamicMessageListener can utilize dynamic introspection
+ * features built into JGN to determine the closest matching method to the Message
+ * that has been received.
+ * 
+ * For example, if you have two methods in your implementing class:
+ * 		messageReceived(Message message)
+ * and
+ * 		messageReceived(MyMessage message)
+ * if you receive a <code>MyMessage</code it will be directly routed to the second method instead
+ * of the first. However, if you receive a <code>YourMessage</code> (and it does not extend
+ * <code>MyMessage</code>) it will be routed to the first method.
+ * 
  * @author Matthew D. Hicks
  */
-public class BasicMessage extends Message {
-	private int value;
-
-	public int getValue() {
-		return value;
-	}
-
-	public void setValue(int value) {
-		this.value = value;
-	}
+public interface DynamicMessageListener extends MessageListener {
 }

@@ -46,7 +46,7 @@ import com.captiveimagination.jgn.message.*;
  * 
  * @author Matthew D. Hicks
  */
-public class InternalListener implements MessageListener, ConnectionListener {
+public class InternalListener implements DynamicMessageListener, ConnectionListener {
 	private static InternalListener instance;
 	
 	private InternalListener() {
@@ -56,8 +56,19 @@ public class InternalListener implements MessageListener, ConnectionListener {
 	}
 	
 	public void messageReceived(LocalRegistrationMessage message) {
-		System.out.println("Received local registration message: " + message);
-		// TODO handle the local registration message
+		String[] messages = message.getMessageClasses();
+		short[] ids = message.getIds();
+		int i = 0;
+		try {
+			for (; i < messages.length; i++) {
+				message.getMessageClient().register(ids[i], (Class<? extends Message>)Class.forName(messages[i]));
+			}
+			message.getMessageClient().setStatus(MessageClient.STATUS_CONNECTED);
+		} catch(ClassNotFoundException exc) {
+			System.err.println("Unable to find the message: " + messages[i] + " in the ClassLoader. Trace follows:");
+			// TODO handle more gracefully
+			throw new RuntimeException(exc);
+		}
 	}
 
 	public void messageSent(Message message) {

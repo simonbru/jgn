@@ -45,6 +45,8 @@ import com.captiveimagination.jgn.tcp.*;
  * @author Matthew D. Hicks
  */
 public class TestMessageServer {
+	public static int receiveCount = 0;
+	
 	public static void main(String[] args) throws Exception {
 		JGN.register(BasicMessage.class);
 		final MessageServer server = new TCPMessageServer(new InetSocketAddress(InetAddress.getLocalHost(), 1000));
@@ -63,7 +65,10 @@ public class TestMessageServer {
 		});
 		server.addMessageListener(new MessageListener() {
 			public void messageReceived(Message message) {
-				System.out.println("Message Received: " + message);
+				if (message instanceof BasicMessage) {
+					receiveCount++;
+					System.out.println("Count: " + receiveCount + ", " + ((BasicMessage)message).getValue());
+				}
 			}
 
 			public void messageSent(Message message) {
@@ -76,7 +81,7 @@ public class TestMessageServer {
 				try {
 					while (true) {
 						server.update();
-						Thread.sleep(500);
+						Thread.sleep(1);
 					}
 				} catch(Exception exc) {
 					exc.printStackTrace();
@@ -91,7 +96,7 @@ public class TestMessageServer {
 				try {
 					while (true) {
 						server2.update();
-						Thread.sleep(500);
+						Thread.sleep(1);
 					}
 				} catch(Exception exc) {
 					exc.printStackTrace();
@@ -99,6 +104,16 @@ public class TestMessageServer {
 			}
 		};
 		t2.start();
-		server2.connect(new InetSocketAddress(InetAddress.getLocalHost(), 1000));
+		MessageClient client = server2.connectAndWait(new InetSocketAddress(InetAddress.getLocalHost(), 1000), 5000);
+		if (client != null) {
+			System.out.println("Connection established!");
+			BasicMessage message = new BasicMessage();
+			for (int i = 0; i < 1000; i++) {
+				message.setValue(i);
+				client.sendMessage(message);
+			}
+		} else {
+			System.out.println("Connection timed out!");
+		}
 	}
 }

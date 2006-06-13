@@ -33,6 +33,8 @@
  */
 package com.captiveimagination.jgn.message;
 
+import com.captiveimagination.jgn.*;
+
 /**
  * Message is the foundation for all communication in JGN.
  * Extending classes simply need to add getter/setters for
@@ -42,7 +44,7 @@ package com.captiveimagination.jgn.message;
  * @author Skip M. B. Balk
  * @author Matthew D. Hicks
  */
-public abstract class Message {
+public abstract class Message implements Cloneable {
 	public static final byte PRIORITY_CRITICAL = 4;
 	public static final byte PRIORITY_HIGH = 3;
 	public static final byte PRIORITY_NORMAL = 2;
@@ -51,6 +53,7 @@ public abstract class Message {
 	
 	private long id;
 	private byte priority;
+	private MessageClient client;
 	
 	public Message() {
 		// Assign default priority
@@ -112,5 +115,34 @@ public abstract class Message {
 	 */
 	public void setPriority(byte priority) {
 		this.priority = priority;
+	}
+
+	/**
+	 * This method is called internally when a Message is
+	 * sent or received so there is a trace-back point of
+	 * origin.
+	 * 
+	 * @param client
+	 */
+	public void setMessageClient(MessageClient client) {
+		this.client = client;
+	}
+	
+	/**
+	 * This is method will return the associated MessageClient
+	 * for this Message. The setMessageClient is called internally
+	 * when a Message is sent or received so a trace-back point
+	 * exists.
+	 * 
+	 * @return
+	 * 		the MessageClient this message was received to or
+	 * 		sent from
+	 */
+	public MessageClient getMessageClient() {
+		return client;
+	}
+
+	public Message clone() throws CloneNotSupportedException {
+		return (Message)super.clone();
 	}
 }

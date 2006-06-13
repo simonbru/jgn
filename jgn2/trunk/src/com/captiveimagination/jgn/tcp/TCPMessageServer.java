@@ -126,15 +126,15 @@ public class TCPMessageServer extends MessageServer {
 				client.getIncomingMessageQueue().add(message);
 			}
 		} catch(IllegalArgumentException exc) {
-			throw new IOException(exc);
+			throw new IOException(exc.getMessage());
 		} catch(NoSuchMethodException exc) {
-			throw new IOException(exc);
+			throw new IOException(exc.getMessage());
 		} catch(IllegalAccessException exc) {
-			throw new IOException(exc);
+			throw new IOException(exc.getMessage());
 		} catch(InstantiationException exc) {
-			throw new IOException(exc);
+			throw new IOException(exc.getMessage());
 		} catch(InvocationTargetException exc) {
-			throw new IOException(exc);
+			throw new IOException(exc.getMessage());
 		}
 	}
 	
@@ -197,9 +197,9 @@ public class TCPMessageServer extends MessageServer {
 				}
 			}
 		} catch(InvocationTargetException exc) {
-			throw new IOException(exc);
+			throw new IOException(exc.getMessage());
 		} catch(IllegalAccessException exc) {
-			throw new IOException(exc);
+			throw new IOException(exc.getMessage());
 		}
 	}
 	

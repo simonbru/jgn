@@ -39,6 +39,7 @@ import java.nio.channels.*;
 import com.captiveimagination.jgn.*;
 import com.captiveimagination.jgn.event.*;
 import com.captiveimagination.jgn.message.*;
+import com.captiveimagination.jgn.queue.*;
 import com.captiveimagination.jgn.tcp.*;
 
 /**
@@ -71,8 +72,8 @@ public class TestMessageServer {
 					if (receiveCount == 0) time = System.currentTimeMillis();
 					receiveCount++;
 					//System.out.println("Count: " + receiveCount + ", " + ((BasicMessage)message).getValue());
-					if (receiveCount % 1000 == 0) System.out.println("Receive Count: " + receiveCount);
-					if (receiveCount == 10000) System.out.println("Completed in: " + (System.currentTimeMillis() - time) + "ms");
+					if (receiveCount > 2000) System.out.println("Receive Count: " + receiveCount);
+					if (receiveCount == 3000) System.out.println("Completed in: " + (System.currentTimeMillis() - time) + "ms");
 				}
 			}
 
@@ -114,9 +115,16 @@ public class TestMessageServer {
 			System.out.println("Connection established!");
 			BasicMessage message = new BasicMessage();
 			long time = System.currentTimeMillis();
-			for (int i = 0; i < 10000; i++) {
+			for (int i = 0; i < 3000; i++) {
 				message.setValue(i);
-				client.sendMessage(message);
+				try {
+					client.sendMessage(message);
+				} catch(QueueFullException exc) {
+					i--;
+					try {
+						Thread.sleep(1);
+					} catch(InterruptedException ie) {}
+				}
 			}
 			System.out.println("Enqueued in: " + (System.currentTimeMillis() - time) + "ms");
 		} else {

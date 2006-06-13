@@ -74,7 +74,7 @@ public class TCPMessageServer extends MessageServer {
 		getMessageClients().add(client);
 		SocketChannel channel = SocketChannel.open();
 		channel.configureBlocking(false);
-		//channel.socket().setTcpNoDelay(true);		// TODO Test this out
+		channel.socket().setTcpNoDelay(true);		// TODO Test this out
 		// TODO connect timeout?
 		SelectionKey key = channel.register(selector, SelectionKey.OP_CONNECT | SelectionKey.OP_READ | SelectionKey.OP_WRITE);
 		key.attach(client);
@@ -110,7 +110,7 @@ public class TCPMessageServer extends MessageServer {
 		// TODO validate connections
 		SocketChannel connection = channel.accept();
 		connection.configureBlocking(false);
-		//connection.socket().setTcpNoDelay(true);		// TODO Test this out
+		connection.socket().setTcpNoDelay(true);		// TODO Test this out
 		SelectionKey key = connection.register(selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
 		MessageClient client = new MessageClient((InetSocketAddress)connection.socket().getRemoteSocketAddress(), this);
 		client.setStatus(MessageClient.STATUS_NEGOTIATING);

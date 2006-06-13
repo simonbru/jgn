@@ -73,7 +73,7 @@ public class TestMessageServer {
 					receiveCount++;
 					//System.out.println("Count: " + receiveCount + ", " + ((BasicMessage)message).getValue());
 					if (receiveCount > 2000) System.out.println("Receive Count: " + receiveCount);
-					if (receiveCount == 3000) System.out.println("Completed in: " + (System.currentTimeMillis() - time) + "ms");
+					if (receiveCount == 4000) System.out.println("Completed in: " + (System.currentTimeMillis() - time) + "ms");
 				}
 			}
 
@@ -94,6 +94,7 @@ public class TestMessageServer {
 				}
 			}
 		};
+		t.setPriority(Thread.MIN_PRIORITY);
 		t.start();
 		
 		final MessageServer server2 = new TCPMessageServer(new InetSocketAddress(InetAddress.getLocalHost(), 2000));
@@ -109,13 +110,14 @@ public class TestMessageServer {
 				}
 			}
 		};
+		t2.setPriority(Thread.MIN_PRIORITY);
 		t2.start();
 		MessageClient client = server2.connectAndWait(new InetSocketAddress(InetAddress.getLocalHost(), 1000), 5000);
 		if (client != null) {
 			System.out.println("Connection established!");
 			BasicMessage message = new BasicMessage();
 			long time = System.currentTimeMillis();
-			for (int i = 0; i < 3000; i++) {
+			for (int i = 0; i < 4000; i++) {
 				message.setValue(i);
 				try {
 					client.sendMessage(message);

@@ -64,10 +64,15 @@ public class TestMessageServer {
 			}
 		});
 		server.addMessageListener(new MessageListener() {
+			private long time;
+			
 			public void messageReceived(Message message) {
 				if (message instanceof BasicMessage) {
+					if (receiveCount == 0) time = System.currentTimeMillis();
 					receiveCount++;
-					System.out.println("Count: " + receiveCount + ", " + ((BasicMessage)message).getValue());
+					//System.out.println("Count: " + receiveCount + ", " + ((BasicMessage)message).getValue());
+					if (receiveCount % 1000 == 0) System.out.println("Receive Count: " + receiveCount);
+					if (receiveCount == 10000) System.out.println("Completed in: " + (System.currentTimeMillis() - time) + "ms");
 				}
 			}
 
@@ -81,7 +86,7 @@ public class TestMessageServer {
 				try {
 					while (true) {
 						server.update();
-						Thread.sleep(1);
+						//Thread.sleep(1);
 					}
 				} catch(Exception exc) {
 					exc.printStackTrace();
@@ -96,7 +101,7 @@ public class TestMessageServer {
 				try {
 					while (true) {
 						server2.update();
-						Thread.sleep(1);
+						//Thread.sleep(1);
 					}
 				} catch(Exception exc) {
 					exc.printStackTrace();
@@ -108,10 +113,12 @@ public class TestMessageServer {
 		if (client != null) {
 			System.out.println("Connection established!");
 			BasicMessage message = new BasicMessage();
-			for (int i = 0; i < 1000; i++) {
+			long time = System.currentTimeMillis();
+			for (int i = 0; i < 10000; i++) {
 				message.setValue(i);
 				client.sendMessage(message);
 			}
+			System.out.println("Enqueued in: " + (System.currentTimeMillis() - time) + "ms");
 		} else {
 			System.out.println("Connection timed out!");
 		}

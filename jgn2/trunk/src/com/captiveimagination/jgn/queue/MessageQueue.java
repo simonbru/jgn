@@ -69,4 +69,13 @@ public interface MessageQueue {
 	 * 		this MessageQueue.
 	 */
 	public boolean isEmpty();
+	
+	/**
+	 * The total count of Messages that have been added
+	 * to this queue.
+	 * 
+	 * @return
+	 * 		the total number of Messages added
+	 */
+	public long getTotal();
 }

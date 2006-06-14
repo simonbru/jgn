@@ -71,6 +71,7 @@ public class TCPMessageServer extends MessageServer {
 	public MessageClient connect(InetSocketAddress address) throws IOException {
 		// TODO lookup to see if the connection already exists
 		MessageClient client = new MessageClient(address, this);
+		client.setStatus(MessageClient.STATUS_NEGOTIATING);
 		getMessageClients().add(client);
 		SocketChannel channel = SocketChannel.open();
 		channel.configureBlocking(false);
@@ -148,7 +149,11 @@ public class TCPMessageServer extends MessageServer {
 			// Read message
 			short typeId = readBuffer.getShort();
 			Class<? extends Message> c = client.getMessageClass(typeId);
-			if (c == null) throw new IOException("Message received from unknown messageTypeId: " + typeId);
+			if (c == null) {
+				if (client.isConnected()) throw new IOException("Message received from unknown messageTypeId: " + typeId);
+				readBuffer.position(position);
+				return null;
+			}
 			Message message = JGN.getConverter(c).receiveMessage(readBuffer);
 			if (messageLength < position - 4 - readPosition) {
 				// Still has content

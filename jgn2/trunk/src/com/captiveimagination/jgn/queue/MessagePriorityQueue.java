@@ -48,6 +48,7 @@ public class MessagePriorityQueue implements MessageQueue {
 	private LinkedList<Message>[] lists;
 	private final int max;
 	private volatile int size = 0;
+	private volatile long total = 0;
 	
 	public MessagePriorityQueue() {
 		this(1024);
@@ -77,6 +78,7 @@ public class MessagePriorityQueue implements MessageQueue {
 		}
 
 		size++;
+		total++;
 	}
 	
 	public Message poll() {
@@ -97,5 +99,9 @@ public class MessagePriorityQueue implements MessageQueue {
 
 	public boolean isEmpty() {
 		return size == 0;
+	}
+
+	public long getTotal() {
+		return total;
 	}
 }

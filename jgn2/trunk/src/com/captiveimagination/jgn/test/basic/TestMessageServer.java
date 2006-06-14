@@ -72,8 +72,8 @@ public class TestMessageServer {
 					if (receiveCount == 0) time = System.currentTimeMillis();
 					receiveCount++;
 					//System.out.println("Count: " + receiveCount + ", " + ((BasicMessage)message).getValue());
-					if (receiveCount > 2000) System.out.println("Receive Count: " + receiveCount);
-					if (receiveCount == 4000) System.out.println("Completed in: " + (System.currentTimeMillis() - time) + "ms");
+					//if (receiveCount > 2000) System.out.println("Receive Count: " + receiveCount);
+					if (receiveCount == 10000) System.out.println("Completed in: " + (System.currentTimeMillis() - time) + "ms");
 				}
 			}
 
@@ -83,10 +83,16 @@ public class TestMessageServer {
 			
 		});
 		Thread t = new Thread() {
+			private long cycle;
+			
 			public void run() {
 				try {
 					while (true) {
 						server.update();
+						if (System.currentTimeMillis() - cycle > 1000) {
+							System.out.println("Received: " + receiveCount);
+							cycle = System.currentTimeMillis();
+						}
 						//Thread.sleep(1);
 					}
 				} catch(Exception exc) {
@@ -117,7 +123,7 @@ public class TestMessageServer {
 			System.out.println("Connection established!");
 			BasicMessage message = new BasicMessage();
 			long time = System.currentTimeMillis();
-			for (int i = 0; i < 4000; i++) {
+			for (int i = 0; i < 10000; i++) {
 				message.setValue(i);
 				try {
 					client.sendMessage(message);

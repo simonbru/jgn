@@ -109,6 +109,7 @@ public class JGN {
 
 	public static final LocalRegistrationMessage generateRegistrationMessage() {
 		LocalRegistrationMessage message = new LocalRegistrationMessage();
+		message.setPriority(Message.PRIORITY_HIGH);
 		Short[] shorts = (Short[])registry.keySet().toArray(new Short[registry.keySet().size()]);
 		short[] ids = new short[shorts.length];
 		String[] names = new String[shorts.length];

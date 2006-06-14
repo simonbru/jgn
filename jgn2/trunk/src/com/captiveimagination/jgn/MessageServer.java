@@ -234,8 +234,8 @@ public abstract class MessageServer {
 	 * @throws IOException
 	 */
 	public void update() throws IOException {
-		updateTraffic();
 		updateEvents();
+		updateTraffic();
 	}
 	
 	/**

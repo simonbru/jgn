@@ -104,4 +104,8 @@ public class MessagePriorityQueue implements MessageQueue {
 	public long getTotal() {
 		return total;
 	}
+
+	public int getSize() {
+		return size;
+	}
 }

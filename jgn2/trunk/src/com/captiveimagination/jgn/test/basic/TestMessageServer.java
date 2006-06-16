@@ -47,21 +47,24 @@ import com.captiveimagination.jgn.tcp.*;
  */
 public class TestMessageServer {
 	public static int receiveCount = 0;
+	public static MessageClient client1;
+	public static MessageClient client2;
 	
 	public static void main(String[] args) throws Exception {
 		JGN.register(BasicMessage.class);
 		final MessageServer server = new TCPMessageServer(new InetSocketAddress(InetAddress.getLocalHost(), 1000));
 		server.addConnectionListener(new ConnectionListener() {
 			public void connected(MessageClient client) {
-				System.out.println("Connected: " + client);
+				System.out.println("S1> Connected: " + client);
+				client1 = client;
 			}
 
 			public void negotiationComplete(MessageClient client) {
-				System.out.println("Negotiation completed successfully with: " + client);
+				System.out.println("S1> Negotiation completed successfully with: " + client);
 			}
 			
 			public void disconnected(MessageClient client) {
-				System.out.println("Disconnected: " + client);
+				System.out.println("S1> Disconnected: " + client);
 			}
 		});
 		server.addMessageListener(new MessageListener() {
@@ -78,7 +81,7 @@ public class TestMessageServer {
 			}
 
 			public void messageSent(Message message) {
-				System.out.println("Message Sent: " + message);
+				System.out.println("S1> Message Sent: " + message);
 			}
 			
 		});
@@ -90,7 +93,16 @@ public class TestMessageServer {
 					while (true) {
 						server.update();
 						if (System.currentTimeMillis() - cycle > 1000) {
-							System.out.println("Received: " + receiveCount);
+							if (client1 != null) {
+								System.out.println("Received: " + receiveCount + 
+												 ", " + client1.getIncomingMessageQueue().getTotal() + "(" + client1.getIncomingMessageQueue().getSize() + ")" +
+												 ", " + client1.getOutgoingMessageQueue().getTotal() + "(" + client1.getOutgoingMessageQueue().getSize() + ")" +
+												 ", " + client1.getOutgoingQueue().getTotal() + "(" + client1.getOutgoingQueue().getSize() + ")" +
+												 
+												 ", " + client2.getIncomingMessageQueue().getTotal() + "(" + client2.getIncomingMessageQueue().getSize() + ")" +
+												 ", " + client2.getOutgoingMessageQueue().getTotal() + "(" + client2.getOutgoingMessageQueue().getSize() + ")" +
+												 ", " + client2.getOutgoingQueue().getTotal() + "(" + client2.getOutgoingQueue().getSize() + ")");
+							}
 							cycle = System.currentTimeMillis();
 						}
 						//Thread.sleep(1);
@@ -116,6 +128,20 @@ public class TestMessageServer {
 				}
 			}
 		};
+		server2.addConnectionListener(new ConnectionListener() {
+			public void connected(MessageClient client) {
+				System.out.println("S2> Connected: " + client);
+				client2 = client;
+			}
+
+			public void negotiationComplete(MessageClient client) {
+				System.out.println("S2> Negotiation completed successfully with: " + client);
+			}
+			
+			public void disconnected(MessageClient client) {
+				System.out.println("S2> Disconnected: " + client);
+			}
+		});
 		t2.setPriority(Thread.MIN_PRIORITY);
 		t2.start();
 		MessageClient client = server2.connectAndWait(new InetSocketAddress(InetAddress.getLocalHost(), 1000), 5000);

@@ -78,4 +78,12 @@ public interface MessageQueue {
 	 * 		the total number of Messages added
 	 */
 	public long getTotal();
+	
+	/**
+	 * The current size of the queue
+	 * 
+	 * @return
+	 * 		int representation of the current queue's size
+	 */
+	public int getSize();
 }

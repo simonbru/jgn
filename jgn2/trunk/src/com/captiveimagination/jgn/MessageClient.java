@@ -73,7 +73,7 @@ public class MessageClient {
 		this.server = server;
 		status = STATUS_NOT_CONNECTED;
 		outgoingQueue = new MessagePriorityQueue();
-		incomingMessages = new MessagePriorityQueue();
+		incomingMessages = new MessagePriorityQueue(-1);
 		outgoingMessages = new MessagePriorityQueue();
 		messageListeners = new ArrayList<MessageListener>();
 		
@@ -124,11 +124,12 @@ public class MessageClient {
 	 * The Message is submitted to the outgoing
 	 * queue and processed from the associated
 	 * MessageServer's updateTraffic method.
-	 * The message sent here is cloned and it
-	 * is utilized instead of the message received.
-	 * This allows for re-use of objects when
-	 * sending without any problems attempting to
-	 * send.
+	 * 
+	 * Note that the message sent here is cloned
+	 * and is utilized instead of the actual
+	 * message received. This allows for re-use
+	 * of objects when sending without any problems
+	 * attempting to send.
 	 * 
 	 * @param message
 	 */

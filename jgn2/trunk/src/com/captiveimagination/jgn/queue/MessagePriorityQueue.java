@@ -70,8 +70,7 @@ public class MessagePriorityQueue implements MessageQueue {
 		if (p < Message.PRIORITY_TRIVIAL || p > Message.PRIORITY_CRITICAL)
 			throw new IllegalStateException("Invalid priority: " + m.getPriority());
 
-		if (size == max)
-			throw new QueueFullException("Queue reached max size: " + max);
+		if ((size == max) && (max != -1)) throw new QueueFullException("Queue reached max size: " + max);
 
 		synchronized (lists[p]) {
 			lists[p].addLast(m);

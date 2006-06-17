@@ -62,10 +62,10 @@ public class TCPMessageServer extends MessageServer {
 		ssc.configureBlocking(false);
 		ssc.register(selector, SelectionKey.OP_ACCEPT);
 		
-		writeMessageLength = ByteBuffer.allocate(4);
-		writeBuffer = ByteBuffer.allocate(1024 * 10);		// TODO provide mechanism for setting allocated buffer size
+		writeMessageLength = ByteBuffer.allocateDirect(4);
+		writeBuffer = ByteBuffer.allocateDirect(1024 * 10);		// TODO provide mechanism for setting allocated buffer size
 		readPosition = 0;
-		readBuffer = ByteBuffer.allocate(1024 * 10);
+		readBuffer = ByteBuffer.allocateDirect(1024 * 10);
 	}
 
 	public MessageClient connect(InetSocketAddress address) throws IOException {
@@ -167,6 +167,10 @@ public class TCPMessageServer extends MessageServer {
 			message.setMessageClient(client);
 			return message;
 		} else {
+			readBuffer.position(readPosition);
+			readBuffer.compact();
+			position = position - readPosition;
+			readPosition = 0;
 			readBuffer.position(position);
 		}
 		return null;
@@ -176,6 +180,7 @@ public class TCPMessageServer extends MessageServer {
 		try {
 			SelectionKey key = channel.keyFor(selector);
 			MessageClient client = (MessageClient)key.attachment();
+			//System.out.println("Client Can Write: " + client.getAddress().getPort());
 			if (client.getCurrentWrite() != null) {
 				channel.write(client.getCurrentWrite());
 				if (!client.getCurrentWrite().hasRemaining()) {

@@ -74,7 +74,7 @@ public class MessageClient {
 		status = STATUS_NOT_CONNECTED;
 		outgoingQueue = new MessagePriorityQueue();
 		incomingMessages = new MessagePriorityQueue(-1);
-		outgoingMessages = new MessagePriorityQueue();
+		outgoingMessages = new MessagePriorityQueue(-1);
 		messageListeners = new ArrayList<MessageListener>();
 		
 		registry = new HashMap<Short,Class<? extends Message>>();

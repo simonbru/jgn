@@ -99,7 +99,7 @@ public class TCPMessageServer extends MessageServer {
 				} else if (activeKey.isReadable()) {
 					read((SocketChannel)activeKey.channel());
 				} else if (activeKey.isWritable()) {
-					write((SocketChannel)activeKey.channel());
+					while (write((SocketChannel)activeKey.channel()));
 				} else if (activeKey.isConnectable()) {
 					connect((SocketChannel)activeKey.channel());
 				}
@@ -180,7 +180,7 @@ public class TCPMessageServer extends MessageServer {
 		return null;
 	}
 	
-	private void write(SocketChannel channel) throws IOException {
+	private boolean write(SocketChannel channel) throws IOException {
 		try {
 			SelectionKey key = channel.keyFor(selector);
 			MessageClient client = (MessageClient)key.attachment();
@@ -191,6 +191,9 @@ public class TCPMessageServer extends MessageServer {
 					client.setCurrentWrite(null);
 					client.getOutgoingMessageQueue().add(client.getCurrentMessage());
 					client.setCurrentMessage(null);
+					// If there are still messages to write and the buffer isn't full,
+					// we return true;
+					if (!client.getOutgoingQueue().isEmpty()) return true;
 				}
 			} else if (!client.getOutgoingQueue().isEmpty()) {
 				Message message = client.getOutgoingQueue().poll();
@@ -209,6 +212,9 @@ public class TCPMessageServer extends MessageServer {
 					client.setCurrentMessage(message);
 				} else {
 					client.getOutgoingMessageQueue().add(message);
+					// If there are still messages to write and the buffer isn't full,
+					// we return true;
+					if (!client.getOutgoingQueue().isEmpty()) return true;
 				}
 			}
 		} catch(InvocationTargetException exc) {
@@ -216,6 +222,7 @@ public class TCPMessageServer extends MessageServer {
 		} catch(IllegalAccessException exc) {
 			throw new IOException(exc.getMessage());
 		}
+		return false;
 	}
 	
 	private void connect(SocketChannel channel) throws IOException {

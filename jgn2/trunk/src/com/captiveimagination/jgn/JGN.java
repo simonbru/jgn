@@ -33,9 +33,6 @@
  */
 package com.captiveimagination.jgn;
 
-import java.io.*;
-import java.lang.reflect.*;
-import java.nio.*;
 import java.util.*;
 
 import com.captiveimagination.jgn.convert.*;
@@ -54,6 +51,7 @@ public class JGN {
 	static {
 		// Certain messages must be known before negotiation so this is explicitly done here
 		register(LocalRegistrationMessage.class, (short)0);
+		register(StreamMessage.class);
 	}
 	
 	/**

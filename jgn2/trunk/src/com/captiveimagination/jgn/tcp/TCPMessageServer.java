@@ -167,10 +167,14 @@ public class TCPMessageServer extends MessageServer {
 			message.setMessageClient(client);
 			return message;
 		} else {
-			readBuffer.position(readPosition);
-			readBuffer.compact();
-			position = position - readPosition;
-			readPosition = 0;
+			if (readBuffer.capacity() == position) {
+				// If the capacity of the buffer has been reached
+				// we must compact it
+				readBuffer.position(readPosition);
+				readBuffer.compact();
+				position = position - readPosition;
+				readPosition = 0;
+			}
 			readBuffer.position(position);
 		}
 		return null;

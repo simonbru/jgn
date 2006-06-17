@@ -149,6 +149,7 @@ public class TestMessageServer {
 			System.out.println("Connection established!");
 			BasicMessage message = new BasicMessage();
 			long time = System.currentTimeMillis();
+			Thread.currentThread().setPriority(Thread.MIN_PRIORITY);
 			for (int i = 0; i < 100000; i++) {
 				message.setValue(i);
 				try {

@@ -46,28 +46,28 @@ import com.captiveimagination.jgn.message.*;
  * 
  * @author Matthew D. Hicks
  */
-public class InternalListener implements DynamicMessageListener, ConnectionListener {
+public class InternalListener implements MessageListener, ConnectionListener {
 	private static InternalListener instance;
 	
 	private InternalListener() {
 	}
 	
 	public void messageReceived(Message message) {
-	}
-	
-	public void messageReceived(LocalRegistrationMessage message) {
-		String[] messages = message.getMessageClasses();
-		short[] ids = message.getIds();
-		int i = 0;
-		try {
-			for (; i < messages.length; i++) {
-				message.getMessageClient().register(ids[i], (Class<? extends Message>)Class.forName(messages[i]));
+		if (message instanceof LocalRegistrationMessage) {
+			LocalRegistrationMessage m = (LocalRegistrationMessage)message;
+			String[] messages = m.getMessageClasses();
+			short[] ids = m.getIds();
+			int i = 0;
+			try {
+				for (; i < messages.length; i++) {
+					message.getMessageClient().register(ids[i], (Class<? extends Message>)Class.forName(messages[i]));
+				}
+				message.getMessageClient().setStatus(MessageClient.STATUS_CONNECTED);
+			} catch(ClassNotFoundException exc) {
+				System.err.println("Unable to find the message: " + messages[i] + " in the ClassLoader. Trace follows:");
+				// TODO handle more gracefully
+				throw new RuntimeException(exc);
 			}
-			message.getMessageClient().setStatus(MessageClient.STATUS_CONNECTED);
-		} catch(ClassNotFoundException exc) {
-			System.err.println("Unable to find the message: " + messages[i] + " in the ClassLoader. Trace follows:");
-			// TODO handle more gracefully
-			throw new RuntimeException(exc);
 		}
 	}
 

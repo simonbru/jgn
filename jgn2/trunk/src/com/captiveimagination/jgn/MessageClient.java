@@ -62,6 +62,8 @@ public class MessageClient {
 	private MessageQueue incomingMessages;			// Waiting for MessageListener handling
 	private MessageQueue outgoingMessages;			// Waiting for MessageListener handling
 	private ArrayList<MessageListener> messageListeners;
+	//private HashMap<Integer,JGNInputStream> inputStreams;
+	//private HashMap<Integer,JGNOutputStream> outputStreams;
 	private ByteBuffer currentWrite;
 	private Message currentMessage;
 	
@@ -75,7 +77,7 @@ public class MessageClient {
 		outgoingQueue = new MessagePriorityQueue();
 		incomingMessages = new MessagePriorityQueue(-1);
 		outgoingMessages = new MessagePriorityQueue(-1);
-		messageListeners = new ArrayList<MessageListener>();
+		messageListeners = new ArrayList<MessageListener>(server.getMaxQueueSize());
 		
 		registry = new HashMap<Short,Class<? extends Message>>();
 		registryReverse = new HashMap<Class<? extends Message>,Short>();

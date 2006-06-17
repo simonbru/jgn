@@ -200,7 +200,6 @@ public class TCPMessageServer extends MessageServer {
 				writeBuffer.clear();
 				writeBuffer.putShort(JGN.getMessageTypeId(message.getClass()));
 				ByteBuffer buffer = convertMessage(message, writeBuffer);
-				int contentLength = buffer.position();
 				writeMessageLength.clear();
 				writeMessageLength.putInt(buffer.position());
 				writeMessageLength.flip();

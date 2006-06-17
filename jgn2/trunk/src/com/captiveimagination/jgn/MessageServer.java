@@ -53,6 +53,7 @@ public abstract class MessageServer {
 	private static HashMap<Class,ArrayList<Class>> classHierarchyCache = new HashMap<Class,ArrayList<Class>>();
 	
 	private InetSocketAddress address;
+	private int maxQueueSize;
 	private ConnectionQueue incomingConnections;	// Waiting for ConnectionListener handling
 	private ConnectionQueue negotiatedConnections;	// Waiting for ConnectionListener handling
 	private ArrayList<ConnectionListener> connectionListeners;
@@ -60,7 +61,12 @@ public abstract class MessageServer {
 	private List<MessageClient> clients;
 
 	public MessageServer(InetSocketAddress address) {
+		this(address, 1024);
+	}
+	
+	public MessageServer(InetSocketAddress address, int maxQueueSize) {
 		this.address = address;
+		this.maxQueueSize = maxQueueSize;
 		incomingConnections = new ConnectionQueue();
 		negotiatedConnections = new ConnectionQueue();
 		connectionListeners = new ArrayList<ConnectionListener>();
@@ -69,6 +75,10 @@ public abstract class MessageServer {
 		
 		addConnectionListener(InternalListener.getInstance());
 		addMessageListener(InternalListener.getInstance());
+	}
+	
+	public int getMaxQueueSize() {
+		return maxQueueSize;
 	}
 	
 	protected ConnectionQueue getIncomingConnectionQueue() {

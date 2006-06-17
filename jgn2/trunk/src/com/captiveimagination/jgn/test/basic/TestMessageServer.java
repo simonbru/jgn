@@ -46,6 +46,8 @@ import com.captiveimagination.jgn.tcp.*;
  * @author Matthew D. Hicks
  */
 public class TestMessageServer {
+	private static final int MAX = 100000;
+	
 	public static int receiveCount = 0;
 	public static MessageClient client1;
 	public static MessageClient client2;
@@ -76,7 +78,10 @@ public class TestMessageServer {
 					receiveCount++;
 					//System.out.println("Count: " + receiveCount + ", " + ((BasicMessage)message).getValue());
 					//if (receiveCount > 2000) System.out.println("Receive Count: " + receiveCount);
-					if (receiveCount == 100000) System.out.println("Completed in: " + (System.currentTimeMillis() - time) + "ms");
+					if (receiveCount == MAX) {
+						System.out.println("Completed in: " + (System.currentTimeMillis() - time) + "ms");
+						System.exit(0);
+					}
 				}
 			}
 
@@ -112,7 +117,7 @@ public class TestMessageServer {
 				}
 			}
 		};
-		t.setDaemon(true);
+		//t.setDaemon(true);
 		t.setPriority(Thread.MIN_PRIORITY);
 		t.start();
 		
@@ -143,7 +148,7 @@ public class TestMessageServer {
 				System.out.println("S2> Disconnected: " + client);
 			}
 		});
-		t2.setDaemon(true);
+		//t2.setDaemon(true);
 		t2.setPriority(Thread.MIN_PRIORITY);
 		t2.start();
 		MessageClient client = server2.connectAndWait(new InetSocketAddress(InetAddress.getLocalHost(), 1000), 5000);
@@ -152,7 +157,7 @@ public class TestMessageServer {
 			BasicMessage message = new BasicMessage();
 			long time = System.currentTimeMillis();
 			Thread.currentThread().setPriority(Thread.MIN_PRIORITY);
-			for (int i = 0; i < 100000; i++) {
+			for (int i = 0; i < MAX; i++) {
 				message.setValue(i);
 				try {
 					client.sendMessage(message);

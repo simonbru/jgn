@@ -112,6 +112,7 @@ public class TestMessageServer {
 				}
 			}
 		};
+		t.setDaemon(true);
 		t.setPriority(Thread.MIN_PRIORITY);
 		t.start();
 		
@@ -142,6 +143,7 @@ public class TestMessageServer {
 				System.out.println("S2> Disconnected: " + client);
 			}
 		});
+		t2.setDaemon(true);
 		t2.setPriority(Thread.MIN_PRIORITY);
 		t2.start();
 		MessageClient client = server2.connectAndWait(new InetSocketAddress(InetAddress.getLocalHost(), 1000), 5000);

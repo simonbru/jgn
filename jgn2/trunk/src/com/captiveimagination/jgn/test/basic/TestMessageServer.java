@@ -46,7 +46,7 @@ import com.captiveimagination.jgn.tcp.*;
  * @author Matthew D. Hicks
  */
 public class TestMessageServer {
-	private static final int MAX = 100000;
+	private static final int MAX = 500000; //2000000000;
 	
 	public static int receiveCount = 0;
 	public static MessageClient client1;
@@ -110,7 +110,7 @@ public class TestMessageServer {
 							}
 							cycle = System.currentTimeMillis();
 						}
-						//Thread.sleep(1);
+						Thread.sleep(1);
 					}
 				} catch(Exception exc) {
 					exc.printStackTrace();
@@ -118,7 +118,7 @@ public class TestMessageServer {
 			}
 		};
 		//t.setDaemon(true);
-		t.setPriority(Thread.MIN_PRIORITY);
+		//t.setPriority(Thread.MIN_PRIORITY);
 		t.start();
 		
 		final MessageServer server2 = new TCPMessageServer(new InetSocketAddress(InetAddress.getLocalHost(), 2000));
@@ -127,7 +127,7 @@ public class TestMessageServer {
 				try {
 					while (true) {
 						server2.update();
-						//Thread.sleep(1);
+						Thread.sleep(1);
 					}
 				} catch(Exception exc) {
 					exc.printStackTrace();
@@ -149,14 +149,14 @@ public class TestMessageServer {
 			}
 		});
 		//t2.setDaemon(true);
-		t2.setPriority(Thread.MIN_PRIORITY);
+		//t2.setPriority(Thread.MIN_PRIORITY);
 		t2.start();
 		MessageClient client = server2.connectAndWait(new InetSocketAddress(InetAddress.getLocalHost(), 1000), 5000);
 		if (client != null) {
 			System.out.println("Connection established!");
 			BasicMessage message = new BasicMessage();
 			long time = System.currentTimeMillis();
-			Thread.currentThread().setPriority(Thread.MIN_PRIORITY);
+			//Thread.currentThread().setPriority(Thread.MIN_PRIORITY);
 			for (int i = 0; i < MAX; i++) {
 				message.setValue(i);
 				try {

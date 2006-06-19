@@ -52,8 +52,8 @@ public class TCPMessageServer extends MessageServer {
 	private int readPosition;
 	private ByteBuffer readBuffer;
 	
-	public TCPMessageServer(InetSocketAddress address) throws IOException {
-		super(address);
+	public TCPMessageServer(InetSocketAddress address, int maxQueueSize) throws IOException {
+		super(address, maxQueueSize);
 		selector = Selector.open();
 		
 		ServerSocketChannel ssc = ServerSocketChannel.open();
@@ -67,6 +67,10 @@ public class TCPMessageServer extends MessageServer {
 		readBuffer = ByteBuffer.allocateDirect(1024 * 10);
 	}
 
+	public TCPMessageServer(InetSocketAddress address) throws IOException {
+		this(address, 1024);
+	}
+	
 	public MessageClient connect(InetSocketAddress address) throws IOException {
 		// TODO lookup to see if the connection already exists
 		MessageClient client = new MessageClient(address, this);

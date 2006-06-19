@@ -97,6 +97,11 @@ public class ConversionHandler
             converters[i].get(message, getters[i], buffer);
          }
       }
+      catch (BufferOverflowException exc)
+      {
+    	  // keep the exception
+    	  throw exc;
+      }
       catch (Exception exc)
       {
          throw new MessageHandlingException("Failed to send message", message, exc);

@@ -45,7 +45,7 @@ import com.captiveimagination.jgn.queue.*;
  * @author Matthew D. Hicks
  */
 public class TestMessageServer {
-	private static final int MAX = 500000; //2000000000;
+	private static final int MAX = 1000000; //2000000000;
 	
 	public static int receiveCount = 0;
 	public static MessageClient client1;

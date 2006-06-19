@@ -181,8 +181,25 @@ public class TCPMessageServer extends MessageServer {
 	}
 	
 	private boolean write(SocketChannel channel) throws IOException {
-		try {
-			SelectionKey key = channel.keyFor(selector);
+			SelectionKey key = channel.keyFor(selector); 
+            MessageClient client = (MessageClient)key.attachment(); 
+             
+            if (client.getCurrentWrite() != null) { 
+                 channel.write(client.getCurrentWrite()); 
+                 if (!client.getCurrentWrite().hasRemaining()) { 
+                      client.setCurrentWrite(null); 
+                 } 
+            } else { 
+                 ByteBuffer buffer = RivenPacketCombiner2.combine(client, 50000); 
+                 if (buffer != null) { 
+                      channel.write(buffer); 
+                      if (buffer.hasRemaining()) { 
+                           client.setCurrentWrite(buffer); 
+                      } 
+                 } 
+            }
+			
+			/*SelectionKey key = channel.keyFor(selector);
 			MessageClient client = (MessageClient)key.attachment();
 			//System.out.println("Client Can Write: " + client.getAddress().getPort());
 			if (client.getCurrentWrite() != null) {
@@ -216,12 +233,7 @@ public class TCPMessageServer extends MessageServer {
 					// we return true;
 					if (!client.getOutgoingQueue().isEmpty()) return true;
 				}
-			}
-		} catch(InvocationTargetException exc) {
-			throw new IOException(exc.getMessage());
-		} catch(IllegalAccessException exc) {
-			throw new IOException(exc.getMessage());
-		}
+			}*/
 		return false;
 	}
 	

@@ -43,6 +43,9 @@ public class RivenPacketCombiner2 {
 			// no message to send
 			if (msg == null) break;
 
+			// Temporary Fix MDH
+			msg.setMessageClient(client);
+			
 			// handle message
 			ConversionHandler handler;
 			handler = ConversionHandler.getConversionHandler(msg.getClass());

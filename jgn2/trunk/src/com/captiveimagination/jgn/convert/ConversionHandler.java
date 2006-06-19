@@ -75,6 +75,8 @@ public class ConversionHandler {
 	}
 	
 	public void sendMessage(Message message, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException, IOException {
+		// Write the message type
+		buffer.putShort(message.getMessageClient().getMessageTypeId(message.getClass()));
 		for (int i = 0; i < converters.length; i++) {
 			converters[i].get(message, getters[i], buffer);
 		}

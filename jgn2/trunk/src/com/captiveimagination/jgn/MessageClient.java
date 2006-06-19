@@ -208,6 +208,14 @@ public class MessageClient {
 		registryReverse.put(c, typeId);
 	}
 
+	public void output() {
+		Iterator<Short> iterator = registry.keySet().iterator();
+		while (iterator.hasNext()) {
+			short id = iterator.next();
+			System.out.println("Registered: " + id + ", " + registry.get(id).getName());
+		}
+	}
+	
 	public void disconnect() throws IOException {
 		// TODO disconnect
 		setStatus(STATUS_DISCONNECTED);

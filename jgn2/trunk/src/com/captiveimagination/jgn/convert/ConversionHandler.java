@@ -50,7 +50,7 @@ import com.captiveimagination.jgn.message.*;
 public class ConversionHandler {
 	private static final MethodComparator methodComparator = new MethodComparator();
 	private static final HashSet<String> ignore = new HashSet<String>();
-	private static final HashMap<Class<? extends Message>,ConversionHandler> handlers = new HashMap<Class<? extends Message>,ConversionHandler>();
+	private static final HashMap<Class<? extends Message>,ConversionHandler> messageToHandler = new HashMap<Class<? extends Message>,ConversionHandler>();
 	static {
 		ignore.add("getId");
 	}
@@ -86,7 +86,7 @@ public class ConversionHandler {
 	public static final synchronized ConversionHandler getConversionHandler(Class<? extends Message> messageClass) {
 		initConverters();
 		
-		if (handlers.containsKey(messageClass)) return handlers.get(messageClass);
+		if (messageToHandler.containsKey(messageClass)) return messageToHandler.get(messageClass);
 		
 		// TODO if the message implements UniqueMessage then we need to associate the getId first
 		
@@ -126,7 +126,7 @@ public class ConversionHandler {
 		}
 		
 		ConversionHandler handler = new ConversionHandler(converters.toArray(new Converter[converters.size()]), getters.toArray(new Method[getters.size()]), setters.toArray(new Method[setters.size()]), messageClass);
-		handlers.put(messageClass, handler);
+		messageToHandler.put(messageClass, handler);
 		return handler;
 	}
 	

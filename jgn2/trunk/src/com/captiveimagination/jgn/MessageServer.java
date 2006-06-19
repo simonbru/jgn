@@ -296,7 +296,7 @@ public abstract class MessageServer {
 		}
 	}
 
-	protected ByteBuffer convertMessage(Message message, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException, IOException {
+	protected ByteBuffer convertMessage(Message message, ByteBuffer buffer) throws MessageHandlingException {
 		ConversionHandler handler = JGN.getConverter(message.getClass());
 		handler.sendMessage(message, buffer);
 		// TODO pass the byte buffer through any MessageProcessors associated with this message

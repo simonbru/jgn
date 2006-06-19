@@ -51,18 +51,18 @@ public class TCPMessageServer extends MessageServer {
 	private ByteBuffer writeBuffer;
 	private int readPosition;
 	private ByteBuffer readBuffer;
-	
+
 	public TCPMessageServer(InetSocketAddress address, int maxQueueSize) throws IOException {
 		super(address, maxQueueSize);
 		selector = Selector.open();
-		
+
 		ServerSocketChannel ssc = ServerSocketChannel.open();
 		ssc.socket().bind(address);
 		ssc.configureBlocking(false);
 		ssc.register(selector, SelectionKey.OP_ACCEPT);
-		
+
 		writeMessageLength = ByteBuffer.allocateDirect(4);
-		writeBuffer = ByteBuffer.allocateDirect(1024 * 10);		// TODO provide mechanism for setting allocated buffer size
+		writeBuffer = ByteBuffer.allocateDirect(1024 * 10); // TODO provide mechanism for setting allocated buffer size
 		readPosition = 0;
 		readBuffer = ByteBuffer.allocateDirect(1024 * 10);
 	}
@@ -70,7 +70,7 @@ public class TCPMessageServer extends MessageServer {
 	public TCPMessageServer(InetSocketAddress address) throws IOException {
 		this(address, 1024);
 	}
-	
+
 	public MessageClient connect(InetSocketAddress address) throws IOException {
 		// TODO lookup to see if the connection already exists
 		MessageClient client = new MessageClient(address, this);
@@ -80,16 +80,17 @@ public class TCPMessageServer extends MessageServer {
 		channel.configureBlocking(false);
 		channel.socket().setTcpNoDelay(true);
 		// TODO connect timeout?
-		SelectionKey key = channel.register(selector, SelectionKey.OP_CONNECT | SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+		SelectionKey key = channel.register(selector, SelectionKey.OP_CONNECT | SelectionKey.OP_READ
+						| SelectionKey.OP_WRITE);
 		key.attach(client);
 		channel.connect(client.getAddress());
 		return null;
 	}
-	
+
 	public void close() {
 		// TODO call disconnect on all MessageClients and then shutdown Selector
 	}
-	
+
 	public synchronized void updateTraffic() throws IOException {
 		// Handle Accept, Read, and Write
 		if (selector.selectNow() > 0) {
@@ -98,53 +99,48 @@ public class TCPMessageServer extends MessageServer {
 				SelectionKey activeKey = keys.next();
 				keys.remove();
 				if (activeKey.isAcceptable()) {
-					accept((ServerSocketChannel)activeKey.channel());
+					accept((ServerSocketChannel) activeKey.channel());
 				} else if (activeKey.isReadable()) {
-					read((SocketChannel)activeKey.channel());
+					read((SocketChannel) activeKey.channel());
 				} else if (activeKey.isWritable()) {
-					while (write((SocketChannel)activeKey.channel()));
+					while (write((SocketChannel) activeKey.channel()))
+						continue;
 				} else if (activeKey.isConnectable()) {
-					connect((SocketChannel)activeKey.channel());
+					connect((SocketChannel) activeKey.channel());
 				}
 			}
 		}
 	}
-	
+
 	private void accept(ServerSocketChannel channel) throws IOException {
 		// TODO validate connections
 		SocketChannel connection = channel.accept();
 		connection.configureBlocking(false);
 		connection.socket().setTcpNoDelay(true);
 		SelectionKey key = connection.register(selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
-		MessageClient client = new MessageClient((InetSocketAddress)connection.socket().getRemoteSocketAddress(), this);
+		MessageClient client = new MessageClient((InetSocketAddress) connection.socket().getRemoteSocketAddress(), this);
 		client.setStatus(MessageClient.STATUS_NEGOTIATING);
 		key.attach(client);
 		getIncomingConnectionQueue().add(client);
 		getMessageClients().add(client);
 	}
-	
+
 	private void read(SocketChannel channel) throws IOException {
 		channel.read(readBuffer);
-		MessageClient client = (MessageClient)channel.keyFor(selector).attachment();
+		MessageClient client = (MessageClient) channel.keyFor(selector).attachment();
 		Message message;
 		try {
 			while ((message = readMessage(client)) != null) {
 				client.getIncomingMessageQueue().add(message);
 			}
-		} catch(IllegalArgumentException exc) {
-			throw new IOException(exc.getMessage());
-		} catch(NoSuchMethodException exc) {
-			throw new IOException(exc.getMessage());
-		} catch(IllegalAccessException exc) {
-			throw new IOException(exc.getMessage());
-		} catch(InstantiationException exc) {
-			throw new IOException(exc.getMessage());
-		} catch(InvocationTargetException exc) {
+		} catch (MessageHandlingException exc) {
+			// FIXME we need to show the cause!
+			// appearantly IOE is not suitable for this
 			throw new IOException(exc.getMessage());
 		}
 	}
-	
-	private Message readMessage(MessageClient client) throws IllegalArgumentException, SecurityException, InstantiationException, IllegalAccessException, InvocationTargetException, IOException, NoSuchMethodException {
+
+	private Message readMessage(MessageClient client) throws MessageHandlingException {
 		int position = readBuffer.position();
 		readBuffer.position(readPosition);
 		int messageLength = readBuffer.getInt();
@@ -155,7 +151,7 @@ public class TCPMessageServer extends MessageServer {
 			if (c == null) {
 				if (client.isConnected()) {
 					client.output();
-					throw new IOException("Message received from unknown messageTypeId: " + typeId);
+					throw new MessageHandlingException("Message received from unknown messageTypeId: " + typeId);
 				}
 				readBuffer.position(position);
 				return null;
@@ -175,6 +171,7 @@ public class TCPMessageServer extends MessageServer {
 		} else {
 			// If the capacity of the buffer has been reached
 			// we must compact it
+			// FIXME this involves a data-copy, don't
 			readBuffer.position(readPosition);
 			readBuffer.compact();
 			position = position - readPosition;
@@ -183,67 +180,83 @@ public class TCPMessageServer extends MessageServer {
 		}
 		return null;
 	}
-	
+
 	private boolean write(SocketChannel channel) throws IOException {
-		SelectionKey key = channel.keyFor(selector); 
-        MessageClient client = (MessageClient)key.attachment(); 
-         
-        if (client.getCurrentWrite() != null) { 
-             channel.write(client.getCurrentWrite()); 
-             if (!client.getCurrentWrite().hasRemaining()) { 
-                  client.setCurrentWrite(null); 
-             } 
-        } else { 
-             ByteBuffer buffer = PacketCombiner.combine(client, 50000); 
-             if (buffer != null) { 
-                  channel.write(buffer); 
-                  if (buffer.hasRemaining()) { 
-                       client.setCurrentWrite(buffer); 
-                  } 
-             } 
-        }
-			
-			/*SelectionKey key = channel.keyFor(selector);
-			MessageClient client = (MessageClient)key.attachment();
-			//System.out.println("Client Can Write: " + client.getAddress().getPort());
-			if (client.getCurrentWrite() != null) {
-				channel.write(client.getCurrentWrite());
-				if (!client.getCurrentWrite().hasRemaining()) {
-					client.setCurrentWrite(null);
-					client.getOutgoingMessageQueue().add(client.getCurrentMessage());
-					client.setCurrentMessage(null);
-					// If there are still messages to write and the buffer isn't full,
-					// we return true;
-					if (!client.getOutgoingQueue().isEmpty()) return true;
-				}
-			} else if (!client.getOutgoingQueue().isEmpty()) {
-				Message message = client.getOutgoingQueue().poll();
-				if (message == null) return false;		// TODO figure out why this is necessary
-				writeBuffer.clear();
-				writeBuffer.putShort(JGN.getMessageTypeId(message.getClass()));
-				ByteBuffer buffer = convertMessage(message, writeBuffer);
-				writeMessageLength.clear();
-				writeMessageLength.putInt(buffer.position());
-				writeMessageLength.flip();
-				buffer.flip();
-				channel.write(writeMessageLength);
+		SelectionKey key = channel.keyFor(selector);
+		MessageClient client = (MessageClient) key.attachment();
+
+		if (client.getCurrentWrite() != null) {
+			//
+			// (riven) [reference A] -----------------------------vv
+			//
+			channel.write(client.getCurrentWrite());
+			if (!client.getCurrentWrite().hasRemaining()) {
+				client.setCurrentWrite(null);
+			}
+		} else {
+			ByteBuffer buffer;
+
+			try {
+				// TODO make 50000 adjustable (getter/setter)
+				buffer = PacketCombiner.combine(client, 50000);
+			} catch (MessageHandlingException exc) {
+				// FIXME handle properly
+				exc.printStackTrace();
+				buffer = null;
+			}
+
+			if (buffer != null) {
 				channel.write(buffer);
 				if (buffer.hasRemaining()) {
 					client.setCurrentWrite(buffer);
-					client.setCurrentMessage(message);
-				} else {
-					client.getOutgoingMessageQueue().add(message);
-					// If there are still messages to write and the buffer isn't full,
-					// we return true;
-					if (!client.getOutgoingQueue().isEmpty()) return true;
 				}
-			}*/
+				// (riven) added this here: otherwise
+				// we send an empty BB to [reference A]  ----------^^
+				else client.setCurrentWrite(null);
+			}
+		}
+
+		/*SelectionKey key = channel.keyFor(selector);
+		 MessageClient client = (MessageClient)key.attachment();
+		 //System.out.println("Client Can Write: " + client.getAddress().getPort());
+		 if (client.getCurrentWrite() != null) {
+		 channel.write(client.getCurrentWrite());
+		 if (!client.getCurrentWrite().hasRemaining()) {
+		 client.setCurrentWrite(null);
+		 client.getOutgoingMessageQueue().add(client.getCurrentMessage());
+		 client.setCurrentMessage(null);
+		 // If there are still messages to write and the buffer isn't full,
+		 // we return true;
+		 if (!client.getOutgoingQueue().isEmpty()) return true;
+		 }
+		 } else if (!client.getOutgoingQueue().isEmpty()) {
+		 Message message = client.getOutgoingQueue().poll();
+		 if (message == null) return false;		// TODO figure out why this is necessary
+		 writeBuffer.clear();
+		 writeBuffer.putShort(JGN.getMessageTypeId(message.getClass()));
+		 ByteBuffer buffer = convertMessage(message, writeBuffer);
+		 writeMessageLength.clear();
+		 writeMessageLength.putInt(buffer.position());
+		 writeMessageLength.flip();
+		 buffer.flip();
+		 channel.write(writeMessageLength);
+		 channel.write(buffer);
+		 if (buffer.hasRemaining()) {
+		 client.setCurrentWrite(buffer);
+		 client.setCurrentMessage(message);
+		 } else {
+		 client.getOutgoingMessageQueue().add(message);
+		 // If there are still messages to write and the buffer isn't full,
+		 // we return true;
+		 if (!client.getOutgoingQueue().isEmpty()) return true;
+		 }
+		 }*/
 		return false;
 	}
-	
+
 	private void connect(SocketChannel channel) throws IOException {
 		channel.finishConnect();
-		MessageClient client = (MessageClient)channel.keyFor(selector).attachment();
+		MessageClient client = (MessageClient) channel.keyFor(selector).attachment();
 		getIncomingConnectionQueue().add(client);
 	}
 }

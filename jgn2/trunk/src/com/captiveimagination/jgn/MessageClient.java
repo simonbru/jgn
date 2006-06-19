@@ -103,15 +103,7 @@ public class MessageClient {
 	public void setCurrentWrite(ByteBuffer currentWrite) {
 		this.currentWrite = currentWrite;
 	}
-	
-	public Message getCurrentMessage() {
-		return currentMessage;
-	}
-	
-	public void setCurrentMessage(Message currentMessage) {
-		this.currentMessage = currentMessage;
-	}
-	
+
 	public InetSocketAddress getAddress() {
 		return address;
 	}

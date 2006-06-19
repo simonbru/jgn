@@ -13,7 +13,7 @@ import com.captiveimagination.jgn.convert.ConversionHandler;
 import com.captiveimagination.jgn.message.Message;
 import com.captiveimagination.jgn.queue.MessageQueue;
 
-public class RivenPacketCombiner2 {
+public class PacketCombiner {
 
 	// map holding the last failed message of each client, if any
 	private static Map<Object, Message> clientToFailedMessage = new HashMap<Object, Message>();
@@ -108,6 +108,7 @@ public class RivenPacketCombiner2 {
 
 			// B: write size at start of the packet
 			buffer.putInt(packetPos0 - 4, packetSize); // does not modify position/limit
+			client.getOutgoingMessageQueue().add(msg);	// Add it to the message sent queue
 		}
 
 		int chunkPos1 = buffer.position();

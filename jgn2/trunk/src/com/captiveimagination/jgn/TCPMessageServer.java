@@ -78,7 +78,7 @@ public class TCPMessageServer extends MessageServer {
 		getMessageClients().add(client);
 		SocketChannel channel = SocketChannel.open();
 		channel.configureBlocking(false);
-		//channel.socket().setTcpNoDelay(true);		// TODO Test this out
+		channel.socket().setTcpNoDelay(true);
 		// TODO connect timeout?
 		SelectionKey key = channel.register(selector, SelectionKey.OP_CONNECT | SelectionKey.OP_READ | SelectionKey.OP_WRITE);
 		key.attach(client);
@@ -114,7 +114,7 @@ public class TCPMessageServer extends MessageServer {
 		// TODO validate connections
 		SocketChannel connection = channel.accept();
 		connection.configureBlocking(false);
-		//connection.socket().setTcpNoDelay(true);		// TODO Test this out
+		connection.socket().setTcpNoDelay(true);
 		SelectionKey key = connection.register(selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
 		MessageClient client = new MessageClient((InetSocketAddress)connection.socket().getRemoteSocketAddress(), this);
 		client.setStatus(MessageClient.STATUS_NEGOTIATING);
@@ -185,23 +185,23 @@ public class TCPMessageServer extends MessageServer {
 	}
 	
 	private boolean write(SocketChannel channel) throws IOException {
-			SelectionKey key = channel.keyFor(selector); 
-            MessageClient client = (MessageClient)key.attachment(); 
-             
-            if (client.getCurrentWrite() != null) { 
-                 channel.write(client.getCurrentWrite()); 
-                 if (!client.getCurrentWrite().hasRemaining()) { 
-                      client.setCurrentWrite(null); 
-                 } 
-            } else { 
-                 ByteBuffer buffer = RivenPacketCombiner2.combine(client, 50000); 
-                 if (buffer != null) { 
-                      channel.write(buffer); 
-                      if (buffer.hasRemaining()) { 
-                           client.setCurrentWrite(buffer); 
-                      } 
-                 } 
-            }
+		SelectionKey key = channel.keyFor(selector); 
+        MessageClient client = (MessageClient)key.attachment(); 
+         
+        if (client.getCurrentWrite() != null) { 
+             channel.write(client.getCurrentWrite()); 
+             if (!client.getCurrentWrite().hasRemaining()) { 
+                  client.setCurrentWrite(null); 
+             } 
+        } else { 
+             ByteBuffer buffer = PacketCombiner.combine(client, 50000); 
+             if (buffer != null) { 
+                  channel.write(buffer); 
+                  if (buffer.hasRemaining()) { 
+                       client.setCurrentWrite(buffer); 
+                  } 
+             } 
+        }
 			
 			/*SelectionKey key = channel.keyFor(selector);
 			MessageClient client = (MessageClient)key.attachment();

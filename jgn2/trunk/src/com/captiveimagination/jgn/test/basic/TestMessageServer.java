@@ -156,6 +156,7 @@ public class TestMessageServer {
 			BasicMessage message = new BasicMessage();
 			long time = System.currentTimeMillis();
 			//Thread.currentThread().setPriority(Thread.MIN_PRIORITY);
+			//message.setData(new byte[512]);
 			for (int i = 0; i < MAX; i++) {
 				message.setValue(i);
 				try {

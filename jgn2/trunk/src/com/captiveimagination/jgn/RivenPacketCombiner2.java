@@ -110,14 +110,20 @@ public class RivenPacketCombiner2 {
 		int chunkPos1 = buffer.position();
 		//int chunkSize = chunkPos1 - chunkPos0;
 
-		// setup the position/limit to be sliced
-		buffer.limit(chunkPos1);
-		buffer.position(chunkPos0);
-		ByteBuffer chunk = buffer.slice();
+		ByteBuffer chunk;
 
-		// restore the position/limit for next write
-		buffer.limit(buffer.capacity());
-		buffer.position(chunkPos1);
+		if (sumBytes != 0) {
+			// setup the position/limit to be sliced
+			buffer.limit(chunkPos1);
+			buffer.position(chunkPos0);
+			chunk = buffer.slice();
+
+			// restore the position/limit for next write
+			buffer.limit(buffer.capacity());
+			buffer.position(chunkPos1);
+		} else {
+			chunk = null;
+		}
 
 		if (bufferFull) {
 			replaceBackingBuffer();

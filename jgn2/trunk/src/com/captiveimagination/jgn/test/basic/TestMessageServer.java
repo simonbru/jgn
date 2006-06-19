@@ -40,7 +40,6 @@ import com.captiveimagination.jgn.*;
 import com.captiveimagination.jgn.event.*;
 import com.captiveimagination.jgn.message.*;
 import com.captiveimagination.jgn.queue.*;
-import com.captiveimagination.jgn.tcp.*;
 
 /**
  * @author Matthew D. Hicks

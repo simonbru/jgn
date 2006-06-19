@@ -31,7 +31,7 @@
  *
  * Created: Jun 7, 2006
  */
-package com.captiveimagination.jgn.tcp;
+package com.captiveimagination.jgn;
 
 import java.io.*;
 import java.lang.reflect.*;
@@ -40,7 +40,6 @@ import java.nio.*;
 import java.nio.channels.*;
 import java.util.*;
 
-import com.captiveimagination.jgn.*;
 import com.captiveimagination.jgn.message.*;
 
 /**
@@ -150,7 +149,10 @@ public class TCPMessageServer extends MessageServer {
 			short typeId = readBuffer.getShort();
 			Class<? extends Message> c = client.getMessageClass(typeId);
 			if (c == null) {
-				if (client.isConnected()) throw new IOException("Message received from unknown messageTypeId: " + typeId);
+				if (client.isConnected()) {
+					client.output();
+					throw new IOException("Message received from unknown messageTypeId: " + typeId);
+				}
 				readBuffer.position(position);
 				return null;
 			}
@@ -167,14 +169,12 @@ public class TCPMessageServer extends MessageServer {
 			message.setMessageClient(client);
 			return message;
 		} else {
-			if (readBuffer.capacity() == position) {
-				// If the capacity of the buffer has been reached
-				// we must compact it
-				readBuffer.position(readPosition);
-				readBuffer.compact();
-				position = position - readPosition;
-				readPosition = 0;
-			}
+			// If the capacity of the buffer has been reached
+			// we must compact it
+			readBuffer.position(readPosition);
+			readBuffer.compact();
+			position = position - readPosition;
+			readPosition = 0;
 			readBuffer.position(position);
 		}
 		return null;

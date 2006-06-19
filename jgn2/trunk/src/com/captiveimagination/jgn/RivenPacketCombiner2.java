@@ -137,6 +137,6 @@ public class RivenPacketCombiner2 {
 	}
 
 	private static final void replaceBackingBuffer() {
-		ByteBuffer.allocateDirect(bigBufferSize);
+		buffer = ByteBuffer.allocateDirect(bigBufferSize);
 	}
 }

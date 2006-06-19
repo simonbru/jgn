@@ -13,140 +13,184 @@ import com.captiveimagination.jgn.convert.ConversionHandler;
 import com.captiveimagination.jgn.message.Message;
 import com.captiveimagination.jgn.queue.MessageQueue;
 
-public class PacketCombiner {
+/**
+ * The <code>PacketCombiner</code> combines packets. Yes, it does.
+ * 
+ * @author Skip M. B. Balk
+ */
 
-	// map holding the last failed message of each client, if any
-	private static Map<Object, Message> clientToFailedMessage = new HashMap<Object, Message>();
+public class PacketCombiner
+{
+   // map holding the last failed message of each client, if any
+   private static Map<Object, Message> clientToFailedMessage = new HashMap<Object, Message>();
 
-	// synchronized! one thread at a time!
-	public synchronized static final ByteBuffer combine(MessageClient client, int maxBytes) {
-		int chunkPos0 = buffer.position();
+   // synchronized! one thread at a time!
 
-		int sumBytes = 0;
+   /**
+    * Combines as much as possible Messages from the client into a single
+    * packet.
+    * 
+    * @param client
+    * @return buffer containing multiple packets
+    */
 
-		Message failed = clientToFailedMessage.get(client);
-		MessageQueue queue = client.getOutgoingQueue();
+   public synchronized static final ByteBuffer combine(MessageClient client, int maxBytes) throws MessageHandlingException
+   {
+      int chunkPos0 = buffer.position();
 
-		boolean bufferFull = false;
+      int sumBytes = 0;
 
-		while (true) {
-			Message msg;
+      Message failed = clientToFailedMessage.get(client);
+      Message initialFailed = failed;
+      MessageQueue queue = client.getOutgoingQueue();
 
-			// either get a new message or the last failed message
-			if (failed == null) {
-				msg = queue.poll();
-			} else {
-				msg = failed;
-				failed = null;
-			}
+      boolean bufferFull = false;
 
-			// no message to send
-			if (msg == null) break;
+      while (true)
+      {
+         Message msg;
 
-			// Temporary Fix MDH
-			msg.setMessageClient(client);
-			
-			// handle message
-			ConversionHandler handler;
-			handler = ConversionHandler.getConversionHandler(msg.getClass());
+         // either get a new message or the last failed message
+         if (failed == null)
+         {
+            msg = queue.poll();
+         }
+         else
+         {
+            msg = failed;
+            failed = null;
+         }
 
-			// not enough space left for size-info 
-			if ((sumBytes + 4 > maxBytes)) {
-				failed = msg;
-				break;
-			}
+         // no message to send
+         if (msg == null)
+            break;
 
-			// A: write the size later (see B)
-			try {
-				buffer.putInt(-1);
-			} catch (BufferOverflowException exc) {
-				// buffer full
-				bufferFull = true;
-				failed = msg;
-				break;
-			}
+         // FIXME
+         // Temporary Fix MDH
+         msg.setMessageClient(client);
 
-			int packetPos0 = buffer.position();
-			try {
-				handler.sendMessage(msg, buffer);
-			} catch (BufferOverflowException exc) {
-				// buffer full
-				bufferFull = true;
-				failed = msg;
+         // handle message
+         ConversionHandler handler;
+         handler = ConversionHandler.getConversionHandler(msg.getClass());
 
-				// restore the buffer
-				buffer.position(packetPos0 - 4);
+         // not enough space left for size-info
+         if ((sumBytes + 4 > maxBytes))
+         {
+            failed = msg;
+            break;
+         }
 
-				break;
-			} catch (Exception exc) {
-				// something serious went wrong, rethrow exception
+         // A: write the size later (see B)
+         try
+         {
+            buffer.putInt(-1);
+         }
+         catch (BufferOverflowException exc)
+         {
+            // buffer full
+            bufferFull = true;
+            failed = msg;
+            break;
+         }
 
-				// restore the buffer
-				buffer.position(packetPos0 - 4);
+         int packetPos0 = buffer.position();
+         try
+         {
+            handler.sendMessage(msg, buffer);
+         }
+         catch (BufferOverflowException exc)
+         {
+            // buffer full
+            bufferFull = true;
+            failed = msg;
 
-				// don't set this, as the message is seriously broken
-				// NOT: failed = msg;
+            // restore the buffer
+            buffer.position(packetPos0 - 4);
 
-				// give up
-				throw new IllegalStateException("Couldn't process message: " + msg, exc);
-			}
-			int packetPos1 = buffer.position();
-			int packetSize = packetPos1 - packetPos0;
+            if (failed == initialFailed) // fails on 2nd attempt
+               throw new MessageHandlingException("Message size larger than backing-buffer: " + (bigBufferSize / 1024) + "K", failed);
 
-			// we managed to write the message to the buffer, but are we allowed?
-			if (sumBytes + 4 + packetSize > maxBytes) {
-				// not enough space to write message-data
-				failed = msg;
+            break;
+         }
+         catch (Exception exc)
+         {
+            // something serious went wrong, rethrow exception
 
-				// restore the buffer
-				buffer.position(packetPos0 - 4);
+            // restore the buffer
+            buffer.position(packetPos0 - 4);
 
-				break;
-			}
+            // don't set this, as the message is seriously broken
+            // NOT: failed = msg;
 
-			sumBytes += 4 + packetSize;
+            // give up
+            throw new MessageHandlingException("Corrupt message", msg, exc);
+         }
+         int packetPos1 = buffer.position();
+         int packetSize = packetPos1 - packetPos0;
 
-			// B: write size at start of the packet
-			buffer.putInt(packetPos0 - 4, packetSize); // does not modify position/limit
-			client.getOutgoingMessageQueue().add(msg);	// Add it to the message sent queue
-		}
+         // we managed to write the message to the buffer, but are we allowed?
+         if (sumBytes + 4 + packetSize > maxBytes)
+         {
+            // not enough space to write message-data
+            failed = msg;
 
-		int chunkPos1 = buffer.position();
-		//int chunkSize = chunkPos1 - chunkPos0;
+            // restore the buffer
+            buffer.position(packetPos0 - 4);
 
-		ByteBuffer chunk;
+            break;
+         }
 
-		if (sumBytes != 0) {
-			// setup the position/limit to be sliced
-			buffer.limit(chunkPos1);
-			buffer.position(chunkPos0);
-			chunk = buffer.slice();
+         sumBytes += 4 + packetSize;
 
-			// restore the position/limit for next write
-			buffer.limit(buffer.capacity());
-			buffer.position(chunkPos1);
-		} else {
-			chunk = null;
-		}
+         // B: write size at start of the packet
+         buffer.putInt(packetPos0 - 4, packetSize); // does not modify
+         // position/limit
+         client.getOutgoingMessageQueue().add(msg); // Add it to the message
+         // sent queue
+      }
 
-		if (bufferFull) {
-			replaceBackingBuffer();
-		}
+      int chunkPos1 = buffer.position();
+      // int chunkSize = chunkPos1 - chunkPos0;
 
-		// remember what the last packet was that failed, if any
-		clientToFailedMessage.put(client, failed);
+      ByteBuffer chunk;
 
-		return chunk;
-	}
+      if (sumBytes != 0)
+      {
+         // setup the position/limit to be sliced
+         buffer.limit(chunkPos1);
+         buffer.position(chunkPos0);
+         chunk = buffer.slice();
 
-	private static final int bigBufferSize = 512 * 1024;
-	private static ByteBuffer buffer;
+         // restore the position/limit for next write
+         buffer.limit(buffer.capacity());
+         buffer.position(chunkPos1);
+      }
+      else
+      {
+         chunk = null;
+      }
 
-	static {
-		replaceBackingBuffer();
-	}
+      if (bufferFull)
+      {
+         replaceBackingBuffer();
+      }
 
-	private static final void replaceBackingBuffer() {
-		buffer = ByteBuffer.allocateDirect(bigBufferSize);
-	}
+      // remember what the last packet was that failed, if any
+      clientToFailedMessage.put(client, failed);
+
+      return chunk;
+   }
+
+   private static final int  bigBufferSize = 512 * 1024;
+   private static ByteBuffer buffer;
+
+   static
+   {
+      replaceBackingBuffer();
+   }
+
+   private static final void replaceBackingBuffer()
+   {
+      buffer = ByteBuffer.allocateDirect(bigBufferSize);
+   }
 }

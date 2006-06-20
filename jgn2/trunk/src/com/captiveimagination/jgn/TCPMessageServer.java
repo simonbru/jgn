@@ -47,8 +47,6 @@ import com.captiveimagination.jgn.message.*;
  */
 public class TCPMessageServer extends MessageServer {
 	private Selector selector;
-	private ByteBuffer writeMessageLength;
-	private ByteBuffer writeBuffer;
 	private int readPosition;
 	private ByteBuffer readBuffer;
 
@@ -61,8 +59,6 @@ public class TCPMessageServer extends MessageServer {
 		ssc.configureBlocking(false);
 		ssc.register(selector, SelectionKey.OP_ACCEPT);
 
-		writeMessageLength = ByteBuffer.allocateDirect(4);
-		writeBuffer = ByteBuffer.allocateDirect(1024 * 10); // TODO provide mechanism for setting allocated buffer size
 		readPosition = 0;
 		readBuffer = ByteBuffer.allocateDirect(1024 * 10);
 	}

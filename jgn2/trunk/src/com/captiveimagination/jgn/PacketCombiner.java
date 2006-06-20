@@ -94,14 +94,15 @@ public class PacketCombiner {
 				// restore the buffer
 				buffer.position(packetPos0 - 4);
 
-				if (failed == initialFailed)
-					// fails on 2nd attempt
+				// failed on 2nd attempt?
+				if (failed == initialFailed) {
 					throw new MessageHandlingException("Message size larger than backing-buffer: "
 									+ (bigBufferSize / 1024) + "K", failed);
+				}
 
 				break;
-			} catch (Exception exc) {
-				// something serious went wrong, rethrow exception
+			} catch (MessageHandlingException exc) {
+				// something serious went wrong, give up
 
 				// restore the buffer
 				buffer.position(packetPos0 - 4);
@@ -109,8 +110,8 @@ public class PacketCombiner {
 				// don't set this, as the message is seriously broken
 				// NOT: failed = msg;
 
-				// give up
-				throw new MessageHandlingException("Corrupt message", msg, exc);
+				// rethrow exception
+				throw exc;
 			}
 			int packetPos1 = buffer.position();
 			int packetSize = packetPos1 - packetPos0;
@@ -128,11 +129,12 @@ public class PacketCombiner {
 
 			sumBytes += 4 + packetSize;
 
-			// B: write size at start of the packet
-			buffer.putInt(packetPos0 - 4, packetSize); // does not modify
-			// position/limit
-			client.getOutgoingMessageQueue().add(msg); // Add it to the message
-			// sent queue
+			// B: write size at start of the packet (see A)
+			// this does not modify position/limit
+			buffer.putInt(packetPos0 - 4, packetSize);
+
+			// Add it to the message sent queue
+			client.getOutgoingMessageQueue().add(msg);
 		}
 
 		int chunkPos1 = buffer.position();

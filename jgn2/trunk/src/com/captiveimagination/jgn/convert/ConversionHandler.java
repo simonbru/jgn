@@ -74,8 +74,14 @@ public class ConversionHandler {
 				converters[i].set(message, setters[i], buffer);
 			}
 			return message;
-		} catch (Exception exc) {
-			throw new MessageHandlingException("Failed to receive message", message, exc);
+		} catch (InstantiationException exc) {
+			throw new MessageHandlingException("Received message-type doesn't have default-constructor", message, exc);
+		} catch (IllegalArgumentException exc) {
+			throw new MessageHandlingException("Corrupt message-format", message, exc);
+		} catch (IllegalAccessException exc) {
+			throw new MessageHandlingException("Corrupt message-format", message, exc);
+		} catch (InvocationTargetException exc) {
+			throw new MessageHandlingException("Message crashed during initialization", message, exc);
 		}
 	}
 
@@ -85,13 +91,14 @@ public class ConversionHandler {
 			for (int i = 0; i < converters.length; i++) {
 				converters[i].get(message, getters[i], buffer);
 			}
-		} catch (BufferOverflowException exc) {
-			// it wasn't a [handling] error, so rethrow it, as is
-			throw exc;
-		} catch (Exception exc) {
-			// all those scary reflection/access/argument/what-not
-			// exceptions are caught here
-			throw new MessageHandlingException("Failed to send message", message, exc);
+		}
+		// do not catch BufferOverflowException!
+		catch (IllegalArgumentException exc) {
+			throw new MessageHandlingException("Corrupt message-format", message, exc);
+		} catch (IllegalAccessException exc) {
+			throw new MessageHandlingException("Corrupt message-format", message, exc);
+		} catch (InvocationTargetException exc) {
+			throw new MessageHandlingException("Message crashed during serialization", message, exc);
 		}
 	}
 

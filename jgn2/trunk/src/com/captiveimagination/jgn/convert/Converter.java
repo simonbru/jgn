@@ -53,12 +53,12 @@ public interface Converter {
 	 * Represents an empty byte array with a length of 0.
 	 */
 	public static final Object[] EMPTY_ARRAY = new Object[0];
-	
+
 	/**
 	 * Defines the mappings of classes to converters.
 	 */
-	public static final HashMap<Class,Converter> CONVERTERS = new HashMap<Class,Converter>();
-	
+	public static final HashMap<Class, Converter> CONVERTERS = new HashMap<Class, Converter>();
+
 	/**
 	 * Reads content from <code>buffer</code> and applies it via
 	 * <code>setter</code> to <code>message</code>.
@@ -67,8 +67,9 @@ public interface Converter {
 	 * @param setter
 	 * @param buffer
 	 */
-	public void set(Message message, Method setter, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException, IOException;
-	
+	public void set(Message message, Method setter, ByteBuffer buffer) throws IllegalArgumentException,
+					IllegalAccessException, InvocationTargetException;
+
 	/**
 	 * Reads content from <code>message</code> via <code>getter</code>
 	 * and applies it to <code>buffer</code>.
@@ -77,5 +78,6 @@ public interface Converter {
 	 * @param getter
 	 * @param buffer
 	 */
-	public void get(Message message, Method getter, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException, IOException;
+	public void get(Message message, Method getter, ByteBuffer buffer) throws IllegalArgumentException,
+					IllegalAccessException, InvocationTargetException;
 }

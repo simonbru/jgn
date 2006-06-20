@@ -47,10 +47,9 @@ public class StringArrayConverter implements Converter {
 	public StringArrayConverter() {
 		ConversionHandler.initConverters();
 	}
-	
-	public void set(Message message, Method setter, ByteBuffer buffer)
-			throws IllegalArgumentException, IllegalAccessException,
-			InvocationTargetException, IOException {
+
+	public void set(Message message, Method setter, ByteBuffer buffer) throws IllegalArgumentException,
+					IllegalAccessException, InvocationTargetException {
 		int length = buffer.getInt();
 		String[] array = null;
 		if (length != -1) {
@@ -61,16 +60,20 @@ public class StringArrayConverter implements Converter {
 				if (l == -1) continue;
 				b = new byte[l];
 				buffer.get(b);
-				array[i] = new String(b, "UTF-8");
+				try {
+					array[i] = new String(b, "UTF-8");
+				} catch (UnsupportedEncodingException exc) {
+					// never happens
+					exc.printStackTrace(); // just be paranoid
+				}
 			}
 		}
 		setter.invoke(message, new Object[] {array});
 	}
 
-	public void get(Message message, Method getter, ByteBuffer buffer)
-			throws IllegalArgumentException, IllegalAccessException,
-			InvocationTargetException, IOException {
-		String[] array = (String[])getter.invoke(message, EMPTY_ARRAY);
+	public void get(Message message, Method getter, ByteBuffer buffer) throws IllegalArgumentException,
+					IllegalAccessException, InvocationTargetException {
+		String[] array = (String[]) getter.invoke(message, EMPTY_ARRAY);
 		if (array == null) {
 			buffer.putInt(-1);
 		} else {
@@ -80,9 +83,14 @@ public class StringArrayConverter implements Converter {
 				if (s == null) {
 					buffer.putInt(-1);
 				} else {
-					byte[] b = s.getBytes("UTF-8");
-					buffer.putInt(b.length);
-					buffer.put(b);
+					try {
+						byte[] b = s.getBytes("UTF-8");
+						buffer.putInt(b.length);
+						buffer.put(b);
+					} catch (UnsupportedEncodingException exc) {
+						// never happens
+						exc.printStackTrace(); // just be paranoid
+					}
 				}
 			}
 		}

@@ -41,6 +41,7 @@ import java.util.*;
 import com.captiveimagination.jgn.event.*;
 import com.captiveimagination.jgn.message.*;
 import com.captiveimagination.jgn.queue.*;
+import com.captiveimagination.jgn.stream.*;
 
 /**
  * MessageClient defines the communication layer
@@ -62,10 +63,9 @@ public class MessageClient {
 	private MessageQueue incomingMessages;			// Waiting for MessageListener handling
 	private MessageQueue outgoingMessages;			// Waiting for MessageListener handling
 	private ArrayList<MessageListener> messageListeners;
-	//private HashMap<Integer,JGNInputStream> inputStreams;
-	//private HashMap<Integer,JGNOutputStream> outputStreams;
+	private HashMap<Short,JGNInputStream> inputStreams;
+	private HashMap<Short,JGNOutputStream> outputStreams;
 	private ByteBuffer currentWrite;
-	private Message currentMessage;
 	
 	private HashMap<Short,Class<? extends Message>> registry;
 	private HashMap<Class<? extends Message>,Short> registryReverse;
@@ -78,6 +78,8 @@ public class MessageClient {
 		incomingMessages = new MessagePriorityQueue(-1);
 		outgoingMessages = new MessagePriorityQueue(-1);
 		messageListeners = new ArrayList<MessageListener>(server.getMaxQueueSize());
+		inputStreams = new HashMap<Short,JGNInputStream>();
+		outputStreams = new HashMap<Short,JGNOutputStream>();
 		
 		registry = new HashMap<Short,Class<? extends Message>>();
 		registryReverse = new HashMap<Class<? extends Message>,Short>();
@@ -187,6 +189,46 @@ public class MessageClient {
 		return messageListeners;
 	}
 	
+	public JGNInputStream getInputStream() throws IOException {
+		return getInputStream((short)0);
+	}
+	
+	public JGNInputStream getInputStream(short streamId) throws IOException {
+		if (inputStreams.containsKey(streamId)) {
+			throw new StreamInUseException("The stream " + streamId + " is currently in use and must be closed before another session can be established.");
+		}
+		JGNInputStream stream = new JGNInputStream(this, streamId);
+		inputStreams.put(streamId, stream);
+		return stream;
+	}
+	
+	public void closeInputStream(short streamId) throws IOException {
+		if (inputStreams.containsKey(streamId)) {
+			if (!inputStreams.get(streamId).isClosed()) inputStreams.get(streamId).close();
+			inputStreams.remove(streamId);
+		}
+	}
+	
+	public JGNOutputStream getOutputStream() throws IOException {
+		return getOutputStream((short)0);
+	}
+	
+	public JGNOutputStream getOutputStream(short streamId) throws IOException {
+		if (outputStreams.containsKey(streamId)) {
+			throw new StreamInUseException("The stream " + streamId + " is currently in use and must be closed before another session can be established.");
+		}
+		JGNOutputStream stream = new JGNOutputStream(this, streamId);
+		outputStreams.put(streamId, stream);
+		return stream;
+	}
+	
+	public void closeOutputStream(short streamId) throws IOException {
+		if (outputStreams.containsKey(streamId)) {
+			if (!outputStreams.get(streamId).isClosed()) outputStreams.get(streamId).close();
+			outputStreams.remove(streamId);
+		}
+	}
+	
 	public short getMessageTypeId(Class<? extends Message> c) {
 		return registryReverse.get(c);
 	}
@@ -198,14 +240,6 @@ public class MessageClient {
 	public void register(short typeId, Class<? extends Message> c) {
 		registry.put(typeId, c);
 		registryReverse.put(c, typeId);
-	}
-
-	public void output() {
-		Iterator<Short> iterator = registry.keySet().iterator();
-		while (iterator.hasNext()) {
-			short id = iterator.next();
-			System.out.println("Registered: " + id + ", " + registry.get(id).getName());
-		}
 	}
 	
 	public void disconnect() throws IOException {

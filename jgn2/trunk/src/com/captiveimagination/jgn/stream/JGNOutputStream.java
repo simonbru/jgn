@@ -29,42 +29,73 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Created: Jun 17, 2006
+ * Created: Jun 19, 2006
  */
-package com.captiveimagination.jgn.message;
+package com.captiveimagination.jgn.stream;
+
+import java.io.IOException;
+import java.io.OutputStream;
+
+import com.captiveimagination.jgn.MessageClient;
+import com.captiveimagination.jgn.message.StreamMessage;
 
 /**
- * <code>StreamMessage</code> provides an internal structure for streaming
- * data inbound and outbound from/to a specific MessageClient.
- * 
  * @author Matthew D. Hicks
  */
-public class StreamMessage extends Message {
+public class JGNOutputStream extends OutputStream {
+	private MessageClient client;
 	private short streamId;
-	private byte[] data;
-	private int dataLength;
+	private byte[] buffer;
+	private int position;
+	private StreamMessage message;
+	private boolean streamClosed;
+	
+	public JGNOutputStream(MessageClient client, short streamId) throws IOException {
+		this.client = client;
+		this.streamId = streamId;
+		message = new StreamMessage();
+		message.setStreamId(streamId);
+		setBufferSize(512);
+	}
+	
+	public MessageClient getMessageClient() {
+		return client;
+	}
 	
 	public short getStreamId() {
 		return streamId;
 	}
 	
-	public void setStreamId(short streamId) {
-		this.streamId = streamId;
+	public void write(int b) throws IOException {
+		if (streamClosed) throw new StreamClosedException();
+		if (position >= buffer.length) {
+			flush();
+		}
+		buffer[position++] = (byte)b;
 	}
 	
-	public byte[] getData() {
-		return data;
+	public void setBufferSize(int length) throws IOException {
+		flush();
+		buffer = new byte[length];
+		message.setData(buffer);
 	}
 	
-	public void setData(byte[] data) {
-		this.data = data;
-	}
-
-	public int getDataLength() {
-		return dataLength;
+	public void flush() throws IOException {
+		if (position > 0) {
+			message.setDataLength(position);
+			client.sendMessage(message);
+		}
 	}
 	
-	public void setDataLength(int dataLength) {
-		this.dataLength = dataLength;
+	public void close() throws IOException {
+		flush();
+		message.setData(null);
+		message.setDataLength(-1);
+		streamClosed = true;
+		client.closeOutputStream(streamId);
+	}
+	
+	public boolean isClosed() {
+		return streamClosed;
 	}
 }

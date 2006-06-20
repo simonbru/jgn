@@ -29,42 +29,23 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Created: Jun 17, 2006
+ * Created: Jun 19, 2006
  */
-package com.captiveimagination.jgn.message;
+package com.captiveimagination.jgn.stream;
+
+import java.io.IOException;
 
 /**
- * <code>StreamMessage</code> provides an internal structure for streaming
- * data inbound and outbound from/to a specific MessageClient.
- * 
  * @author Matthew D. Hicks
  */
-public class StreamMessage extends Message {
-	private short streamId;
-	private byte[] data;
-	private int dataLength;
-	
-	public short getStreamId() {
-		return streamId;
-	}
-	
-	public void setStreamId(short streamId) {
-		this.streamId = streamId;
-	}
-	
-	public byte[] getData() {
-		return data;
-	}
-	
-	public void setData(byte[] data) {
-		this.data = data;
-	}
+public class StreamClosedException extends IOException {
+	private static final long serialVersionUID = 8846015391787210613L;
 
-	public int getDataLength() {
-		return dataLength;
+	public StreamClosedException() {
+		super();
 	}
 	
-	public void setDataLength(int dataLength) {
-		this.dataLength = dataLength;
+	public StreamClosedException(String s) {
+		super(s);
 	}
 }

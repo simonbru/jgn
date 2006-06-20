@@ -33,6 +33,7 @@
  */
 package com.captiveimagination.jgn;
 
+import java.io.*;
 import java.util.*;
 
 import com.captiveimagination.jgn.convert.*;
@@ -118,5 +119,29 @@ public class JGN {
 		message.setIds(ids);
 		message.setMessageClasses(names);
 		return message;
+	}
+
+	public static final Runnable createMessageServerRunnable(final MessageServer server) {
+		Runnable r = new Runnable() {
+			public void run() {
+				while (true) {
+					try {
+						server.update();
+					} catch(IOException exc) {
+						throw new RuntimeException(exc);
+					}
+					try {
+						Thread.sleep(1);
+					} catch(InterruptedException exc) {
+						exc.printStackTrace();
+					}
+				}
+			}
+		};
+		return r;
+	}
+	
+	public static final Thread createMessageServerThread(MessageServer server) {
+		return new Thread(createMessageServerRunnable(server));
 	}
 }

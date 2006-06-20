@@ -29,42 +29,83 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Created: Jun 17, 2006
+ * Created: Jun 19, 2006
  */
-package com.captiveimagination.jgn.message;
+package com.captiveimagination.jgn.stream;
+
+import java.io.*;
+
+import com.captiveimagination.jgn.*;
+import com.captiveimagination.jgn.event.*;
+import com.captiveimagination.jgn.message.*;
+import com.captiveimagination.jgn.queue.*;
 
 /**
- * <code>StreamMessage</code> provides an internal structure for streaming
- * data inbound and outbound from/to a specific MessageClient.
- * 
  * @author Matthew D. Hicks
  */
-public class StreamMessage extends Message {
+public class JGNInputStream extends InputStream implements MessageListener {
+	private MessageClient client;
 	private short streamId;
-	private byte[] data;
-	private int dataLength;
+	private MessageQueue queue;
+	private boolean streamClosed;
+	
+	private StreamMessage current;
+	private int position;
+	
+	public JGNInputStream(MessageClient client, short streamId) {
+		this.client = client;
+		this.streamId = streamId;
+		queue = new MessagePriorityQueue(-1);
+		client.addMessageListener(this);
+	}
+	
+	public MessageClient getMessageClient() {
+		return client;
+	}
 	
 	public short getStreamId() {
 		return streamId;
 	}
 	
-	public void setStreamId(short streamId) {
-		this.streamId = streamId;
-	}
-	
-	public byte[] getData() {
-		return data;
-	}
-	
-	public void setData(byte[] data) {
-		this.data = data;
+	public int read() throws IOException {
+		if (streamClosed) throw new StreamClosedException();
+		
+		if ((current == null) && (!queue.isEmpty())) {
+			current = (StreamMessage)queue.poll();
+			position = 0;
+		}
+		
+		if (current != null) {
+			if (current.getDataLength() == -1) {
+				streamClosed = true;
+				throw new StreamClosedException();
+			}
+			
+			int read = current.getData()[position++];
+			if (position == current.getDataLength()) {
+				current = null;
+			}
+			return read;
+		}
+		return -1;
 	}
 
-	public int getDataLength() {
-		return dataLength;
+	public void messageReceived(Message message) {
+		if (message instanceof StreamMessage) {
+			queue.add((StreamMessage)message);
+		}
+	}
+
+	public void messageSent(Message message) {
 	}
 	
-	public void setDataLength(int dataLength) {
-		this.dataLength = dataLength;
+	public void close() throws IOException {
+		streamClosed = true;
+		client.removeMessageListener(this);
+		client.closeInputStream(streamId);
+	}
+	
+	public boolean isClosed() {
+		return streamClosed;
 	}
 }

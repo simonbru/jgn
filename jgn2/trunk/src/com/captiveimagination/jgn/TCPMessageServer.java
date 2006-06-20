@@ -150,7 +150,6 @@ public class TCPMessageServer extends MessageServer {
 			Class<? extends Message> c = client.getMessageClass(typeId);
 			if (c == null) {
 				if (client.isConnected()) {
-					client.output();
 					throw new MessageHandlingException("Message received from unknown messageTypeId: " + typeId);
 				}
 				readBuffer.position(position);

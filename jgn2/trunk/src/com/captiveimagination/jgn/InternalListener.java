@@ -31,9 +31,10 @@
  *
  * Created: Jun 10, 2006
  */
-package com.captiveimagination.jgn.event;
+package com.captiveimagination.jgn;
 
 import com.captiveimagination.jgn.*;
+import com.captiveimagination.jgn.event.*;
 import com.captiveimagination.jgn.message.*;
 
 /**
@@ -63,6 +64,7 @@ public class InternalListener implements MessageListener, ConnectionListener {
 					message.getMessageClient().register(ids[i], (Class<? extends Message>)Class.forName(messages[i]));
 				}
 				message.getMessageClient().setStatus(MessageClient.STATUS_CONNECTED);
+				message.getMessageClient().getMessageServer().getNegotiatedConnectionQueue().add(message.getMessageClient());
 			} catch(ClassNotFoundException exc) {
 				System.err.println("Unable to find the message: " + messages[i] + " in the ClassLoader. Trace follows:");
 				// TODO handle more gracefully

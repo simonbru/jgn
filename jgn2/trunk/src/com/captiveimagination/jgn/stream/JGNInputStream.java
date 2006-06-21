@@ -68,24 +68,29 @@ public class JGNInputStream extends InputStream implements MessageListener {
 	}
 	
 	public int read() throws IOException {
-		if (streamClosed) throw new StreamClosedException();
-		
-		if ((current == null) && (!queue.isEmpty())) {
-			current = (StreamMessage)queue.poll();
-			position = 0;
-		}
-		
-		if (current != null) {
-			if (current.getDataLength() == -1) {
-				streamClosed = true;
-				throw new StreamClosedException();
+		while (!streamClosed) {
+			if ((current == null) && (!queue.isEmpty())) {
+				current = (StreamMessage)queue.poll();
+				position = 0;
 			}
 			
-			int read = current.getData()[position++];
-			if (position == current.getDataLength()) {
-				current = null;
+			if (current != null) {
+				if (current.getDataLength() == -1) {
+					streamClosed = true;
+					break;
+				}
+				
+				int read = current.getData()[position++];
+				if (position == current.getDataLength()) {
+					current = null;
+				}
+				return read & 0xff;
 			}
-			return read;
+			try {
+				Thread.sleep(1);
+			} catch(InterruptedException exc) {
+				exc.printStackTrace();
+			}
 		}
 		return -1;
 	}

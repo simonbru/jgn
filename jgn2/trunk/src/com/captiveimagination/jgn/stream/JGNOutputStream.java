@@ -38,6 +38,7 @@ import java.io.OutputStream;
 
 import com.captiveimagination.jgn.MessageClient;
 import com.captiveimagination.jgn.message.StreamMessage;
+import com.captiveimagination.jgn.queue.*;
 
 /**
  * @author Matthew D. Hicks
@@ -67,7 +68,7 @@ public class JGNOutputStream extends OutputStream {
 	}
 	
 	public void write(int b) throws IOException {
-		if (streamClosed) throw new StreamClosedException();
+		if (streamClosed) throw new IOException("This stream has been closed already (" + streamId + ").");
 		if (position >= buffer.length) {
 			flush();
 		}
@@ -83,7 +84,8 @@ public class JGNOutputStream extends OutputStream {
 	public void flush() throws IOException {
 		if (position > 0) {
 			message.setDataLength(position);
-			client.sendMessage(message);
+			sendMessage();
+			position = 0;
 		}
 	}
 	
@@ -91,11 +93,27 @@ public class JGNOutputStream extends OutputStream {
 		flush();
 		message.setData(null);
 		message.setDataLength(-1);
+		sendMessage();
 		streamClosed = true;
 		client.closeOutputStream(streamId);
 	}
 	
 	public boolean isClosed() {
 		return streamClosed;
+	}
+	
+	private void sendMessage() {
+		boolean keepTrying = true;
+		while (keepTrying) {
+			try {
+				client.sendMessage(message);
+				keepTrying = false;
+			} catch(QueueFullException exc) {
+			}
+			try {
+				Thread.sleep(1);
+			} catch(InterruptedException exc) {
+			}
+		}
 	}
 }

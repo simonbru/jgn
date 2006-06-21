@@ -96,7 +96,7 @@ public class JGNInputStream extends InputStream implements MessageListener {
 	}
 
 	public void messageReceived(Message message) {
-		if (message instanceof StreamMessage) {
+		if ((message instanceof StreamMessage) && (((StreamMessage)message).getStreamId() == streamId)) {
 			queue.add((StreamMessage)message);
 		}
 	}

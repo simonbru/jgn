@@ -1,0 +1,15 @@
+* Connection closing and timeouts
+* UDPMessageServer
+* RealtimeMessage, MultiMessageQueue, and RealtimeMessageQueue (HashMap<Short,RealtimeMessage>)
+* CertifiedMessage
+* ChatMessage implements CertifiedMessage
+* 2DSynchronizationMessage implements RealtimeMessage
+* 3DSynchronizationMessage extends 2DSynchronizationMessage
+* PhysicsSynchronizationMessage extends 3DSynchronizationMessage
+* Finish work on UniqueMessage
+* Ping capabilities
+* Client/Server features
+* P2P features
+* Code cleanup work
+* JUnit tests
+	* Threaded tests

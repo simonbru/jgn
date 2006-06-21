@@ -8,69 +8,61 @@ import com.captiveimagination.jgn.event.*;
 import com.captiveimagination.jgn.stream.*;
 
 public class TestStream {
-	public static JGNInputStream input;
-	
 	public static void main(String[] args) throws Exception {
-		createServerThread();
-		
-		// Create Client
-		final MessageServer server = new TCPMessageServer(new InetSocketAddress(InetAddress.getLocalHost(), 2000));
-		Thread t = new Thread() {
-			public void run() {
-				try {
-					while (true) {
-						server.update();
-					}
-				} catch(Exception exc) {
-					exc.printStackTrace();
-				}
-			}
-		};
-		t.start();
-		MessageClient client = server.connectAndWait(new InetSocketAddress(InetAddress.getLocalHost(), 1000), 5000);
-		if (client != null) {
-			System.out.println("Connection established!");
-			
-		}
-	}
-	
-	private static final void createServerThread() throws UnknownHostException, IOException {
-		final MessageServer server = new TCPMessageServer(new InetSocketAddress(InetAddress.getLocalHost(), 1000));
-		server.addConnectionListener(new ConnectionListener() {
+		MessageServer server1 = new TCPMessageServer(new InetSocketAddress((InetAddress)null, 1000));
+		server1.addConnectionListener(new ConnectionListener() {
 			public void connected(MessageClient client) {
 			}
 
-			public void negotiationComplete(MessageClient client) {
-				try {
-					input = client.getInputStream();
-				} catch(Exception exc) {
-					exc.printStackTrace();
-				}
+			public void negotiationComplete(final MessageClient client) {
+				Thread t = new Thread() {
+					public void run() {
+						try {
+							long time = System.currentTimeMillis();
+							System.out.println("Waiting for incoming data...");
+							JGNInputStream input = client.getInputStream();
+							FileOutputStream fos = new FileOutputStream(new File("test.bin"));
+							byte[] buffer = new byte[512];
+							int len;
+							while ((len = input.read(buffer)) != -1) {
+								fos.write(buffer, 0, len);
+							}
+							fos.flush();
+							fos.close();
+							input.close();
+							System.out.println("Finished receiving file in " + (System.currentTimeMillis() - time) + "ms");
+						} catch(Exception exc) {
+							exc.printStackTrace();
+						}
+					}
+				};
+				t.start();
 			}
 
 			public void disconnected(MessageClient client) {
 			}
 		});
-		//FileOutputStream fos = new FileOutputStream()
-		Thread t = new Thread() {
-			public void run() {
-				try {
-					while (true) {
-						server.update();
-						if (input != null) {
-							try {
-								input.read();
-							} catch(StreamClosedException exc) {
-								System.out.println("Stream closed!");
-								
-							}
-						}
-					}
-				} catch(Exception exc) {
-					exc.printStackTrace();
-				}
+		Thread t1 = JGN.createMessageServerThread(server1);
+		t1.start();
+		
+		MessageServer server2 = new TCPMessageServer(new InetSocketAddress((InetAddress)null, 2000));
+		Thread t2 = JGN.createMessageServerThread(server2);
+		t2.start();
+		
+		MessageClient client = server2.connectAndWait(new InetSocketAddress((InetAddress)null, 1000), 5000);
+		if (client != null) {
+			System.out.println("Connected...");
+			JGNOutputStream output = client.getOutputStream();
+			FileInputStream fis = new FileInputStream(new File("file.zip"));
+			byte[] buffer = new byte[512];
+			int len;
+			while ((len = fis.read(buffer)) != -1) {
+				output.write(buffer, 0, len);
 			}
-		};
-		t.start();
+			output.flush();
+			output.close();
+			fis.close();
+			System.out.println("Finished sending file!");
+		}
 	}
 }

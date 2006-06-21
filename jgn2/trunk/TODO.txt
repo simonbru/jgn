@@ -10,6 +10,7 @@
 * Ping capabilities
 * Client/Server features
 * P2P features
+* Compression
 * Code cleanup work
 * JUnit tests
 	* Threaded tests

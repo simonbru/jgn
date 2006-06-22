@@ -34,7 +34,6 @@
 package com.captiveimagination.jgn;
 
 import java.io.*;
-import java.lang.reflect.*;
 import java.net.*;
 import java.nio.*;
 import java.nio.channels.*;
@@ -81,6 +80,20 @@ public class TCPMessageServer extends MessageServer {
 		key.attach(client);
 		channel.connect(client.getAddress());
 		return null;
+	}
+	
+	public void disconnect(MessageClient client) throws IOException {
+		// TODO sendCertified DisconnectMessage
+		Iterator<SelectionKey> iterator = selector.keys().iterator();
+		while (iterator.hasNext()) {
+			SelectionKey key = iterator.next();
+			if (key.attachment() == client) {
+				key.channel().close();
+				key.cancel();
+			}
+		}
+		client.setStatus(MessageClient.STATUS_DISCONNECTED);
+		getDisconnectedConnectionQueue().add(client);
 	}
 
 	public void close() {
@@ -137,6 +150,7 @@ public class TCPMessageServer extends MessageServer {
 	}
 
 	private Message readMessage(MessageClient client) throws MessageHandlingException {
+		client.received();
 		int position = readBuffer.position();
 		readBuffer.position(readPosition);
 		int messageLength = readBuffer.getInt();
@@ -180,6 +194,8 @@ public class TCPMessageServer extends MessageServer {
 		SelectionKey key = channel.keyFor(selector);
 		MessageClient client = (MessageClient) key.attachment();
 
+		client.sent();
+		
 		if (client.getCurrentWrite() != null) {
 			//
 			// (riven) [reference A] -----------------------------vv

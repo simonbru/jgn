@@ -50,12 +50,16 @@ import com.captiveimagination.jgn.queue.*;
  * @author Matthew D. Hicks
  */
 public abstract class MessageServer {
+	public static long DEFAULT_TIMEOUT = 60 * 1000;
+	
 	private static HashMap<Class,ArrayList<Class>> classHierarchyCache = new HashMap<Class,ArrayList<Class>>();
 	
 	private InetSocketAddress address;
 	private int maxQueueSize;
-	private ConnectionQueue incomingConnections;	// Waiting for ConnectionListener handling
-	private ConnectionQueue negotiatedConnections;	// Waiting for ConnectionListener handling
+	private long connectionTimeout;
+	private ConnectionQueue incomingConnections;		// Waiting for ConnectionListener handling
+	private ConnectionQueue negotiatedConnections;		// Waiting for ConnectionListener handling
+	private ConnectionQueue disconnectedConnections;	// Waiting for ConnectionListener handling
 	private ArrayList<ConnectionListener> connectionListeners;
 	private ArrayList<MessageListener> messageListeners;
 	private List<MessageClient> clients;
@@ -67,8 +71,10 @@ public abstract class MessageServer {
 	public MessageServer(InetSocketAddress address, int maxQueueSize) {
 		this.address = address;
 		this.maxQueueSize = maxQueueSize;
+		connectionTimeout = DEFAULT_TIMEOUT;
 		incomingConnections = new ConnectionQueue();
 		negotiatedConnections = new ConnectionQueue();
+		disconnectedConnections = new ConnectionQueue();
 		connectionListeners = new ArrayList<ConnectionListener>();
 		messageListeners = new ArrayList<MessageListener>();
 		clients = Collections.synchronizedList(new LinkedList<MessageClient>());
@@ -81,12 +87,20 @@ public abstract class MessageServer {
 		return maxQueueSize;
 	}
 	
+	public void setConnectionTimeout(long connectionTimeout) {
+		this.connectionTimeout = connectionTimeout;
+	}
+	
 	protected ConnectionQueue getIncomingConnectionQueue() {
 		return incomingConnections;
 	}
 	
 	protected ConnectionQueue getNegotiatedConnectionQueue() {
 		return negotiatedConnections;
+	}
+	
+	protected ConnectionQueue getDisconnectedConnectionQueue() {
+		return disconnectedConnections;
 	}
 	
 	protected List<MessageClient> getMessageClients() {
@@ -154,6 +168,13 @@ public abstract class MessageServer {
 		if (client.isConnected()) return client;
 		return null;
 	}
+	
+	/**
+	 * Disconnects the referenced <code>MessageClient</code> 
+	 * 
+	 * @param client
+	 */
+	public abstract void disconnect(MessageClient client) throws IOException;
 	
 	/**
 	 * Closes all open connections to remote clients
@@ -225,13 +246,54 @@ public abstract class MessageServer {
 			}
 		}
 
-		// Process incoming negiated connections
+		// Process incoming negotiated connections
 		while (!negotiatedConnections.isEmpty()) {
 			MessageClient client = negotiatedConnections.poll();
 			synchronized (connectionListeners) {
 				for (ConnectionListener listener : connectionListeners) {
 					listener.negotiationComplete(client);
 				}
+			}
+		}
+		
+		// Process disconnected connections
+		while (!disconnectedConnections.isEmpty()) {
+			MessageClient client = disconnectedConnections.poll();
+			synchronized (connectionListeners) {
+				for (ConnectionListener listener : connectionListeners) {
+					listener.disconnected(client);
+				}
+			}
+		}
+	}
+	
+	/**
+	 * Processes all MessageClients associated with this MessageServer and
+	 * checks for connections that have been closed or have timed out and
+	 * removes them.
+	 */
+	public synchronized void updateConnections() {
+		// Cycle through connections and see if any have timed out
+		for (MessageClient client : clients) {
+			if (client.lastReceived() + connectionTimeout < System.currentTimeMillis()) {
+				try {
+					client.disconnect();
+					clients.remove(client);
+				} catch(IOException exc) {
+					exc.printStackTrace();
+					// TODO handle more gracefully
+				}
+			}
+		}
+		
+		// Send Noops to connections that are still alive
+		NoopMessage message = null;
+		for (MessageClient client : clients) {
+			if (client.lastSent() + (connectionTimeout / 4) < System.currentTimeMillis()) {
+				if (message == null) {
+					message = new NoopMessage();
+				}
+				client.sendMessage(message);
 			}
 		}
 	}

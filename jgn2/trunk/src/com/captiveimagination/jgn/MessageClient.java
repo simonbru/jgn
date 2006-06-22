@@ -59,6 +59,8 @@ public class MessageClient {
 	private InetSocketAddress address;
 	private MessageServer server;
 	private int status;
+	private long lastReceived;
+	private long lastSent;
 	private MessageQueue outgoingQueue;				// Waiting to be sent via updateTraffic()
 	private MessageQueue incomingMessages;			// Waiting for MessageListener handling
 	private MessageQueue outgoingMessages;			// Waiting for MessageListener handling
@@ -84,6 +86,8 @@ public class MessageClient {
 		registry = new HashMap<Short,Class<? extends Message>>();
 		registryReverse = new HashMap<Class<? extends Message>,Short>();
 		register((short)0, LocalRegistrationMessage.class);
+		received();
+		sent();
 	}
 	
 	public int getStatus() {
@@ -242,8 +246,23 @@ public class MessageClient {
 		registryReverse.put(c, typeId);
 	}
 	
+	public void received() {
+		lastReceived = System.currentTimeMillis();
+	}
+	
+	public long lastReceived() {
+		return lastReceived;
+	}
+	
+	public void sent() {
+		lastSent = System.currentTimeMillis();
+	}
+	
+	public long lastSent() {
+		return lastSent;
+	}
+	
 	public void disconnect() throws IOException {
-		// TODO disconnect
-		setStatus(STATUS_DISCONNECTED);
+		getMessageServer().disconnect(this);
 	}
 }

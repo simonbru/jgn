@@ -33,6 +33,8 @@
  */
 package com.captiveimagination.jgn;
 
+import java.io.*;
+
 import com.captiveimagination.jgn.*;
 import com.captiveimagination.jgn.event.*;
 import com.captiveimagination.jgn.message.*;
@@ -69,6 +71,13 @@ public class InternalListener implements MessageListener, ConnectionListener {
 				System.err.println("Unable to find the message: " + messages[i] + " in the ClassLoader. Trace follows:");
 				// TODO handle more gracefully
 				throw new RuntimeException(exc);
+			}
+		} else if (message instanceof DisconnectMessage) {
+			try {
+				message.getMessageClient().disconnect();
+			} catch(IOException exc) {
+				exc.printStackTrace();
+				// TODO handle more gracefully
 			}
 		}
 	}

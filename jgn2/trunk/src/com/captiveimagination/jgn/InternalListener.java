@@ -73,12 +73,7 @@ public class InternalListener implements MessageListener, ConnectionListener {
 				throw new RuntimeException(exc);
 			}
 		} else if (message instanceof DisconnectMessage) {
-			try {
-				message.getMessageClient().disconnect();
-			} catch(IOException exc) {
-				exc.printStackTrace();
-				// TODO handle more gracefully
-			}
+			message.getMessageClient().setStatus(MessageClient.STATUS_DISCONNECTING);
 		}
 	}
 

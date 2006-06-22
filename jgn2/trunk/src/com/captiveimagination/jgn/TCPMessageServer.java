@@ -82,8 +82,7 @@ public class TCPMessageServer extends MessageServer {
 		return null;
 	}
 	
-	public void disconnect(MessageClient client) throws IOException {
-		// TODO sendCertified DisconnectMessage
+	protected void disconnectInternal(MessageClient client) throws IOException {
 		Iterator<SelectionKey> iterator = selector.keys().iterator();
 		while (iterator.hasNext()) {
 			SelectionKey key = iterator.next();
@@ -197,9 +196,6 @@ public class TCPMessageServer extends MessageServer {
 		client.sent();
 		
 		if (client.getCurrentWrite() != null) {
-			//
-			// (riven) [reference A] -----------------------------vv
-			//
 			channel.write(client.getCurrentWrite());
 			if (!client.getCurrentWrite().hasRemaining()) {
 				client.setCurrentWrite(null);
@@ -220,48 +216,13 @@ public class TCPMessageServer extends MessageServer {
 				channel.write(buffer);
 				if (buffer.hasRemaining()) {
 					client.setCurrentWrite(buffer);
+				} else {
+					client.setCurrentWrite(null);
 				}
-				// (riven) added this here: otherwise
-				// we send an empty BB to [reference A]  ----------^^
-				else client.setCurrentWrite(null);
+			} else if (client.getStatus() == MessageClient.STATUS_DISCONNECTING) {
+				disconnectInternal(client);
 			}
 		}
-
-		/*SelectionKey key = channel.keyFor(selector);
-		 MessageClient client = (MessageClient)key.attachment();
-		 //System.out.println("Client Can Write: " + client.getAddress().getPort());
-		 if (client.getCurrentWrite() != null) {
-		 channel.write(client.getCurrentWrite());
-		 if (!client.getCurrentWrite().hasRemaining()) {
-		 client.setCurrentWrite(null);
-		 client.getOutgoingMessageQueue().add(client.getCurrentMessage());
-		 client.setCurrentMessage(null);
-		 // If there are still messages to write and the buffer isn't full,
-		 // we return true;
-		 if (!client.getOutgoingQueue().isEmpty()) return true;
-		 }
-		 } else if (!client.getOutgoingQueue().isEmpty()) {
-		 Message message = client.getOutgoingQueue().poll();
-		 if (message == null) return false;		// TODO figure out why this is necessary
-		 writeBuffer.clear();
-		 writeBuffer.putShort(JGN.getMessageTypeId(message.getClass()));
-		 ByteBuffer buffer = convertMessage(message, writeBuffer);
-		 writeMessageLength.clear();
-		 writeMessageLength.putInt(buffer.position());
-		 writeMessageLength.flip();
-		 buffer.flip();
-		 channel.write(writeMessageLength);
-		 channel.write(buffer);
-		 if (buffer.hasRemaining()) {
-		 client.setCurrentWrite(buffer);
-		 client.setCurrentMessage(message);
-		 } else {
-		 client.getOutgoingMessageQueue().add(message);
-		 // If there are still messages to write and the buffer isn't full,
-		 // we return true;
-		 if (!client.getOutgoingQueue().isEmpty()) return true;
-		 }
-		 }*/
 		return false;
 	}
 

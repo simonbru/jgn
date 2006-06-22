@@ -54,7 +54,8 @@ public class MessageClient {
 	public static final int STATUS_NOT_CONNECTED = 1;
 	public static final int STATUS_NEGOTIATING = 2;
 	public static final int STATUS_CONNECTED = 3;
-	public static final int STATUS_DISCONNECTED = 4;
+	public static final int STATUS_DISCONNECTING = 4;
+	public static final int STATUS_DISCONNECTED = 5;
 	
 	private InetSocketAddress address;
 	private MessageServer server;
@@ -134,6 +135,11 @@ public class MessageClient {
 	 * @param message
 	 */
 	public void sendMessage(Message message) {
+		if (getStatus() == STATUS_DISCONNECTING) {
+			throw new RuntimeException("Connection is closing, no more messages being accepted.");
+		} else if (getStatus() == STATUS_DISCONNECTED) {
+			throw new RuntimeException("Connection is closed, no more messages being accepted.");
+		}
 		try {
 			Message m = message.clone();
 			m.setMessageClient(this);
@@ -263,6 +269,7 @@ public class MessageClient {
 	}
 	
 	public void disconnect() throws IOException {
-		getMessageServer().disconnect(this);
+		sendMessage(new DisconnectMessage());
+		setStatus(STATUS_DISCONNECTING);
 	}
 }

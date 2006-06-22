@@ -53,6 +53,8 @@ public class JGN {
 		// Certain messages must be known before negotiation so this is explicitly done here
 		register(LocalRegistrationMessage.class, (short)0);
 		register(StreamMessage.class);
+		register(NoopMessage.class);
+		register(DisconnectMessage.class);
 	}
 	
 	/**

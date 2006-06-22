@@ -168,13 +168,8 @@ public abstract class MessageServer {
 		if (client.isConnected()) return client;
 		return null;
 	}
-	
-	/**
-	 * Disconnects the referenced <code>MessageClient</code> 
-	 * 
-	 * @param client
-	 */
-	public abstract void disconnect(MessageClient client) throws IOException;
+		
+	protected abstract void disconnectInternal(MessageClient client) throws IOException;
 	
 	/**
 	 * Closes all open connections to remote clients

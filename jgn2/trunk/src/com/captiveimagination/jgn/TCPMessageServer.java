@@ -199,6 +199,23 @@ public class TCPMessageServer extends MessageServer {
 			channel.write(client.getCurrentWrite().getBuffer());
 			if (!client.getCurrentWrite().getBuffer().hasRemaining()) {
 				client.setCurrentWrite(null);
+
+				// Write all messages in combined to sent queue
+				while (client.getCurrentWrite().hasMore()) {
+					Message message = client.getCurrentWrite().getMessage();
+					client.getOutgoingMessageQueue().add(message);
+					client.getCurrentWrite().remove();
+				}
+			} else {
+				// Take completed messages and add them to the sent queue
+				int position = client.getCurrentWrite().getBuffer().position();
+				while (client.getCurrentWrite().hasMore()) {
+					if (client.getCurrentWrite().getEnd() > position) {
+						break;
+					}
+					client.getOutgoingMessageQueue().add(client.getCurrentWrite().getMessage());
+					client.getCurrentWrite().remove();
+				}
 			}
 		} else {
 			CombinedPacket combined;
@@ -216,8 +233,25 @@ public class TCPMessageServer extends MessageServer {
 				channel.write(combined.getBuffer());
 				if (combined.getBuffer().hasRemaining()) {
 					client.setCurrentWrite(combined);
+					
+					// Take completed messages and add them to the sent queue
+					int position = combined.getBuffer().position();
+					while (combined.hasMore()) {
+						if (combined.getEnd() > position) {
+							break;
+						}
+						client.getOutgoingMessageQueue().add(combined.getMessage());
+						combined.remove();
+					}
 				} else {
 					client.setCurrentWrite(null);
+					
+					// Write all messages in combined to sent queue
+					while (combined.hasMore()) {
+						Message message = combined.getMessage();
+						client.getOutgoingMessageQueue().add(message);
+						combined.remove();
+					}
 				}
 			} else if (client.getStatus() == MessageClient.STATUS_DISCONNECTING) {
 				disconnectInternal(client);

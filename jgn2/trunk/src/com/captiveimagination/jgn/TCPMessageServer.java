@@ -196,26 +196,26 @@ public class TCPMessageServer extends MessageServer {
 		client.sent();
 		
 		if (client.getCurrentWrite() != null) {
-			channel.write(client.getCurrentWrite());
-			if (!client.getCurrentWrite().hasRemaining()) {
+			channel.write(client.getCurrentWrite().getBuffer());
+			if (!client.getCurrentWrite().getBuffer().hasRemaining()) {
 				client.setCurrentWrite(null);
 			}
 		} else {
-			ByteBuffer buffer;
+			CombinedPacket combined;
 
 			try {
 				// TODO make 50000 adjustable (getter/setter)
-				buffer = PacketCombiner.combine(client, 50000);
+				combined = PacketCombiner.combine(client, 50000);
 			} catch (MessageHandlingException exc) {
 				// FIXME handle properly
 				exc.printStackTrace();
-				buffer = null;
+				combined = null;
 			}
 
-			if (buffer != null) {
-				channel.write(buffer);
-				if (buffer.hasRemaining()) {
-					client.setCurrentWrite(buffer);
+			if (combined != null) {
+				channel.write(combined.getBuffer());
+				if (combined.getBuffer().hasRemaining()) {
+					client.setCurrentWrite(combined);
 				} else {
 					client.setCurrentWrite(null);
 				}

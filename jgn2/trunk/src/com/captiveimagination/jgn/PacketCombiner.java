@@ -23,6 +23,13 @@ public class PacketCombiner {
 	// map holding the last failed message of each client, if any
 	private static Map<Object, Message> clientToFailedMessage = new HashMap<Object, Message>();
 
+	private static final int bigBufferSize = 512 * 1024;
+	private static ByteBuffer buffer;
+
+	static {
+		replaceBackingBuffer();
+	}
+
 	// synchronized! one thread at a time!
 
 	/**
@@ -30,11 +37,11 @@ public class PacketCombiner {
 	 * packet.
 	 * 
 	 * @param client
-	 * @return buffer containing multiple packets
+	 * @return CombinedPacket containing the buffer containing multiple packets, list of messages, and the message positions in the buffer
 	 */
-
-	public synchronized static final ByteBuffer combine(MessageClient client, int maxBytes)
+	public synchronized static final CombinedPacket combine(MessageClient client, int maxBytes)
 					throws MessageHandlingException {
+		CombinedPacket combined = null;
 		int chunkPos0 = buffer.position();
 
 		int sumBytes = 0;
@@ -134,7 +141,9 @@ public class PacketCombiner {
 			buffer.putInt(packetPos0 - 4, packetSize);
 
 			// Add it to the message sent queue
-			client.getOutgoingMessageQueue().add(msg);
+			//client.getOutgoingMessageQueue().add(msg);
+			if (combined == null) combined = new CombinedPacket(buffer);
+			combined.add(msg, buffer.position());
 		}
 
 		int chunkPos1 = buffer.position();
@@ -162,14 +171,7 @@ public class PacketCombiner {
 		// remember what the last packet was that failed, if any
 		clientToFailedMessage.put(client, failed);
 
-		return chunk;
-	}
-
-	private static final int bigBufferSize = 512 * 1024;
-	private static ByteBuffer buffer;
-
-	static {
-		replaceBackingBuffer();
+		return combined;
 	}
 
 	private static final void replaceBackingBuffer() {

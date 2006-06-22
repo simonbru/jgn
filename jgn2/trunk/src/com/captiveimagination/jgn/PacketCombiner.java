@@ -19,7 +19,7 @@ import com.captiveimagination.jgn.queue.MessageQueue;
  * @author Skip M. B. Balk
  */
 
-public class PacketCombiner {
+class PacketCombiner {
 	// map holding the last failed message of each client, if any
 	private static Map<Object, Message> clientToFailedMessage = new HashMap<Object, Message>();
 
@@ -142,8 +142,8 @@ public class PacketCombiner {
 
 			// Add it to the message sent queue
 			//client.getOutgoingMessageQueue().add(msg);
-			if (combined == null) combined = new CombinedPacket(buffer);
-			combined.add(msg, buffer.position());
+			if (combined == null) combined = new CombinedPacket();
+			combined.add(msg, buffer.position() - chunkPos0);
 		}
 
 		int chunkPos1 = buffer.position();
@@ -170,7 +170,9 @@ public class PacketCombiner {
 
 		// remember what the last packet was that failed, if any
 		clientToFailedMessage.put(client, failed);
-
+		
+		if (chunk == null) return null;
+		combined.setBuffer(chunk);
 		return combined;
 	}
 

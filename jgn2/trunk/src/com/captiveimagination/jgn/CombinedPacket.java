@@ -44,35 +44,46 @@ import com.captiveimagination.jgn.message.*;
  * 
  * @author Matthew CTR Hicks
  */
-public class CombinedPacket {
+class CombinedPacket {
 	private ByteBuffer buffer;
 	private List<Message> messages;
-	private List<Integer> positions;
+	private List<Integer> ends;
 	
-	public CombinedPacket(ByteBuffer buffer) {
-		this.buffer = buffer;
+	public CombinedPacket() {
 		messages = new LinkedList<Message>();
-		positions = new LinkedList<Integer>();
+		ends = new LinkedList<Integer>();
 	}
 	
 	public ByteBuffer getBuffer() {
 		return buffer;
 	}
 	
-	public void add(Message message, int position) {
+	public void setBuffer(ByteBuffer buffer) {
+		this.buffer = buffer;
+	}
+	
+	public void add(Message message, int end) {
 		messages.add(message);
-		positions.add(position);
+		ends.add(end);
 	}
 	
 	public Message getMessage() {
-		return messages.get(0);
+		if (messages.size() > 0) {
+			return messages.get(0);
+		}
+		return null;
 	}
 	
-	public int getPosition() {
-		return positions.get(0);
+	public int getEnd() {
+		return ends.get(0);
 	}
 	
 	public void remove() {
 		messages.remove(0);
+		ends.remove(0);
+	}
+	
+	public boolean hasMore() {
+		return messages.size() > 0;
 	}
 }

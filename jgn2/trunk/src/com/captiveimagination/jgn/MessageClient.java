@@ -68,7 +68,7 @@ public class MessageClient {
 	private ArrayList<MessageListener> messageListeners;
 	private HashMap<Short,JGNInputStream> inputStreams;
 	private HashMap<Short,JGNOutputStream> outputStreams;
-	private ByteBuffer currentWrite;
+	private CombinedPacket currentWrite;
 	
 	private HashMap<Short,Class<? extends Message>> registry;
 	private HashMap<Class<? extends Message>,Short> registryReverse;
@@ -103,11 +103,11 @@ public class MessageClient {
 		return status == STATUS_CONNECTED;
 	}
 	
-	public ByteBuffer getCurrentWrite() {
+	public CombinedPacket getCurrentWrite() {
 		return currentWrite;
 	}
 	
-	public void setCurrentWrite(ByteBuffer currentWrite) {
+	public void setCurrentWrite(CombinedPacket currentWrite) {
 		this.currentWrite = currentWrite;
 	}
 

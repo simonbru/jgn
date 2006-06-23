@@ -126,7 +126,7 @@ public class JGN {
 	public static final Runnable createMessageServerRunnable(final MessageServer server) {
 		Runnable r = new Runnable() {
 			public void run() {
-				while (true) {
+				while (server.isAlive()) {
 					try {
 						server.update();
 					} catch(IOException exc) {

@@ -48,9 +48,13 @@ public class TCPMessageServer extends MessageServer {
 	private Selector selector;
 	private int readPosition;
 	private ByteBuffer readBuffer;
+	private boolean keepAlive;
+	private boolean alive;
 
 	public TCPMessageServer(InetSocketAddress address, int maxQueueSize) throws IOException {
 		super(address, maxQueueSize);
+		keepAlive = true;
+		alive = true;
 		selector = Selector.open();
 
 		ServerSocketChannel ssc = ServerSocketChannel.open();
@@ -91,15 +95,53 @@ public class TCPMessageServer extends MessageServer {
 				key.cancel();
 			}
 		}
+		getMessageClients().remove(client);
 		client.setStatus(MessageClient.STATUS_DISCONNECTED);
 		getDisconnectedConnectionQueue().add(client);
 	}
 
-	public void close() {
-		// TODO call disconnect on all MessageClients and then shutdown Selector
+	public void close() throws IOException {
+		for (MessageClient client : getMessageClients()) {
+			client.disconnect();
+		}
+		keepAlive = false;
+	}
+	
+	public void closeAndWait(long timeout) throws IOException, InterruptedException {
+		close();
+		long time = System.currentTimeMillis();
+		while (System.currentTimeMillis() <= time + timeout) {
+			if (!isAlive()) return;
+			synchronized (getMessageClients()) {
+				if ((getMessageClients().size() > 0) && (getMessageClients().get(0).getStatus() == MessageClient.STATUS_CONNECTED)) {
+					getMessageClients().get(0).disconnect();
+				}
+			}
+			Thread.sleep(1);
+		}
+		for (MessageClient client : getMessageClients()) {
+			System.out.println("Client: " + client.getStatus());
+		}
+		throw new IOException("MessageServer did not shutdown within the allotted time (" + getMessageClients().size() + ").");
 	}
 
 	public synchronized void updateTraffic() throws IOException {
+		// Ignore if no longer alive
+		if (!isAlive()) return;
+		
+		// If should be shutting down, check
+		if ((getMessageClients().size() == 0) && (!keepAlive)) {
+			Iterator<SelectionKey> iterator = selector.keys().iterator();
+			while (iterator.hasNext()) {
+				SelectionKey key = iterator.next();
+				key.channel().close();
+				key.cancel();
+			}
+			selector.close();
+			alive = false;
+			return;
+		}
+		
 		// Handle Accept, Read, and Write
 		if (selector.selectNow() > 0) {
 			Iterator<SelectionKey> keys = selector.selectedKeys().iterator();
@@ -264,5 +306,9 @@ public class TCPMessageServer extends MessageServer {
 		channel.finishConnect();
 		MessageClient client = (MessageClient) channel.keyFor(selector).attachment();
 		getIncomingConnectionQueue().add(client);
+	}
+
+	public boolean isAlive() {
+		return alive;
 	}
 }

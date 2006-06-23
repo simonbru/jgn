@@ -1,5 +1,7 @@
 package com.captiveimagination.jgn.test.unit;
 
+import static org.junit.Assert.*;
+
 import java.io.*;
 import java.net.*;
 
@@ -7,9 +9,6 @@ import org.junit.*;
 
 import com.captiveimagination.jgn.*;
 import com.captiveimagination.jgn.event.*;
-
-import static org.junit.Assert.assertEquals;
-import junit.framework.JUnit4TestAdapter;
 
 public class TestDisconnect {
 	private MessageServer server1;
@@ -22,7 +21,7 @@ public class TestDisconnect {
 	@Before
 	public void setupServers() throws IOException, InterruptedException {
 		// Create first MessageServer
-		InetSocketAddress address1 = new InetSocketAddress((InetAddress)null, 1000);
+		InetSocketAddress address1 = new InetSocketAddress(InetAddress.getLocalHost(), 1100);
 		server1 = new TCPMessageServer(address1);
 		server1.addConnectionListener(new ConnectionListener() {
 			public void connected(MessageClient client) {
@@ -41,7 +40,7 @@ public class TestDisconnect {
 		JGN.createMessageServerThread(server1).start();
 		
 		// Create second MessageServer
-		InetSocketAddress address2 = new InetSocketAddress((InetAddress)null, 2000);
+		InetSocketAddress address2 = new InetSocketAddress(InetAddress.getLocalHost(), 2100);
 		server2 = new TCPMessageServer(address2);
 		server2.addConnectionListener(new ConnectionListener() {
 			public void connected(MessageClient client) {
@@ -66,6 +65,13 @@ public class TestDisconnect {
 		} else {
 			System.out.println("Connection established successfully");
 		}
+		long time = System.currentTimeMillis();
+		while (System.currentTimeMillis() < time + 5000) {
+			if ((client1 != null) && (client2 != null)) break;
+			Thread.sleep(1);
+		}
+		assertEquals(client1 != null, true);
+		assertEquals(client2 != null, true);
 	}
 	
 	@Test
@@ -79,6 +85,7 @@ public class TestDisconnect {
 			}
 			Thread.sleep(1);
 		}
+		Thread.sleep(1000);
 		assertEquals(client1.getStatus() == MessageClient.STATUS_DISCONNECTED, client2.getStatus() == MessageClient.STATUS_DISCONNECTED);
 		assertEquals(client1Disconnected == true, client2Disconnected == true);
 		System.out.println("Disconnection took: " + (System.currentTimeMillis() - time) + "ms");
@@ -95,20 +102,15 @@ public class TestDisconnect {
 			}
 			Thread.sleep(1);
 		}
+		Thread.sleep(1000);
 		assertEquals(client1.getStatus() == MessageClient.STATUS_DISCONNECTED, client2.getStatus() == MessageClient.STATUS_DISCONNECTED);
 		assertEquals(client1Disconnected == true, client2Disconnected == true);
 		System.out.println("Disconnection took: " + (System.currentTimeMillis() - time) + "ms");
 	}
 	
 	@After
-	public void shutdownServers() throws IOException {
-		server1.close();
-		server2.close();
-		System.exit(0);	// TODO remove - temporary
-	}
-	
-	// Compatability
-	public static junit.framework.Test suite() {
-		return new JUnit4TestAdapter(TestDisconnect.class);
+	public void shutdownServers() throws IOException, InterruptedException {
+		server1.closeAndWait(5000);
+		server2.closeAndWait(5000);
 	}
 }

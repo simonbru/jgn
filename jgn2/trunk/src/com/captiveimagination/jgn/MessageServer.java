@@ -174,7 +174,9 @@ public abstract class MessageServer {
 	/**
 	 * Closes all open connections to remote clients
 	 */
-	public abstract void close();
+	public abstract void close() throws IOException;
+	
+	public abstract void closeAndWait(long timeout) throws IOException, InterruptedException;
 	
 	/**
 	 * Processing incoming/outgoing traffic for this MessageServer
@@ -422,4 +424,6 @@ public abstract class MessageServer {
     	
     	return list;
     }
+
+	public abstract boolean isAlive();
 }

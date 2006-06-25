@@ -45,11 +45,13 @@ import com.captiveimagination.jgn.message.*;
  * @author Matthew CTR Hicks
  */
 class CombinedPacket {
+	private MessageClient client;
 	private ByteBuffer buffer;
 	private List<Message> messages;
 	private List<Integer> ends;
 	
-	public CombinedPacket() {
+	public CombinedPacket(MessageClient client) {
+		this.client = client;
 		messages = new LinkedList<Message>();
 		ends = new LinkedList<Integer>();
 	}
@@ -85,5 +87,16 @@ class CombinedPacket {
 	
 	public boolean hasMore() {
 		return messages.size() > 0;
+	}
+
+	public void process() {
+		int position = getBuffer().position();
+		while (hasMore()) {
+			if (getEnd() > position) {
+				break;
+			}
+			client.getOutgoingMessageQueue().add(getMessage());
+			remove();
+		}
 	}
 }

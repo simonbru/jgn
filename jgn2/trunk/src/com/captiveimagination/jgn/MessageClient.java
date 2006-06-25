@@ -35,11 +35,11 @@ package com.captiveimagination.jgn;
 
 import java.io.*;
 import java.net.*;
-import java.nio.*;
 import java.util.*;
 
 import com.captiveimagination.jgn.event.*;
 import com.captiveimagination.jgn.message.*;
+import com.captiveimagination.jgn.message.type.*;
 import com.captiveimagination.jgn.queue.*;
 import com.captiveimagination.jgn.stream.*;
 
@@ -56,6 +56,7 @@ public class MessageClient {
 	public static final int STATUS_CONNECTED = 3;
 	public static final int STATUS_DISCONNECTING = 4;
 	public static final int STATUS_DISCONNECTED = 5;
+	public static final int STATUS_TERMINATED = 6;
 	
 	private InetSocketAddress address;
 	private MessageServer server;
@@ -77,9 +78,9 @@ public class MessageClient {
 		this.address = address;
 		this.server = server;
 		status = STATUS_NOT_CONNECTED;
-		outgoingQueue = new MessagePriorityQueue();
-		incomingMessages = new MessagePriorityQueue(-1);
-		outgoingMessages = new MessagePriorityQueue(-1);
+		outgoingQueue = new MultiMessageQueue(server.getMaxQueueSize());
+		incomingMessages = new BasicMessageQueue();
+		outgoingMessages = new BasicMessageQueue();
 		messageListeners = new ArrayList<MessageListener>(server.getMaxQueueSize());
 		inputStreams = new HashMap<Short,JGNInputStream>();
 		outputStreams = new HashMap<Short,JGNOutputStream>();
@@ -143,6 +144,10 @@ public class MessageClient {
 		try {
 			Message m = message.clone();
 			m.setMessageClient(this);
+			// Assign unique id if this is a UniqueMessage
+			if (message instanceof UniqueMessage) {
+				message.setId(Message.nextUniqueId());
+			}
 			outgoingQueue.add(m);
 		} catch(CloneNotSupportedException exc) {
 			// TODO this should never happen, right?

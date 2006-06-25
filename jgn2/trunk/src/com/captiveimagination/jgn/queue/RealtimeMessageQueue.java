@@ -29,66 +29,78 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Created: Jun 6, 2006
+ * Created: Jun 24, 2006
  */
 package com.captiveimagination.jgn.queue;
+
+import java.util.*;
 
 import com.captiveimagination.jgn.message.*;
 
 /**
+ * MessageQueue specifically designed for handling RealtimeMessages.
+ * 
  * @author Matthew D. Hicks
- * @author Skip M. B. Balk
  */
-public class MessagePriorityQueue implements MessageQueue {
-	private BasicMessageQueue[] lists;
-	private final int max;
+public class RealtimeMessageQueue implements MessageQueue {
+	private LinkedList<Object> active;
+	private HashMap<Short,Message> groupToMessages;
+	private HashMap<Class,Message> classToMessages;
 	private volatile int size = 0;
 	private volatile long total = 0;
 	
-	public MessagePriorityQueue() {
-		this(1024);
-	}
-
-	public MessagePriorityQueue(int max) {
-		this.max = max;
-		lists = new BasicMessageQueue[5];
-		for (int i = 0; i < lists.length; i++) {
-			lists[i] = new BasicMessageQueue();
-		}
-	}
-
-	public void add(Message m) {
-		if (m == null) throw new NullPointerException("Message must not be null");
-
-		int p = m.getPriority();
-
-		if (p < Message.PRIORITY_TRIVIAL || p > Message.PRIORITY_CRITICAL)
-			throw new IllegalStateException("Invalid priority: " + m.getPriority());
-
-		if ((size == max) && (max != -1)) throw new QueueFullException("Queue reached max size: " + max);
-
-		synchronized (lists[p]) {
-			lists[p].add(m);
-		}
-
-		size++;
-		total++;
+	public RealtimeMessageQueue() {
+		active = new LinkedList<Object>();
+		groupToMessages = new HashMap<Short,Message>();
+		classToMessages = new HashMap<Class,Message>();
 	}
 	
-	public Message poll() {
-		if (isEmpty()) return null;
-
-		for (int i = lists.length - 1; i >= 0; i--) {
-			synchronized (lists[i]) {
-				if (lists[i].isEmpty()) continue;
-
-				Message m = lists[i].poll();
-				size--;
-				return m;
+	public void add(Message message) {
+		if (message == null) throw new NullPointerException("Message must not be null");
+		
+		synchronized(this) {
+			if (message.getGroupId() == 0) {		// Group ID not set, so we base it off the class
+				if (classToMessages.containsKey(message.getClass())) {
+					if (classToMessages.get(message.getClass()).getId() > message.getId()) {
+						// Message is older than currently in the queue
+						return;
+					}
+				}
+				classToMessages.put(message.getClass(), message);
+				active.add(message.getClass());
+				size++;
+				total++;
+			} else {
+				if (groupToMessages.containsKey(message.getGroupId())) {		// 
+					if (groupToMessages.get(message.getGroupId()).getId() > message.getId()) {
+						// Message is older than currently in the queue
+						return;
+					}
+				}
+				groupToMessages.put(message.getGroupId(), message);
+				active.add(message.getGroupId());
+				size++;
+				total++;
 			}
 		}
+	}
 
-		return null;
+	public Message poll() {
+		if (isEmpty()) return null;
+		
+		synchronized(this) {
+			Object o = active.poll();
+			Message m;
+			if (o instanceof Class) {
+				m = classToMessages.get(o);
+				classToMessages.remove(o);
+			} else {
+				m = groupToMessages.get(o);
+				groupToMessages.remove(o);
+			}
+			if (m != null) size--;
+			return m;
+		}
 	}
 
 	public boolean isEmpty() {

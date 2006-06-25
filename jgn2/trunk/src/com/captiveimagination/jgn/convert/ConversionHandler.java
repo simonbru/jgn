@@ -39,6 +39,7 @@ import java.util.*;
 
 import com.captiveimagination.jgn.*;
 import com.captiveimagination.jgn.message.*;
+import com.captiveimagination.jgn.message.type.*;
 
 /**
  * ConversionHandlers exist to process incoming and outgoing Messages
@@ -51,6 +52,7 @@ public class ConversionHandler {
 	private static final HashMap<Class<? extends Message>, ConversionHandler> messageToHandler = new HashMap<Class<? extends Message>, ConversionHandler>();
 	static {
 		ignore.add("getId");
+		ignore.add("getGroupId");
 	}
 
 	private Converter[] converters;
@@ -69,7 +71,11 @@ public class ConversionHandler {
 		Message message = null;
 
 		try {
-			message = (Message) messageClass.newInstance();
+			try {
+				message = (Message)messageClass.newInstance();
+			} catch(IllegalAccessException exc) {
+				throw new MessageHandlingException("Unable to instantiate message (make sure the constructor is visible).", message, exc);
+			}
 			for (int i = 0; i < converters.length; i++) {
 				converters[i].set(message, setters[i], buffer);
 			}
@@ -103,15 +109,11 @@ public class ConversionHandler {
 	}
 
 	public static final synchronized ConversionHandler getConversionHandler(Class<? extends Message> messageClass) {
-
 		ConversionHandler handler = messageToHandler.get(messageClass);
 
 		if (handler != null) return handler;
 
 		initConverters();
-
-		// TODO if the message implements UniqueMessage then we need to associate
-		// the getId first
 
 		// Introspect Class
 		ArrayList<Converter> converters = new ArrayList<Converter>();
@@ -121,6 +123,42 @@ public class ConversionHandler {
 		ArrayList<Method> methods = new ArrayList<Method>();
 		Collections.addAll(methods, ms);
 		Collections.sort(methods, methodComparator);
+		
+		// Special circumstances handled here
+		if (UniqueMessage.class.isAssignableFrom(messageClass)) {
+			// Add validation for UniqueMessage
+			try {
+				converters.add(Converter.CONVERTERS.get(long.class));
+				Method getter = messageClass.getMethod("getId", new Class[0]);
+				getter.setAccessible(true);
+				Method setter = messageClass.getMethod("setId", new Class[] {long.class});
+				setter.setAccessible(true);
+				getters.add(getter);
+				setters.add(setter);
+			} catch(SecurityException exc) {
+				exc.printStackTrace();
+			} catch(NoSuchMethodException exc) {
+				exc.printStackTrace();
+			}
+		}
+		if (GroupMessage.class.isAssignableFrom(messageClass)) {
+			// Add validation for GroupMessage
+			try {
+				converters.add(Converter.CONVERTERS.get(short.class));
+				Method getter = messageClass.getMethod("getGroupId", new Class[0]);
+				getter.setAccessible(true);
+				Method setter = messageClass.getMethod("setGroupId", new Class[] {short.class});
+				setter.setAccessible(true);
+				getters.add(getter);
+				setters.add(setter);
+			} catch(SecurityException exc) {
+				exc.printStackTrace();
+			} catch(NoSuchMethodException exc) {
+				exc.printStackTrace();
+			}
+		}
+		
+		// Add standard getter/setter aspects
 		for (Method getter : methods) {
 			if (!getter.getName().startsWith("get")) continue; // Make sure it's a getter
 			if (ignore.contains(getter.getName())) continue; // Methods to be ignored

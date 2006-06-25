@@ -48,13 +48,9 @@ public class TCPMessageServer extends MessageServer {
 	private Selector selector;
 	private int readPosition;
 	private ByteBuffer readBuffer;
-	private boolean keepAlive;
-	private boolean alive;
 
 	public TCPMessageServer(InetSocketAddress address, int maxQueueSize) throws IOException {
 		super(address, maxQueueSize);
-		keepAlive = true;
-		alive = true;
 		selector = Selector.open();
 
 		ServerSocketChannel ssc = ServerSocketChannel.open();
@@ -79,14 +75,13 @@ public class TCPMessageServer extends MessageServer {
 		channel.configureBlocking(false);
 		channel.socket().setTcpNoDelay(true);
 		// TODO connect timeout?
-		SelectionKey key = channel.register(selector, SelectionKey.OP_CONNECT | SelectionKey.OP_READ
-						| SelectionKey.OP_WRITE);
+		SelectionKey key = channel.register(selector, SelectionKey.OP_CONNECT | SelectionKey.OP_READ | SelectionKey.OP_WRITE);
 		key.attach(client);
 		channel.connect(client.getAddress());
 		return null;
 	}
 	
-	protected void disconnectInternal(MessageClient client) throws IOException {
+	protected void disconnectInternal(MessageClient client, boolean graceful) throws IOException {
 		Iterator<SelectionKey> iterator = selector.keys().iterator();
 		while (iterator.hasNext()) {
 			SelectionKey key = iterator.next();
@@ -96,15 +91,12 @@ public class TCPMessageServer extends MessageServer {
 			}
 		}
 		getMessageClients().remove(client);
-		client.setStatus(MessageClient.STATUS_DISCONNECTED);
-		getDisconnectedConnectionQueue().add(client);
-	}
-
-	public void close() throws IOException {
-		for (MessageClient client : getMessageClients()) {
-			client.disconnect();
+		if (graceful) {
+			client.setStatus(MessageClient.STATUS_DISCONNECTED);
+		} else {
+			client.setStatus(MessageClient.STATUS_TERMINATED);
 		}
-		keepAlive = false;
+		getDisconnectedConnectionQueue().add(client);
 	}
 	
 	public void closeAndWait(long timeout) throws IOException, InterruptedException {
@@ -118,9 +110,6 @@ public class TCPMessageServer extends MessageServer {
 				}
 			}
 			Thread.sleep(1);
-		}
-		for (MessageClient client : getMessageClients()) {
-			System.out.println("Client: " + client.getStatus());
 		}
 		throw new IOException("MessageServer did not shutdown within the allotted time (" + getMessageClients().size() + ").");
 	}
@@ -148,14 +137,16 @@ public class TCPMessageServer extends MessageServer {
 			while (keys.hasNext()) {
 				SelectionKey activeKey = keys.next();
 				keys.remove();
-				if (activeKey.isAcceptable()) {
+				if ((activeKey.isValid()) && (activeKey.isAcceptable())) {
 					accept((ServerSocketChannel) activeKey.channel());
-				} else if (activeKey.isReadable()) {
+				}
+				if ((activeKey.isValid()) && (activeKey.isReadable())) {
 					read((SocketChannel) activeKey.channel());
-				} else if (activeKey.isWritable()) {
-					while (write((SocketChannel) activeKey.channel()))
-						continue;
-				} else if (activeKey.isConnectable()) {
+				}
+				if ((activeKey.isValid()) && (activeKey.isWritable())) {
+					while (write((SocketChannel)activeKey.channel())) continue;
+				}
+				if ((activeKey.isValid()) && (activeKey.isConnectable())) {
 					connect((SocketChannel) activeKey.channel());
 				}
 			}
@@ -176,8 +167,13 @@ public class TCPMessageServer extends MessageServer {
 	}
 
 	private void read(SocketChannel channel) throws IOException {
-		channel.read(readBuffer);
-		MessageClient client = (MessageClient) channel.keyFor(selector).attachment();
+		MessageClient client = (MessageClient)channel.keyFor(selector).attachment();
+		try {
+			channel.read(readBuffer);
+		} catch(IOException exc) {
+			// Handle connections being closed
+			disconnectInternal(client, false);
+		}
 		Message message;
 		try {
 			while ((message = readMessage(client)) != null) {
@@ -186,7 +182,7 @@ public class TCPMessageServer extends MessageServer {
 		} catch (MessageHandlingException exc) {
 			// FIXME we need to show the cause!
 			// appearantly IOE is not suitable for this
-			throw new IOException(exc.getMessage());
+			throw new RuntimeException(exc);
 		}
 	}
 
@@ -234,34 +230,21 @@ public class TCPMessageServer extends MessageServer {
 	private boolean write(SocketChannel channel) throws IOException {
 		SelectionKey key = channel.keyFor(selector);
 		MessageClient client = (MessageClient) key.attachment();
-
-		client.sent();
 		
 		if (client.getCurrentWrite() != null) {
+			client.sent();		// Let the system know something has been written
 			channel.write(client.getCurrentWrite().getBuffer());
 			if (!client.getCurrentWrite().getBuffer().hasRemaining()) {
-				client.setCurrentWrite(null);
-
 				// Write all messages in combined to sent queue
-				while (client.getCurrentWrite().hasMore()) {
-					Message message = client.getCurrentWrite().getMessage();
-					client.getOutgoingMessageQueue().add(message);
-					client.getCurrentWrite().remove();
-				}
+				client.getCurrentWrite().process();
+				
+				client.setCurrentWrite(null);
 			} else {
 				// Take completed messages and add them to the sent queue
-				int position = client.getCurrentWrite().getBuffer().position();
-				while (client.getCurrentWrite().hasMore()) {
-					if (client.getCurrentWrite().getEnd() > position) {
-						break;
-					}
-					client.getOutgoingMessageQueue().add(client.getCurrentWrite().getMessage());
-					client.getCurrentWrite().remove();
-				}
+				client.getCurrentWrite().process();
 			}
 		} else {
 			CombinedPacket combined;
-
 			try {
 				// TODO make 50000 adjustable (getter/setter)
 				combined = PacketCombiner.combine(client, 50000);
@@ -277,26 +260,17 @@ public class TCPMessageServer extends MessageServer {
 					client.setCurrentWrite(combined);
 					
 					// Take completed messages and add them to the sent queue
-					int position = combined.getBuffer().position();
-					while (combined.hasMore()) {
-						if (combined.getEnd() > position) {
-							break;
-						}
-						client.getOutgoingMessageQueue().add(combined.getMessage());
-						combined.remove();
-					}
+					combined.process();
 				} else {
 					client.setCurrentWrite(null);
 					
 					// Write all messages in combined to sent queue
-					while (combined.hasMore()) {
-						Message message = combined.getMessage();
-						client.getOutgoingMessageQueue().add(message);
-						combined.remove();
-					}
+					combined.process();
+					
+					return true;
 				}
 			} else if (client.getStatus() == MessageClient.STATUS_DISCONNECTING) {
-				disconnectInternal(client);
+				disconnectInternal(client, true);
 			}
 		}
 		return false;
@@ -306,9 +280,5 @@ public class TCPMessageServer extends MessageServer {
 		channel.finishConnect();
 		MessageClient client = (MessageClient) channel.keyFor(selector).attachment();
 		getIncomingConnectionQueue().add(client);
-	}
-
-	public boolean isAlive() {
-		return alive;
 	}
 }

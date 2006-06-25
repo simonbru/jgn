@@ -63,6 +63,8 @@ public abstract class MessageServer {
 	private ArrayList<ConnectionListener> connectionListeners;
 	private ArrayList<MessageListener> messageListeners;
 	private List<MessageClient> clients;
+	protected boolean keepAlive;
+	protected boolean alive;
 
 	public MessageServer(InetSocketAddress address) {
 		this(address, 1024);
@@ -71,6 +73,10 @@ public abstract class MessageServer {
 	public MessageServer(InetSocketAddress address, int maxQueueSize) {
 		this.address = address;
 		this.maxQueueSize = maxQueueSize;
+		
+		keepAlive = true;
+		alive = true;
+		
 		connectionTimeout = DEFAULT_TIMEOUT;
 		incomingConnections = new ConnectionQueue();
 		negotiatedConnections = new ConnectionQueue();
@@ -169,12 +175,17 @@ public abstract class MessageServer {
 		return null;
 	}
 		
-	protected abstract void disconnectInternal(MessageClient client) throws IOException;
+	protected abstract void disconnectInternal(MessageClient client, boolean graceful) throws IOException;
 	
 	/**
 	 * Closes all open connections to remote clients
 	 */
-	public abstract void close() throws IOException;
+	public void close() throws IOException {
+		for (MessageClient client : getMessageClients()) {
+			if (client.isConnected()) client.disconnect();
+		}
+		keepAlive = false;
+	}
 	
 	public abstract void closeAndWait(long timeout) throws IOException, InterruptedException;
 	
@@ -305,6 +316,7 @@ public abstract class MessageServer {
 	public void update() throws IOException {
 		updateEvents();
 		updateTraffic();
+		updateConnections();
 	}
 	
 	/**
@@ -425,5 +437,7 @@ public abstract class MessageServer {
     	return list;
     }
 
-	public abstract boolean isAlive();
+	public boolean isAlive() {
+		return alive;
+	}
 }

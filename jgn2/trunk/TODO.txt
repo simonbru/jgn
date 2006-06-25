@@ -5,6 +5,7 @@ X Make NoopMessage implement RealtimeMessage
 X GroupMessage
 * OrderedMessage and OrderedQueue
 * CertifiedMessage
+* Better Exception handling
 * UDPMessageServer
 * ChatMessage implements CertifiedMessage
 * 2DSynchronizationMessage implements RealtimeMessage

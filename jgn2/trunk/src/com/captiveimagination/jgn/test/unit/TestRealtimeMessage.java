@@ -29,17 +29,48 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Created: Jun 21, 2006
+ * Created: Jun 24, 2006
  */
-package com.captiveimagination.jgn.message;
+package com.captiveimagination.jgn.test.unit;
 
-import com.captiveimagination.jgn.message.type.*;
+import java.io.*;
+
+import com.captiveimagination.jgn.*;
+import com.captiveimagination.jgn.event.*;
 
 /**
- * This message is sent internally to let the remote machine know that
- * the connection is still active and should not be terminated.
- * 
  * @author Matthew D. Hicks
  */
-public class NoopMessage extends Message implements RealtimeMessage {
+public class TestRealtimeMessage extends AbstractMessageServerTestCase {
+	private int server1MessageCount = 0;
+	private int server2MessageCount = 0;
+	
+	protected void setUp() throws IOException, InterruptedException {
+		JGN.register(MyRealtimeMessage.class);
+		super.setUp();
+	}
+	
+	public void testRealtimeMessage() throws Exception {
+		server1.addMessageListener(new DynamicMessageAdapter() {
+			public void messageReceived(MyRealtimeMessage message) {
+				System.out.println("S1> Received Message: " + message.getId());
+				server1MessageCount++;
+			}
+		});
+		server2.addMessageListener(new DynamicMessageAdapter() {
+			public void messageReceived(MyRealtimeMessage message) {
+				System.out.println("S2> Received Message: " + message.getId());
+				server2MessageCount++;
+			}
+		});
+		MyRealtimeMessage message = new MyRealtimeMessage();
+		
+		for (int i = 0; i < 100; i++) {
+			client1.sendMessage(message);
+			client2.sendMessage(message);
+		}
+		Thread.sleep(1000);
+		assertEquals(server1MessageCount, 1);
+		assertEquals(server2MessageCount, 1);
+	}
 }

@@ -33,9 +33,6 @@
  */
 package com.captiveimagination.jgn;
 
-import java.io.*;
-
-import com.captiveimagination.jgn.*;
 import com.captiveimagination.jgn.event.*;
 import com.captiveimagination.jgn.message.*;
 
@@ -49,7 +46,7 @@ import com.captiveimagination.jgn.message.*;
  * 
  * @author Matthew D. Hicks
  */
-public class InternalListener implements MessageListener, ConnectionListener {
+class InternalListener implements MessageListener, ConnectionListener {
 	private static InternalListener instance;
 	
 	private InternalListener() {

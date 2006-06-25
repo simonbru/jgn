@@ -29,17 +29,67 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Created: Jun 21, 2006
+ * Created: Jun 24, 2006
  */
-package com.captiveimagination.jgn.message;
+package com.captiveimagination.jgn.queue;
 
+import com.captiveimagination.jgn.message.*;
 import com.captiveimagination.jgn.message.type.*;
 
 /**
- * This message is sent internally to let the remote machine know that
- * the connection is still active and should not be terminated.
- * 
- * @author Matthew D. Hicks
+ * @author Administrator
  */
-public class NoopMessage extends Message implements RealtimeMessage {
+public class MultiMessageQueue implements MessageQueue {
+	private RealtimeMessageQueue realtimeQueue;
+	private MessagePriorityQueue priorityQueue;
+	private final int max;
+	private volatile int size = 0;
+	private volatile int total = 0;
+	
+	public MultiMessageQueue(int max) {
+		this.max = max;
+		realtimeQueue = new RealtimeMessageQueue();
+		priorityQueue = new MessagePriorityQueue(-1);
+	}
+	
+	public void add(Message message) {
+		if (message == null) throw new NullPointerException("Message must not be null");
+		
+		if ((size == max) && (max != -1)) throw new QueueFullException("Queue reached max size: " + max);
+		
+		if (message instanceof RealtimeMessage) {
+			realtimeQueue.add(message);
+		} else {
+			// Defer to MessagePriorityQueue if it won't fit in another queue
+			priorityQueue.add(message);
+		}
+		
+		size++;
+		total++;
+	}
+
+	public Message poll() {
+		if (isEmpty()) return null;
+		
+		Message m = realtimeQueue.poll();
+		if (m == null) {
+			m = priorityQueue.poll();
+		}
+		if (m != null) size--;
+		
+		return m;
+	}
+
+	public boolean isEmpty() {
+		return size == 0;
+	}
+
+	public long getTotal() {
+		return total;
+	}
+
+	public int getSize() {
+		return size;
+	}
+
 }

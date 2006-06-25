@@ -29,17 +29,21 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Created: Jun 21, 2006
+ * Created: Jun 23, 2006
  */
-package com.captiveimagination.jgn.message;
-
-import com.captiveimagination.jgn.message.type.*;
+package com.captiveimagination.jgn.message.type;
 
 /**
- * This message is sent internally to let the remote machine know that
- * the connection is still active and should not be terminated.
+ * GroupMessage simply associates a group number with this message
+ * in order to explicitly determine associative groupings. If a value
+ * is not explicitly set this is keyed off of the derivative message class.
+ * That is to say that a MyMessage is defined to be in a different group
+ * than YourMessage.
  * 
  * @author Matthew D. Hicks
  */
-public class NoopMessage extends Message implements RealtimeMessage {
+public interface GroupMessage {
+	public short getGroupId();
+	
+	public void setGroupId(short groupId);
 }

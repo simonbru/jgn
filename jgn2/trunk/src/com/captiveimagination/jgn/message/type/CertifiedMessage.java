@@ -29,17 +29,18 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Created: Jun 21, 2006
+ * Created: Jun 23, 2006
  */
-package com.captiveimagination.jgn.message;
-
-import com.captiveimagination.jgn.message.type.*;
+package com.captiveimagination.jgn.message.type;
 
 /**
- * This message is sent internally to let the remote machine know that
- * the connection is still active and should not be terminated.
+ * CertifiedMessage is a message that guarantees delivery whether in
+ * UDP or TCP the message will be re-requested a specified number of
+ * times before giving up. A CertifiedMessage is not considered to be
+ * "sent" until a Receipt message corresponding to this message's unique
+ * id is received to valid that the message arrived successfully.
  * 
  * @author Matthew D. Hicks
  */
-public class NoopMessage extends Message implements RealtimeMessage {
+public interface CertifiedMessage extends UniqueMessage {
 }

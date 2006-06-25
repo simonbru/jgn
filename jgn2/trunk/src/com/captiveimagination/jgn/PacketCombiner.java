@@ -142,7 +142,7 @@ class PacketCombiner {
 
 			// Add it to the message sent queue
 			//client.getOutgoingMessageQueue().add(msg);
-			if (combined == null) combined = new CombinedPacket();
+			if (combined == null) combined = new CombinedPacket(client);
 			combined.add(msg, buffer.position() - chunkPos0);
 		}
 

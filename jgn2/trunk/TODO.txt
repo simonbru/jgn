@@ -1,8 +1,11 @@
-* Connection closing and timeouts
-* RealtimeMessage, MultiMessageQueue, and RealtimeMessageQueue (HashMap<Short,RealtimeMessage>)
-* Finish work on UniqueMessage
-* UDPMessageServer
+X Connection closing and timeouts
+X Finish work on UniqueMessage
+X RealtimeMessage, MultiMessageQueue, and RealtimeMessageQueue (HashMap<Short,RealtimeMessage>)
+X Make NoopMessage implement RealtimeMessage
+X GroupMessage
+* OrderedMessage and OrderedQueue
 * CertifiedMessage
+* UDPMessageServer
 * ChatMessage implements CertifiedMessage
 * 2DSynchronizationMessage implements RealtimeMessage
 * 3DSynchronizationMessage extends 2DSynchronizationMessage

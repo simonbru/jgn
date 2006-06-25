@@ -29,17 +29,20 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Created: Jun 21, 2006
+ * Created: Jun 23, 2006
  */
-package com.captiveimagination.jgn.message;
-
-import com.captiveimagination.jgn.message.type.*;
+package com.captiveimagination.jgn.message.type;
 
 /**
- * This message is sent internally to let the remote machine know that
- * the connection is still active and should not be terminated.
+ * RealtimeMessage is very similar to OrderedMessage except that
+ * it is not a CertifiedMessage and in many ways is quite the opposite.
+ * This type of message is handled by a special RealtimeMessageQueue
+ * internally that only keeps the most recently received message for its
+ * associated group. RealtimeMessage also extends UniqueMessage and utilizes
+ * this number to determine the most recent message as UniqueMessage's id
+ * is a growing value.
  * 
  * @author Matthew D. Hicks
  */
-public class NoopMessage extends Message implements RealtimeMessage {
+public interface RealtimeMessage extends GroupMessage, UniqueMessage {
 }

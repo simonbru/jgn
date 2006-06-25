@@ -45,6 +45,8 @@ import com.captiveimagination.jgn.*;
  * @author Matthew D. Hicks
  */
 public abstract class Message implements Cloneable {
+	private static int UNIQUE_ID = 0;
+	
 	public static final byte PRIORITY_CRITICAL = 4;
 	public static final byte PRIORITY_HIGH = 3;
 	public static final byte PRIORITY_NORMAL = 2;
@@ -52,18 +54,13 @@ public abstract class Message implements Cloneable {
 	public static final byte PRIORITY_TRIVIAL = 0;
 	
 	private long id;
+	private short groupId;
 	private byte priority;
 	private MessageClient client;
 	
 	public Message() {
 		// Assign default priority
 		this.priority = PRIORITY_NORMAL;
-		
-		// Generate unique id
-		if (this instanceof UniqueMessage) {
-			id = Math.round(Math.random() * Long.MAX_VALUE);
-			id += Math.round(Math.random() * Long.MIN_VALUE);
-		}
 	}
 	
 	/**
@@ -92,6 +89,31 @@ public abstract class Message implements Cloneable {
 		this.id = id;
 	}
 
+	/**
+	 * Ignored unless the extending Message implements
+	 * GroupMessage interface. This should be set explicitly
+	 * if implementing GroupMessage or it will default to
+	 * group based on the message's class.
+	 * 
+	 * @return
+	 * 		groupId reference for this Message as a short
+	 */
+	public short getGroupId() {
+		return groupId;
+	}
+	
+	/**
+	 * Sets the groupId for this Message. This is only utilized
+	 * if the Message implements GroupMessage. This will be defaulted
+	 * to 0 unless otherwise set. If the value is set to 0 the
+	 * queue will base groupings off of the message's class.
+	 * 
+	 * @param groupId
+	 */
+	public void setGroupId(short groupId) {
+		this.groupId = groupId;
+	}
+	
 	/**
 	 * Priority
 	 * 
@@ -144,5 +166,9 @@ public abstract class Message implements Cloneable {
 
 	public Message clone() throws CloneNotSupportedException {
 		return (Message)super.clone();
+	}
+
+	public static synchronized int nextUniqueId() {
+		return ++UNIQUE_ID;
 	}
 }

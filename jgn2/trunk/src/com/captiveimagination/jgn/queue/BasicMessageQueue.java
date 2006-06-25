@@ -29,17 +29,60 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Created: Jun 21, 2006
+ * Created: Jun 24, 2006
  */
-package com.captiveimagination.jgn.message;
+package com.captiveimagination.jgn.queue;
 
-import com.captiveimagination.jgn.message.type.*;
+import java.util.*;
+
+import com.captiveimagination.jgn.message.*;
 
 /**
- * This message is sent internally to let the remote machine know that
- * the connection is still active and should not be terminated.
+ * BasicMessageQueue handles the basic function of enqueuing and
+ * retrieving messages.
  * 
  * @author Matthew D. Hicks
  */
-public class NoopMessage extends Message implements RealtimeMessage {
+public class BasicMessageQueue implements MessageQueue {
+	private LinkedList<Message> list;
+	private volatile int size;
+	private volatile long total;
+	
+	public BasicMessageQueue() {
+		list = new LinkedList<Message>();
+		size = 0;
+		total = 0;
+	}
+	
+	public void add(Message message) {
+		if (message == null) throw new NullPointerException("Message must not be null");
+		
+		synchronized (list) {
+			list.addLast(message);
+		}
+		size++;
+		total++;
+	}
+
+	public Message poll() {
+		if (isEmpty()) return null;
+		
+		synchronized (list) {
+			Message m = list.poll();
+			if (m != null) size--;
+			return m;
+		}
+	}
+
+	public boolean isEmpty() {
+		return size == 0;
+	}
+
+	public long getTotal() {
+		return total;
+	}
+
+	public int getSize() {
+		return size;
+	}
 }

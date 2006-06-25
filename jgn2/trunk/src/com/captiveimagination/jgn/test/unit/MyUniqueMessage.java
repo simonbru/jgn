@@ -29,17 +29,15 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Created: Jun 21, 2006
+ * Created: Jun 24, 2006
  */
-package com.captiveimagination.jgn.message;
+package com.captiveimagination.jgn.test.unit;
 
+import com.captiveimagination.jgn.message.*;
 import com.captiveimagination.jgn.message.type.*;
 
 /**
- * This message is sent internally to let the remote machine know that
- * the connection is still active and should not be terminated.
- * 
  * @author Matthew D. Hicks
  */
-public class NoopMessage extends Message implements RealtimeMessage {
+public class MyUniqueMessage extends Message implements UniqueMessage {
 }

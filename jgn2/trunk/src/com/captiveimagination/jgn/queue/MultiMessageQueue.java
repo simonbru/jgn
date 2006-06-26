@@ -55,7 +55,7 @@ public class MultiMessageQueue implements MessageQueue {
 	public void add(Message message) {
 		if (message == null) throw new NullPointerException("Message must not be null");
 		
-		if ((size == max) && (max != -1)) throw new QueueFullException("Queue reached max size: " + max);
+		if (size == max) throw new QueueFullException("Queue reached max size: " + max);
 		
 		if (message instanceof RealtimeMessage) {
 			realtimeQueue.add(message);

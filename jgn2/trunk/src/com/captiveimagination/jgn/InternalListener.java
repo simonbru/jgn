@@ -94,6 +94,9 @@ class InternalListener implements MessageListener, ConnectionListener {
 	public void messageCertified(Message message) {
 	}
 	
+	public void messageFailed(Message message) {
+	}
+	
 	public static final InternalListener getInstance() {
 		if (instance == null) {
 			instance = new InternalListener();

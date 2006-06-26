@@ -24,13 +24,11 @@ class PacketCombiner {
 	private static Map<Object, Message> clientToFailedMessage = new HashMap<Object, Message>();
 
 	private static final int bigBufferSize = 512 * 1024;
-	private static ByteBuffer buffer;
+	private static volatile ByteBuffer buffer;
 
 	static {
 		replaceBackingBuffer();
 	}
-
-	// synchronized! one thread at a time!
 
 	/**
 	 * Combines as much as possible Messages from the client into a single
@@ -66,9 +64,8 @@ class PacketCombiner {
 			// no message to send
 			if (msg == null) break;
 
-			// FIXME
-			// Temporary Fix MDH
-			msg.setMessageClient(client);
+			msg.setMessageClient(client);					// Assign the MessageClient
+			msg.setTimestamp(System.currentTimeMillis());	// Set the timestamp
 
 			// handle message
 			ConversionHandler handler;

@@ -273,6 +273,44 @@ public abstract class MessageServer {
 				}
 			}
 		}
+		
+		// Process the list of certified messages that have failed
+		for (MessageClient client : clients) {
+			MessageQueue failedMessages = client.getFailedMessageQueue();
+			while (!failedMessages.isEmpty()) {
+				Message message = failedMessages.poll();
+				synchronized (client.getMessageListeners()) {
+					for (MessageListener listener : client.getMessageListeners()) {
+						sendToListener(message, listener, MessageListener.FAILED);
+					}
+				}
+				synchronized (messageListeners) {
+					for (MessageListener listener : messageListeners) {
+						sendToListener(message, listener, MessageListener.FAILED);
+					}
+				}
+			}
+		}
+		
+		// Process the list of certified messages that still are waiting for certification
+		for (MessageClient client : clients) {
+			List<Message> messages = client.getCertifiableMessageQueue().clonedList();
+			for (Message m : messages) {
+				System.out.println("Checking this message: " + m.getClass());
+				if ((m.getTimestamp() != -1) && (m.getTimestamp() + m.getTimeout() < System.currentTimeMillis())) {
+					if (m.getTries() == m.getMaxTries()) {
+						// Message failed
+						client.getFailedMessageQueue().add(m);
+						client.getCertifiableMessageQueue().remove(m);
+					} else {
+						System.out.println("Lets try to resend: " + m.getClass());
+						m.setTries(m.getTries() + 1);
+						m.setTimestamp(-1);
+						client.getOutgoingQueue().add(m);	// We don't want to clone or reset the unique id
+					}
+				}
+			}
+		}
 
 		// Process incoming negotiated connections
 		while (!negotiatedConnections.isEmpty()) {
@@ -334,8 +372,8 @@ public abstract class MessageServer {
 	 * @throws IOException
 	 */
 	public void update() throws IOException {
-		updateEvents();
 		updateTraffic();
+		updateEvents();
 		updateConnections();
 	}
 	
@@ -413,6 +451,14 @@ public abstract class MessageServer {
 			} else {
 				listener.messageCertified(message);
 			}
+		} else if (type == MessageListener.FAILED) {
+			if (listener instanceof DynamicMessageListener) {
+				callMethod(listener, "messageFailed", message, false);
+			} else {
+				listener.messageFailed(message);
+			}
+		} else {
+			throw new RuntimeException("Unknown listener type specified: " + type);
 		}
 	}
 	

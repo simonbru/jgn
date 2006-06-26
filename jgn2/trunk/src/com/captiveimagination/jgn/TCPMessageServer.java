@@ -90,6 +90,16 @@ public class TCPMessageServer extends MessageServer {
 				key.cancel();
 			}
 		}
+		
+		// Parse through all the certified messages unsent
+		Message message;
+		while ((message = client.getCertifiableMessageQueue().poll()) != null) {
+			client.getFailedMessageQueue().add(message);
+		}
+		
+		// Execute events to invoke any visible events left
+		updateEvents();		// TODO perhaps not remove from getMessageClients() until all events are finished?
+		
 		getMessageClients().remove(client);
 		if (graceful) {
 			client.setStatus(MessageClient.STATUS_DISCONNECTED);

@@ -85,4 +85,14 @@ public class BasicMessageQueue implements MessageQueue {
 	public int getSize() {
 		return size;
 	}
+
+	public List<Message> clonedList() {
+		return (List<Message>)list.clone();
+	}
+	
+	public void remove(Message message) {
+		synchronized(list) {
+			list.remove(message);
+		}
+	}
 }

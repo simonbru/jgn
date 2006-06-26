@@ -56,11 +56,20 @@ public abstract class Message implements Cloneable {
 	private long id;
 	private short groupId;
 	private byte priority;
+	private long timestamp;
+	private int tries;
+	private int maxTries;
+	private long timeout;
 	private MessageClient client;
 	
 	public Message() {
 		// Assign default priority
 		this.priority = PRIORITY_NORMAL;
+		groupId = -1;	// Default to -1 meaning there is no group assignment
+		timestamp = -1;
+		tries = 0;
+		maxTries = 5;
+		timeout = 5000;
 	}
 	
 	/**
@@ -168,6 +177,38 @@ public abstract class Message implements Cloneable {
 		return (Message)super.clone();
 	}
 
+	public long getTimestamp() {
+		return timestamp;
+	}
+	
+	public void setTimestamp(long timestamp) {
+		this.timestamp = timestamp;
+	}
+	
+	public int getTries() {
+		return tries;
+	}
+	
+	public void setTries(int tries) {
+		this.tries = tries;
+	}
+	
+	public int getMaxTries() {
+		return maxTries;
+	}
+	
+	public void setMaxTries(int maxTries) {
+		this.maxTries = maxTries;
+	}
+	
+	public long getTimeout() {
+		return timeout;
+	}
+	
+	public void setTimeout(long timeout) {
+		this.timeout = timeout;
+	}
+	
 	public static synchronized int nextUniqueId() {
 		return ++UNIQUE_ID;
 	}

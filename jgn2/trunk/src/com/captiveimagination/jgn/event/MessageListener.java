@@ -45,6 +45,7 @@ public interface MessageListener {
 	public static final int RECEIVED = 1;
 	public static final int SENT = 2;
 	public static final int CERTIFIED = 3;
+	public static final int FAILED = 4;
 	
 	/**
 	 * This method is invoked when a message has been
@@ -70,4 +71,12 @@ public interface MessageListener {
 	 * @param message
 	 */
 	public void messageCertified(Message message);
+	
+	/**
+	 * This method is invoked when a message has failed
+	 * confirmed send to the remote destination server.
+	 * 
+	 * @param message
+	 */
+	public void messageFailed(Message message);
 }

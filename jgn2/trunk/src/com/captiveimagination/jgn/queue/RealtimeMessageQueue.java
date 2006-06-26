@@ -59,7 +59,7 @@ public class RealtimeMessageQueue implements MessageQueue {
 		if (message == null) throw new NullPointerException("Message must not be null");
 		
 		synchronized(this) {
-			if (message.getGroupId() == 0) {		// Group ID not set, so we base it off the class
+			if (message.getGroupId() == -1) {		// Group ID not set, so we base it off the class
 				if (classToMessages.containsKey(message.getClass())) {
 					if (classToMessages.get(message.getClass()).getId() > message.getId()) {
 						// Message is older than currently in the queue

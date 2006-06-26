@@ -69,23 +69,23 @@ class CombinedPacket {
 		ends.add(end);
 	}
 	
-	public Message getMessage() {
+	private Message getMessage() {
 		if (messages.size() > 0) {
 			return messages.get(0);
 		}
 		return null;
 	}
 	
-	public int getEnd() {
+	private int getEnd() {
 		return ends.get(0);
 	}
 	
-	public void remove() {
+	private void remove() {
 		messages.remove(0);
 		ends.remove(0);
 	}
 	
-	public boolean hasMore() {
+	private boolean hasMore() {
 		return messages.size() > 0;
 	}
 

@@ -107,6 +107,9 @@ public class JGNInputStream extends InputStream implements MessageListener {
 	public void messageCertified(Message message) {
 	}
 	
+	public void messageFailed(Message message) {
+	}
+	
 	public void close() throws IOException {
 		streamClosed = true;
 		client.removeMessageListener(this);

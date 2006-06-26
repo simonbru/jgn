@@ -29,27 +29,17 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Created: Jun 6, 2006
+ * Created: Jun 26, 2006
  */
-package com.captiveimagination.jgn.event;
-
-import com.captiveimagination.jgn.message.*;
+package com.captiveimagination.jgn.message.type;
 
 /**
- * Convenience implementation around MessageListener
+ * TimestampedMessage adds the current time in milliseconds to the message at actual time of
+ * streaming the message out to the remote machine. The values can be accessed via the methods
+ * 		getTimestamp()
  * 
  * @author Matthew D. Hicks
  */
-public class MessageAdapter implements MessageListener {
-	public void messageReceived(Message message) {
-	}
-
-	public void messageSent(Message message) {
-	}
-
-	public void messageCertified(Message message) {
-	}
-
-	public void messageFailed(Message message) {
-	}
+public interface TimestampedMessage {
+	public long getTimestamp();
 }

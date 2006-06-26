@@ -38,9 +38,11 @@ package com.captiveimagination.jgn.message.type;
  * UDP or TCP the message will be re-requested a specified number of
  * times before giving up. A CertifiedMessage is not considered to be
  * "sent" until a Receipt message corresponding to this message's unique
- * id is received to valid that the message arrived successfully.
+ * id is received to valid that the message arrived successfully. It also
+ * utilizes the TimestampedMessage in order to determine time of the last
+ * send attempt.
  * 
  * @author Matthew D. Hicks
  */
-public interface CertifiedMessage extends UniqueMessage {
+public interface CertifiedMessage extends UniqueMessage, TimestampedMessage {
 }

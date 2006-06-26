@@ -33,6 +33,8 @@
  */
 package com.captiveimagination.jgn.test.unit;
 
+import java.io.*;
+
 import com.captiveimagination.jgn.event.*;
 import com.captiveimagination.jgn.message.*;
 
@@ -42,14 +44,21 @@ import com.captiveimagination.jgn.message.*;
 public class TestCertifiedMessage extends AbstractMessageServerTestCase {
 	private static long certified1Id;
 	private static boolean certified1;
+	private static boolean failed1;
 	
-	public void testCertification() throws Exception {
-		server1.addMessageListener(new MessageListener() {
+	public void setUp() throws IOException, InterruptedException {
+		super.setUp();
+		server1.addMessageListener(new MessageAdapter() {
 			public void messageCertified(Message message) {
 				System.out.println("S1> Message was certified: " + message.getId());
 				assertEquals(message.getId(), certified1Id);
 				assertTrue(message.getId() > 0);
 				certified1 = true;
+			}
+			
+			public void messageFailed(Message message) {
+				System.out.println("S1> Message failed: " + message.getId());
+				failed1 = true;
 			}
 
 			public void messageReceived(Message message) {
@@ -66,9 +75,13 @@ public class TestCertifiedMessage extends AbstractMessageServerTestCase {
 				}
 			}
 		});
-		server2.addMessageListener(new MessageListener() {
+		server2.addMessageListener(new MessageAdapter() {
 			public void messageCertified(Message message) {
 				System.out.println("S2> Message was certified: " + message.getId());
+			}
+			
+			public void messageFailed(Message message) {
+				System.out.println("S2> Message failed: " + message.getId());
 			}
 
 			public void messageReceived(Message message) {
@@ -85,8 +98,19 @@ public class TestCertifiedMessage extends AbstractMessageServerTestCase {
 				}
 			}
 		});
+	}
+	
+	public void testCertification() throws Exception {
 		client1.sendMessage(new MyCertifiedMessage());
 		Thread.sleep(1000);
 		assertTrue(certified1);
+	}
+
+	public void testFailure() throws Exception {
+		client1.sendMessage(new DisconnectMessage());
+		Thread.sleep(1000);
+		client1.sendMessage(new MyCertifiedMessage());
+		Thread.sleep(1000);
+		assertTrue(failed1);
 	}
 }

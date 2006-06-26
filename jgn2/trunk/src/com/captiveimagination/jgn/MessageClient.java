@@ -66,8 +66,9 @@ public class MessageClient {
 	private MessageQueue outgoingQueue;				// Waiting to be sent via updateTraffic()
 	private MessageQueue incomingMessages;			// Waiting for MessageListener handling
 	private MessageQueue outgoingMessages;			// Waiting for MessageListener handling
-	private MessageQueue certifiableMessages;			// Waiting for a Receipt message to certify the message was received
-	private MessageQueue certifiedMessages;
+	private BasicMessageQueue certifiableMessages;	// Waiting for a Receipt message to certify the message was received
+	private MessageQueue certifiedMessages;			// Waiting for MessageListener handling
+	private MessageQueue failedMessages;			// Waiting for MessageListener handling
 	private ArrayList<MessageListener> messageListeners;
 	private HashMap<Short,JGNInputStream> inputStreams;
 	private HashMap<Short,JGNOutputStream> outputStreams;
@@ -85,6 +86,7 @@ public class MessageClient {
 		outgoingMessages = new BasicMessageQueue();
 		certifiableMessages = new BasicMessageQueue();
 		certifiedMessages = new BasicMessageQueue();
+		failedMessages = new BasicMessageQueue();
 		messageListeners = new ArrayList<MessageListener>(server.getMaxQueueSize());
 		inputStreams = new HashMap<Short,JGNInputStream>();
 		outputStreams = new HashMap<Short,JGNOutputStream>();
@@ -154,7 +156,6 @@ public class MessageClient {
 			}
 			outgoingQueue.add(m);
 		} catch(CloneNotSupportedException exc) {
-			// TODO this should never happen, right?
 			throw new RuntimeException(exc);
 		}
 	}
@@ -200,13 +201,13 @@ public class MessageClient {
 	 * @return
 	 * 		MessageQueue
 	 */
-	public MessageQueue getCertifiableMessageQueue() {
+	public BasicMessageQueue getCertifiableMessageQueue() {
 		return certifiableMessages;
 	}
 	
 	/**
 	 * Represents the list of CertifiedMessages that have been certified
-	 * and area waiting to send events to the message listeners regarding
+	 * and are waiting to send events to the message listeners regarding
 	 * the certification.
 	 * 
 	 * @return
@@ -214,6 +215,18 @@ public class MessageClient {
 	 */
 	public MessageQueue getCertifiedMessageQueue() {
 		return certifiedMessages;
+	}
+	
+	/**
+	 * Represents the list of CertifiedMessages that have failed certification
+	 * and are waiting to send events to the message listeners regarding
+	 * the failure.
+	 * 
+	 * @return
+	 * 		MessageQueue
+	 */
+	public MessageQueue getFailedMessageQueue() {
+		return failedMessages;
 	}
 	
 	public void addMessageListener(MessageListener listener) {
@@ -307,6 +320,10 @@ public class MessageClient {
 	protected void certifyMessage(long messageId) {
 		synchronized(certifiableMessages) {
 			Message firstMessage = certifiableMessages.poll();
+			if (firstMessage == null) {
+				System.out.println("It should have a message!");
+				return;
+			}
 			if (firstMessage.getId() == messageId) {
 				certifiedMessages.add(firstMessage);
 				return;

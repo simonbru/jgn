@@ -53,6 +53,11 @@ public class ConversionHandler {
 	static {
 		ignore.add("getId");
 		ignore.add("getGroupId");
+		ignore.add("getTimestamp");
+		ignore.add("getTries");
+		ignore.add("getMaxTries");
+		ignore.add("getTimeout");
+		ignore.add("getMessageClient");
 	}
 
 	private Converter[] converters;
@@ -148,6 +153,22 @@ public class ConversionHandler {
 				Method getter = messageClass.getMethod("getGroupId", new Class[0]);
 				getter.setAccessible(true);
 				Method setter = messageClass.getMethod("setGroupId", new Class[] {short.class});
+				setter.setAccessible(true);
+				getters.add(getter);
+				setters.add(setter);
+			} catch(SecurityException exc) {
+				exc.printStackTrace();
+			} catch(NoSuchMethodException exc) {
+				exc.printStackTrace();
+			}
+		}
+		if (TimestampedMessage.class.isAssignableFrom(messageClass)) {
+			// Add validation for TimestampedMessage
+			try {
+				converters.add(Converter.CONVERTERS.get(long.class));
+				Method getter = messageClass.getMethod("getTimestamp", new Class[0]);
+				getter.setAccessible(true);
+				Method setter = messageClass.getMethod("setTimestamp", new Class[] {long.class});
 				setter.setAccessible(true);
 				getters.add(getter);
 				setters.add(setter);

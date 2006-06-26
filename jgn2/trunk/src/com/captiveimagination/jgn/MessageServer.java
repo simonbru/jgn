@@ -181,8 +181,10 @@ public abstract class MessageServer {
 	 * Closes all open connections to remote clients
 	 */
 	public void close() throws IOException {
-		for (MessageClient client : getMessageClients()) {
-			if (client.isConnected()) client.disconnect();
+		synchronized (getMessageClients()) {
+			for (MessageClient client : getMessageClients()) {
+				if (client.isConnected()) client.disconnect();
+			}
 		}
 		keepAlive = false;
 	}
@@ -222,13 +224,13 @@ public abstract class MessageServer {
 				synchronized (client.getMessageListeners()) {
 					for (MessageListener listener : client.getMessageListeners()) {
 						//listener.messageReceived(message);
-						sendToListener(message, listener, true);
+						sendToListener(message, listener, MessageListener.RECEIVED);
 					}
 				}
 				synchronized (messageListeners) {
 					for (MessageListener listener : messageListeners) {
 						//listener.messageReceived(message);
-						sendToListener(message, listener, true);
+						sendToListener(message, listener, MessageListener.RECEIVED);
 					}
 				}
 			}
@@ -242,13 +244,31 @@ public abstract class MessageServer {
 				synchronized (client.getMessageListeners()) {
 					for (MessageListener listener : client.getMessageListeners()) {
 						//listener.messageReceived(message);'
-						sendToListener(message, listener, false);
+						sendToListener(message, listener, MessageListener.SENT);
 					}
 				}
 				synchronized (messageListeners) {
 					for (MessageListener listener : messageListeners) {
-						listener.messageSent(message);
-						sendToListener(message, listener, false);
+						//listener.messageSent(message);
+						sendToListener(message, listener, MessageListener.SENT);
+					}
+				}
+			}
+		}
+		
+		// Process certified Messages to the listeners
+		for (MessageClient client : clients) {
+			MessageQueue certifiedMessages = client.getCertifiedMessageQueue();
+			while (!certifiedMessages.isEmpty()) {
+				Message message = certifiedMessages.poll();
+				synchronized (client.getMessageListeners()) {
+					for (MessageListener listener : client.getMessageListeners()) {
+						sendToListener(message, listener, MessageListener.CERTIFIED);
+					}
+				}
+				synchronized (messageListeners) {
+					for (MessageListener listener : messageListeners) {
+						sendToListener(message, listener, MessageListener.CERTIFIED);
 					}
 				}
 			}
@@ -374,18 +394,24 @@ public abstract class MessageServer {
 		return buffer;
 	}
 	
-	private static final void sendToListener(Message message, MessageListener listener, boolean received) {
-		if (received) {
+	private static final void sendToListener(Message message, MessageListener listener, int type) {
+		if (type == MessageListener.RECEIVED) {
 			if (listener instanceof DynamicMessageListener) {
 				callMethod(listener, "messageReceived", message, false);
 			} else {
 				listener.messageReceived(message);
 			}
-		} else {
+		} else if (type == MessageListener.SENT) {
 			if (listener instanceof DynamicMessageListener) {
 				callMethod(listener, "messageSent", message, false);
 			} else {
 				listener.messageSent(message);
+			}
+		} else if (type == MessageListener.CERTIFIED) {
+			if (listener instanceof DynamicMessageListener) {
+				callMethod(listener, "messageCertified", message, false);
+			} else {
+				listener.messageCertified(message);
 			}
 		}
 	}

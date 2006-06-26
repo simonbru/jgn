@@ -29,43 +29,64 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Created: Jun 24, 2006
+ * Created: Jun 26, 2006
  */
 package com.captiveimagination.jgn.test.unit;
 
-import java.io.*;
-
-import com.captiveimagination.jgn.*;
 import com.captiveimagination.jgn.event.*;
+import com.captiveimagination.jgn.message.*;
 
 /**
  * @author Matthew D. Hicks
  */
-public class TestRealtimeMessage extends AbstractMessageServerTestCase {
-	private int server1MessageCount = 0;
-	private int server2MessageCount = 0;
-		
-	public void testRealtimeMessage() throws Exception {
-		server1.addMessageListener(new DynamicMessageAdapter() {
-			public void messageReceived(MyRealtimeMessage message) {
-				System.out.println("S1> Received Message: " + message.getId());
-				server1MessageCount++;
+public class TestCertifiedMessage extends AbstractMessageServerTestCase {
+	private static long certified1Id;
+	private static boolean certified1;
+	
+	public void testCertification() throws Exception {
+		server1.addMessageListener(new MessageListener() {
+			public void messageCertified(Message message) {
+				System.out.println("S1> Message was certified: " + message.getId());
+				assertEquals(message.getId(), certified1Id);
+				assertTrue(message.getId() > 0);
+				certified1 = true;
+			}
+
+			public void messageReceived(Message message) {
+				if (message instanceof MyCertifiedMessage) {
+					System.out.println("S1> Message received: " + message.getId());
+				}
+			}
+
+			public void messageSent(Message message) {
+				if (message instanceof MyCertifiedMessage) {
+					assertTrue(message.getId() > 0);
+					certified1Id = message.getId();
+					System.out.println("S1> Message sent: " + message.getId());
+				}
 			}
 		});
-		server2.addMessageListener(new DynamicMessageAdapter() {
-			public void messageReceived(MyRealtimeMessage message) {
-				System.out.println("S2> Received Message: " + message.getId());
-				server2MessageCount++;
+		server2.addMessageListener(new MessageListener() {
+			public void messageCertified(Message message) {
+				System.out.println("S2> Message was certified: " + message.getId());
+			}
+
+			public void messageReceived(Message message) {
+				if (message instanceof MyCertifiedMessage) {
+					System.out.println("S2> Message received: " + message.getId());
+					assertTrue(message.getId() > 0);
+					assertEquals(message.getId(), certified1Id);
+				}
+			}
+
+			public void messageSent(Message message) {
+				if (message instanceof MyCertifiedMessage) {
+					System.out.println("S2> Message sent: " + message.getId());
+				}
 			}
 		});
-		MyRealtimeMessage message = new MyRealtimeMessage();
-		
-		for (int i = 0; i < 100; i++) {
-			client1.sendMessage(message);
-			client2.sendMessage(message);
-		}
+		client1.sendMessage(new MyCertifiedMessage());
 		Thread.sleep(1000);
-		assertEquals(server1MessageCount, 1);
-		assertEquals(server2MessageCount, 1);
+		assertTrue(certified1);
 	}
 }

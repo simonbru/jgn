@@ -66,6 +66,8 @@ public class MessageClient {
 	private MessageQueue outgoingQueue;				// Waiting to be sent via updateTraffic()
 	private MessageQueue incomingMessages;			// Waiting for MessageListener handling
 	private MessageQueue outgoingMessages;			// Waiting for MessageListener handling
+	private MessageQueue certifiableMessages;			// Waiting for a Receipt message to certify the message was received
+	private MessageQueue certifiedMessages;
 	private ArrayList<MessageListener> messageListeners;
 	private HashMap<Short,JGNInputStream> inputStreams;
 	private HashMap<Short,JGNOutputStream> outputStreams;
@@ -81,6 +83,8 @@ public class MessageClient {
 		outgoingQueue = new MultiMessageQueue(server.getMaxQueueSize());
 		incomingMessages = new BasicMessageQueue();
 		outgoingMessages = new BasicMessageQueue();
+		certifiableMessages = new BasicMessageQueue();
+		certifiedMessages = new BasicMessageQueue();
 		messageListeners = new ArrayList<MessageListener>(server.getMaxQueueSize());
 		inputStreams = new HashMap<Short,JGNInputStream>();
 		outputStreams = new HashMap<Short,JGNOutputStream>();
@@ -145,8 +149,8 @@ public class MessageClient {
 			Message m = message.clone();
 			m.setMessageClient(this);
 			// Assign unique id if this is a UniqueMessage
-			if (message instanceof UniqueMessage) {
-				message.setId(Message.nextUniqueId());
+			if (m instanceof UniqueMessage) {
+				m.setId(Message.nextUniqueId());
 			}
 			outgoingQueue.add(m);
 		} catch(CloneNotSupportedException exc) {
@@ -186,6 +190,30 @@ public class MessageClient {
 	 */
 	public MessageQueue getOutgoingMessageQueue() {
 		return outgoingMessages;
+	}
+	
+	/**
+	 * Represents the list of CertifiedMessages that have been sent
+	 * but are waiting for validation from the remote server that the
+	 * message was successfully received.
+	 * 
+	 * @return
+	 * 		MessageQueue
+	 */
+	public MessageQueue getCertifiableMessageQueue() {
+		return certifiableMessages;
+	}
+	
+	/**
+	 * Represents the list of CertifiedMessages that have been certified
+	 * and area waiting to send events to the message listeners regarding
+	 * the certification.
+	 * 
+	 * @return
+	 * 		MessageQueue
+	 */
+	public MessageQueue getCertifiedMessageQueue() {
+		return certifiedMessages;
 	}
 	
 	public void addMessageListener(MessageListener listener) {
@@ -245,6 +273,9 @@ public class MessageClient {
 	}
 	
 	public short getMessageTypeId(Class<? extends Message> c) {
+		if (!registryReverse.containsKey(c)) {
+			throw new NoClassDefFoundError("The Message " + c.getName() + " is not registered, make sure to register with JGN.register() before using.");
+		}
 		return registryReverse.get(c);
 	}
 	
@@ -271,6 +302,26 @@ public class MessageClient {
 	
 	public long lastSent() {
 		return lastSent;
+	}
+	
+	protected void certifyMessage(long messageId) {
+		synchronized(certifiableMessages) {
+			Message firstMessage = certifiableMessages.poll();
+			if (firstMessage.getId() == messageId) {
+				certifiedMessages.add(firstMessage);
+				return;
+			}
+			certifiableMessages.add(firstMessage);
+			Message m = null;
+			while ((m = certifiableMessages.poll()) != firstMessage) {
+				if (m.getId() == messageId) {
+					certifiedMessages.add(m);
+					return;
+				}
+				certifiableMessages.add(m);
+			}
+			if (m != null) certifiableMessages.add(m);
+		}
 	}
 	
 	public void disconnect() throws IOException {

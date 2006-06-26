@@ -29,18 +29,15 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Created: Jun 23, 2006
+ * Created: Jun 26, 2006
  */
-package com.captiveimagination.jgn.message.type;
+package com.captiveimagination.jgn.test.unit;
+
+import com.captiveimagination.jgn.message.*;
+import com.captiveimagination.jgn.message.type.*;
 
 /**
- * CertifiedMessage is a message that guarantees delivery whether in
- * UDP or TCP the message will be re-requested a specified number of
- * times before giving up. A CertifiedMessage is not considered to be
- * "sent" until a Receipt message corresponding to this message's unique
- * id is received to valid that the message arrived successfully.
- * 
  * @author Matthew D. Hicks
  */
-public interface CertifiedMessage extends UniqueMessage {
+public class MyCertifiedMessage extends Message implements CertifiedMessage {
 }

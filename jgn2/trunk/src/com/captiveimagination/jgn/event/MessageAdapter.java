@@ -46,4 +46,7 @@ public class MessageAdapter implements MessageListener {
 
 	public void messageSent(Message message) {
 	}
+
+	public void messageCertified(Message message) {
+	}
 }

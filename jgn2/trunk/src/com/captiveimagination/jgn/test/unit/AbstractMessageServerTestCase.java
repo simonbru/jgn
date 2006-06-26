@@ -17,6 +17,10 @@ public class AbstractMessageServerTestCase extends TestCase {
 	protected boolean client2Disconnected;
 	
 	protected void setUp() throws IOException, InterruptedException {
+		JGN.register(MyCertifiedMessage.class);
+		JGN.register(MyRealtimeMessage.class);
+		JGN.register(MyUniqueMessage.class);
+		
 		// Create first MessageServer
 		InetSocketAddress address1 = new InetSocketAddress(InetAddress.getLocalHost(), 1000);
 		server1 = new TCPMessageServer(address1);

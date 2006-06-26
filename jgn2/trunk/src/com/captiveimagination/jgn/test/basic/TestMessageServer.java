@@ -68,7 +68,7 @@ public class TestMessageServer {
 				System.out.println("S1> Disconnected: " + client);
 			}
 		});
-		server.addMessageListener(new MessageListener() {
+		server.addMessageListener(new MessageAdapter() {
 			private long time;
 			
 			public void messageReceived(Message message) {

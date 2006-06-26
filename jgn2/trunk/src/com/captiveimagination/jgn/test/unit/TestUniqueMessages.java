@@ -1,21 +1,13 @@
 package com.captiveimagination.jgn.test.unit;
 
-import java.io.*;
-
-import com.captiveimagination.jgn.*;
 import com.captiveimagination.jgn.event.*;
 import com.captiveimagination.jgn.message.*;
 import com.captiveimagination.jgn.message.type.*;
 
 public class TestUniqueMessages extends AbstractMessageServerTestCase {
-	protected void setUp() throws IOException, InterruptedException {
-		JGN.register(MyUniqueMessage.class);
-		super.setUp();
-	}
-	
 	public void testUniqueMessage1() throws Exception {
 		MyUniqueMessage message = new MyUniqueMessage();
-		server1.addMessageListener(new DynamicMessageListener() {
+		server1.addMessageListener(new DynamicMessageAdapter() {
 			public void messageReceived(Message message) {
 			}
 
@@ -26,7 +18,7 @@ public class TestUniqueMessages extends AbstractMessageServerTestCase {
 				System.out.println("S1> Sent unique message: " + message.getId());
 			}
 		});
-		server2.addMessageListener(new DynamicMessageListener() {
+		server2.addMessageListener(new DynamicMessageAdapter() {
 			public void messageReceived(Message message) {
 			}
 			

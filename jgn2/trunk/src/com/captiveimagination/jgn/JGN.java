@@ -54,6 +54,7 @@ public class JGN {
 		register(LocalRegistrationMessage.class, (short)0);
 		register(StreamMessage.class);
 		register(NoopMessage.class);
+		register(Receipt.class);
 		register(DisconnectMessage.class);
 	}
 	

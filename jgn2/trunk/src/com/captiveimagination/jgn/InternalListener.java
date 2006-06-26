@@ -35,6 +35,7 @@ package com.captiveimagination.jgn;
 
 import com.captiveimagination.jgn.event.*;
 import com.captiveimagination.jgn.message.*;
+import com.captiveimagination.jgn.message.type.*;
 
 /**
  * This listener gets added by default to every new MessageServer as a MessageListener
@@ -54,6 +55,7 @@ class InternalListener implements MessageListener, ConnectionListener {
 	
 	public void messageReceived(Message message) {
 		if (message instanceof LocalRegistrationMessage) {
+			// Handle incoming negotiation information
 			LocalRegistrationMessage m = (LocalRegistrationMessage)message;
 			String[] messages = m.getMessageClasses();
 			short[] ids = m.getIds();
@@ -70,11 +72,26 @@ class InternalListener implements MessageListener, ConnectionListener {
 				throw new RuntimeException(exc);
 			}
 		} else if (message instanceof DisconnectMessage) {
+			// Disconnect from the remote client
 			message.getMessageClient().setStatus(MessageClient.STATUS_DISCONNECTING);
+		} else if (message instanceof CertifiedMessage) {
+			// Send back a message to the sender to let them know the message was received
+			Receipt receipt = new Receipt();
+			receipt.setCertifiedId(message.getId());
+			message.getMessageClient().sendMessage(receipt);
+		} else if (message instanceof Receipt) {
+			// Received confirmation of a CertifiedMessage
+			message.getMessageClient().certifyMessage(((Receipt)message).getCertifiedId());
 		}
 	}
 
 	public void messageSent(Message message) {
+		if (message instanceof CertifiedMessage) {
+			message.getMessageClient().getCertifiableMessageQueue().add(message);
+		}
+	}
+	
+	public void messageCertified(Message message) {
 	}
 	
 	public static final InternalListener getInstance() {

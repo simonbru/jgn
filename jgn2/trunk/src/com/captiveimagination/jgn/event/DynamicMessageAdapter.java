@@ -46,4 +46,7 @@ public class DynamicMessageAdapter implements DynamicMessageListener {
 
 	public void messageSent(Message message) {
 	}
+	
+	public void messageCertified(Message message) {
+	}
 }

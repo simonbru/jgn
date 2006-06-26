@@ -33,7 +33,6 @@
  */
 package com.captiveimagination.jgn.event;
 
-import com.captiveimagination.jgn.*;
 import com.captiveimagination.jgn.message.*;
 
 /**
@@ -43,6 +42,10 @@ import com.captiveimagination.jgn.message.*;
  * @author Matthew D. Hicks
  */
 public interface MessageListener {
+	public static final int RECEIVED = 1;
+	public static final int SENT = 2;
+	public static final int CERTIFIED = 3;
+	
 	/**
 	 * This method is invoked when a message has been
 	 * received.
@@ -58,4 +61,13 @@ public interface MessageListener {
 	 * @param message
 	 */
 	public void messageSent(Message message);
+	
+	/**
+	 * This method is invoked when a message has been
+	 * certified as successfully received by the remote
+	 * server.
+	 * 
+	 * @param message
+	 */
+	public void messageCertified(Message message);
 }

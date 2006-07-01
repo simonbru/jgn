@@ -3,7 +3,7 @@ X Finish work on UniqueMessage
 X RealtimeMessage, MultiMessageQueue, and RealtimeMessageQueue (HashMap<Short,RealtimeMessage>)
 X Make NoopMessage implement RealtimeMessage
 X GroupMessage
-* CertifiedMessage
+X CertifiedMessage
 * OrderedMessage and OrderedQueue
 * Better Exception handling
 * UDPMessageServer

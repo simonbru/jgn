@@ -2,7 +2,7 @@
  * Created on 26-jun-2006
  */
 
-package com.captiveimagination.jgn.test.riven;
+package com.captiveimagination.jgn.test.threaded;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -14,7 +14,6 @@ import com.captiveimagination.jgn.TCPMessageServer;
 import com.captiveimagination.jgn.event.MessageAdapter;
 import com.captiveimagination.jgn.message.Message;
 import com.captiveimagination.jgn.test.basic.BasicMessage;
-import com.eyeriv.util.TaskDispatcher;
 
 public class MultiThreadTest
 {
@@ -74,7 +73,8 @@ public class MultiThreadTest
          });
       }
 
-      disp.waitForCurrentLast();
+      disp.waitForEmpty();
+      disp.shutdown();
    }
 
    private static final void launchUpdater(final MessageServer server)

@@ -41,11 +41,13 @@ public class MultiThreadTest
 
       JGN.register(BasicMessage.class);
 
-      TaskDispatcher disp = new TaskDispatcher(threads);
+      //TaskDispatcher disp = new TaskDispatcher(threads);
+      TaskDispatcher dispatcher = new TaskDispatcher(8);
 
       for (int i = 0; i < tasks; i++)
       {
-         disp.addTask(new Runnable()
+         //disp.addTask(new Runnable()
+    	  dispatcher.execute(new Runnable()
          {
             public void run()
             {
@@ -73,8 +75,8 @@ public class MultiThreadTest
          });
       }
 
-      disp.waitForEmpty();
-      disp.shutdown();
+      //disp.waitForEmpty();
+      //disp.shutdown();
    }
 
    private static final void launchUpdater(final MessageServer server)

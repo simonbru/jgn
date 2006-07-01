@@ -33,90 +33,56 @@
  */
 package com.captiveimagination.jgn.test.threaded;
 
+import java.util.*;
+
 /**
  * @author Matthew D. Hicks
  */
 public class TaskDispatcher {
-	private TaskThread[] threads;
-	
-	public TaskDispatcher(int threadCount) {
-		threads = new TaskThread[threadCount];
-		for (int i = 0; i < threads.length; i++) {
-			threads[i] = new TaskThread();
-			new Thread(threads[i]).start();
-		}
-	}
-	
-	public synchronized void shutdown() {
-		for (TaskThread t : threads) {
-			t.shutdown();
-		}
-	}
-	
-	public synchronized void addTask(Runnable r) throws InterruptedException {
-		while (true) {
-			for (TaskThread t : threads) {
-				if (!t.isTasked()) {
-					t.setTask(r);
-					return;
-				}
-			}
-			Thread.sleep(10);
-		}
-	}
-	
-	public synchronized void waitForEmpty() throws InterruptedException {
-		boolean empty = false;
-		outter: while (!empty) {
-			Thread.sleep(10);
-			for (TaskThread t : threads) {
-				if (t.isTasked()) {
-					continue outter;
-				}
-			}
-			empty = true;
-		}
-	}
-}
+    private final PoolWorker[] threads;
+    private final LinkedList<Runnable> queue;
 
-class TaskThread implements Runnable {
-	private Runnable task;
-	private boolean keepAlive;
-	
-	public TaskThread() {
-		keepAlive = true;
-	}
-	
-	public void run() {
-		try {
-			while (keepAlive) {
-				if (task != null) {
-					task.run();
-					task = null;
-				}
-				synchronized (this) {
-					wait();
-				}
-			}
-		} catch(InterruptedException exc) {
-			exc.printStackTrace();
-		}
-	}
-	
-	public void setTask(Runnable task) {
-		this.task = task;
-	}
-	
-	public boolean isTasked() {
-		return task != null;
-	}
-	
-	public boolean isAlive() {
-		return keepAlive;
-	}
-	
-	public synchronized void shutdown() {
-		keepAlive = false;
-		notify();
-	}
+    public TaskDispatcher(int nThreads) {
+        queue = new LinkedList<Runnable>();
+        threads = new PoolWorker[nThreads];
+
+        for (int i=0; i<nThreads; i++) {
+            threads[i] = new PoolWorker();
+            threads[i].start();
+        }
+    }
+
+    public void execute(Runnable r) {
+        synchronized(queue) {
+            queue.addLast(r);
+            queue.notify();
+        }
+    }
+
+    private class PoolWorker extends Thread {
+        public void run() {
+            Runnable r;
+
+            while (true) {
+                synchronized(queue) {
+                    while (queue.isEmpty()) {
+                        try {
+                            queue.wait();
+                        } catch (InterruptedException exc) {
+                        }
+                    }
+
+                    r = (Runnable) queue.removeFirst();
+                }
+
+                // If we don't catch RuntimeException, 
+                // the pool could leak threads
+                try {
+                    r.run();
+                } catch (RuntimeException exc) {
+                	exc.printStackTrace();
+                }
+            }
+        }
+    }
 }

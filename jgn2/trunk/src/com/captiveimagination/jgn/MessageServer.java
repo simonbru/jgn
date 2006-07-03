@@ -38,6 +38,7 @@ import java.lang.reflect.*;
 import java.net.*;
 import java.nio.*;
 import java.util.*;
+import java.util.concurrent.*;
 
 import com.captiveimagination.jgn.convert.*;
 import com.captiveimagination.jgn.event.*;
@@ -62,7 +63,7 @@ public abstract class MessageServer {
 	private ConnectionQueue disconnectedConnections;	// Waiting for ConnectionListener handling
 	private ArrayList<ConnectionListener> connectionListeners;
 	private ArrayList<MessageListener> messageListeners;
-	private List<MessageClient> clients;
+	private AbstractQueue<MessageClient> clients;
 	protected boolean keepAlive;
 	protected boolean alive;
 
@@ -83,7 +84,7 @@ public abstract class MessageServer {
 		disconnectedConnections = new ConnectionQueue();
 		connectionListeners = new ArrayList<ConnectionListener>();
 		messageListeners = new ArrayList<MessageListener>();
-		clients = Collections.synchronizedList(new LinkedList<MessageClient>());
+		clients = new LinkedBlockingQueue<MessageClient>();
 		
 		addConnectionListener(InternalListener.getInstance());
 		addMessageListener(InternalListener.getInstance());
@@ -109,7 +110,7 @@ public abstract class MessageServer {
 		return disconnectedConnections;
 	}
 	
-	protected List<MessageClient> getMessageClients() {
+	protected AbstractQueue<MessageClient> getMessageClients() {
 		return clients;
 	}
 	

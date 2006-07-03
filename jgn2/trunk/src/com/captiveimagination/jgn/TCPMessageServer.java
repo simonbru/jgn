@@ -115,8 +115,8 @@ public class TCPMessageServer extends MessageServer {
 		while (System.currentTimeMillis() <= time + timeout) {
 			if (!isAlive()) return;
 			synchronized (getMessageClients()) {
-				if ((getMessageClients().size() > 0) && (getMessageClients().get(0).getStatus() == MessageClient.STATUS_CONNECTED)) {
-					getMessageClients().get(0).disconnect();
+				if ((getMessageClients().size() > 0) && (getMessageClients().peek().getStatus() == MessageClient.STATUS_CONNECTED)) {
+					getMessageClients().peek().disconnect();
 				}
 			}
 			Thread.sleep(1);
@@ -239,8 +239,8 @@ public class TCPMessageServer extends MessageServer {
 
 	private boolean write(SocketChannel channel) throws IOException {
 		SelectionKey key = channel.keyFor(selector);
-		MessageClient client = (MessageClient) key.attachment();
-		
+		MessageClient client = (MessageClient)key.attachment();
+				
 		if (client.getCurrentWrite() != null) {
 			client.sent();		// Let the system know something has been written
 			channel.write(client.getCurrentWrite().getBuffer());

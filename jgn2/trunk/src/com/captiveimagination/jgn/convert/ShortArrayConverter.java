@@ -44,12 +44,10 @@ import com.captiveimagination.jgn.message.*;
 public class ShortArrayConverter implements Converter {
 	public void set(Message message, Method setter, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
 		int length = buffer.getInt();
-		System.err.println("Length: " + length);
 		short[] array = null;
 		if (length != -1) {
 			array = new short[length];
 			for (int i = 0; i < length; i++) {
-				System.err.println("Getting Short: " + i + ", " + buffer.position());
 				array[i] = buffer.getShort();
 			}
 		}

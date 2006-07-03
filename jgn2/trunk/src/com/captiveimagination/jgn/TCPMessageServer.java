@@ -212,7 +212,6 @@ public class TCPMessageServer extends MessageServer {
 				readBuffer.position(position);
 				return null;
 			}
-			System.out.println("MessageLength: " + messageLength + ", " + (position - 4 - readPosition) + ", " + readPosition);
 			Message message = JGN.getConverter(c).receiveMessage(readBuffer);
 			if (messageLength < position - 4 - readPosition) {
 				// Still has content

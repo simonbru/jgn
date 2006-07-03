@@ -10,7 +10,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.captiveimagination.jgn.convert.ConversionHandler;
-import com.captiveimagination.jgn.message.Message;
+import com.captiveimagination.jgn.message.*;
 import com.captiveimagination.jgn.queue.MessageQueue;
 
 /**
@@ -63,6 +63,12 @@ class PacketCombiner {
 
 			// no message to send
 			if (msg == null) break;
+			
+			// Pay attention to state
+			if ((!client.isConnected()) && (!(msg instanceof LocalRegistrationMessage))) {
+				queue.add(msg);
+				break;
+			}
 
 			msg.setMessageClient(client);					// Assign the MessageClient
 			msg.setTimestamp(System.currentTimeMillis());	// Set the timestamp

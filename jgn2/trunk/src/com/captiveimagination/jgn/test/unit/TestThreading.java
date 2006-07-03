@@ -29,60 +29,34 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Created: Jul 1, 2006
+ * Created: Jun 23, 2006
  */
-package com.captiveimagination.jgn.test.threaded;
+package com.captiveimagination.jgn.test.unit;
 
-import java.util.*;
+
+import org.junit.*;
 
 /**
- * @author Matthew D. Hicks
+ * @author Matthew CTR Hicks
  */
-public class TaskDispatcher {
-    private final PoolWorker[] threads;
-    private final LinkedList<Runnable> queue;
+public class TestThreading {
+	@Before
+	public void setUp() throws Exception {
+		System.out.println("Setup");
+	}
 
-    public TaskDispatcher(int nThreads) {
-        queue = new LinkedList<Runnable>();
-        threads = new PoolWorker[nThreads];
-
-        for (int i=0; i<nThreads; i++) {
-            threads[i] = new PoolWorker();
-            threads[i].start();
-        }
-    }
-
-    public void execute(Runnable r) {
-        synchronized(queue) {
-            queue.addLast(r);
-            queue.notify();
-        }
-    }
-
-    private class PoolWorker extends Thread {
-        public void run() {
-            Runnable r;
-
-            while (true) {
-                synchronized(queue) {
-                    while (queue.isEmpty()) {
-                        try {
-                            queue.wait();
-                        } catch (InterruptedException exc) {
-                        }
-                    }
-
-                    r = (Runnable) queue.removeFirst();
-                }
-
-                // If we don't catch RuntimeException, 
-                // the pool could leak threads
-                try {
-                    r.run();
-                } catch (RuntimeException exc) {
-                	exc.printStackTrace();
-                }
-            }
-        }
-    }
+	@Test
+	public void testThreading() throws Exception {
+		System.out.println("One");
+	}
+	
+	@Test
+	public void testThreading2() throws Exception {
+		System.out.println("Two");
+	}
+	
+	@After
+	public void tearDown() throws Exception {
+		System.out.println("Teardown");
+	}
 }

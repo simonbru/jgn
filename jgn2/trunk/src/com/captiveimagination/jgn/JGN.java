@@ -51,7 +51,7 @@ public class JGN {
 	private static final HashMap<Class<? extends Message>,ConversionHandler> converters = new HashMap<Class<? extends Message>,ConversionHandler>();
 	static {
 		// Certain messages must be known before negotiation so this is explicitly done here
-		register(LocalRegistrationMessage.class, (short)0);
+		register(LocalRegistrationMessage.class, (short)-1);
 		register(StreamMessage.class);
 		register(NoopMessage.class);
 		register(Receipt.class);

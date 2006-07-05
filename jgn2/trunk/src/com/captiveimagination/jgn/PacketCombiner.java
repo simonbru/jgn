@@ -75,6 +75,7 @@ public class PacketCombiner {
 				buffer.putInt(messageEnd - messageStart - 4);
 				buffer.position(messageEnd);
 				packet.add(message, messageEnd - startPosition);
+				//System.out.println("MessageLength(Write): " + (messageEnd - messageStart - 4));
 			} catch(BufferOverflowException exc) {
 				buffer.position(messageStart);
 				clientToFailedMessage.put(client, message);

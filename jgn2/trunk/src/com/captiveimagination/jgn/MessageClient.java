@@ -35,6 +35,7 @@ package com.captiveimagination.jgn;
 
 import java.io.*;
 import java.net.*;
+import java.nio.*;
 import java.util.*;
 
 import com.captiveimagination.jgn.event.*;
@@ -74,6 +75,9 @@ public class MessageClient {
 	private HashMap<Short,JGNOutputStream> outputStreams;
 	private CombinedPacket currentWrite;
 	
+	private int readPosition;
+	private ByteBuffer readBuffer;
+	
 	private HashMap<Short,Class<? extends Message>> registry;
 	private HashMap<Class<? extends Message>,Short> registryReverse;
 	
@@ -91,9 +95,12 @@ public class MessageClient {
 		inputStreams = new HashMap<Short,JGNInputStream>();
 		outputStreams = new HashMap<Short,JGNOutputStream>();
 		
+		readPosition = 0;
+		readBuffer = ByteBuffer.allocateDirect(1024 * 10);
+		
 		registry = new HashMap<Short,Class<? extends Message>>();
 		registryReverse = new HashMap<Class<? extends Message>,Short>();
-		register((short)0, LocalRegistrationMessage.class);
+		register((short)-1, LocalRegistrationMessage.class);
 		received();
 		sent();
 	}
@@ -344,5 +351,17 @@ public class MessageClient {
 	public void disconnect() throws IOException {
 		sendMessage(new DisconnectMessage());
 		setStatus(STATUS_DISCONNECTING);
+	}
+
+	protected ByteBuffer getReadBuffer() {
+		return readBuffer;
+	}
+	
+	protected int getReadPosition() {
+		return readPosition;
+	}
+	
+	protected void setReadPosition(int readPosition) {
+		this.readPosition = readPosition;
 	}
 }

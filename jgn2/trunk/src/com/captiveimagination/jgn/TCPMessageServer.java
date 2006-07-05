@@ -46,8 +46,6 @@ import com.captiveimagination.jgn.message.*;
  */
 public class TCPMessageServer extends MessageServer {
 	private Selector selector;
-	private int readPosition;
-	private ByteBuffer readBuffer;
 
 	public TCPMessageServer(InetSocketAddress address, int maxQueueSize) throws IOException {
 		super(address, maxQueueSize);
@@ -57,9 +55,6 @@ public class TCPMessageServer extends MessageServer {
 		ssc.socket().bind(address);
 		ssc.configureBlocking(false);
 		ssc.register(selector, SelectionKey.OP_ACCEPT);
-
-		readPosition = 0;
-		readBuffer = ByteBuffer.allocateDirect(1024 * 10);
 	}
 
 	public TCPMessageServer(InetSocketAddress address) throws IOException {
@@ -179,7 +174,7 @@ public class TCPMessageServer extends MessageServer {
 	private void read(SocketChannel channel) throws IOException {
 		MessageClient client = (MessageClient)channel.keyFor(selector).attachment();
 		try {
-			channel.read(readBuffer);
+			channel.read(client.getReadBuffer());
 		} catch(IOException exc) {
 			// Handle connections being closed
 			disconnectInternal(client, false);
@@ -198,30 +193,33 @@ public class TCPMessageServer extends MessageServer {
 
 	private Message readMessage(MessageClient client) throws MessageHandlingException {
 		client.received();
-		int position = readBuffer.position();
-		readBuffer.position(readPosition);
-		int messageLength = readBuffer.getInt();
+		int position = client.getReadBuffer().position();
+		client.getReadBuffer().position(client.getReadPosition());
+		int messageLength = client.getReadBuffer().getInt();
+		//System.out.println("MessageLength(Read): " + messageLength);
 		//System.out.println("ReadMessage: " + messageLength + ", " + (position - 4 - readPosition) + " - " + position + ", " + readPosition);
-		if (messageLength <= position - 4 - readPosition) {
+		if (messageLength <= position - 4 - client.getReadPosition()) {
 			// Read message
-			short typeId = readBuffer.getShort();
+			short typeId = client.getReadBuffer().getShort();
 			Class<? extends Message> c = client.getMessageClass(typeId);
 			if (c == null) {
 				if (client.isConnected()) {
+					client.getReadBuffer().position(client.getReadPosition());
+					//System.err.println("Buffer: " + client.getReadBuffer().capacity() + ", " + client.getReadBuffer() + ", " + messageLength + ", " + position + ", " + readBuffer.getInt() + ", " + readBuffer.getShort());
 					throw new MessageHandlingException("Message received from unknown messageTypeId: " + typeId);
 				}
-				readBuffer.position(position);
+				client.getReadBuffer().position(position);
 				return null;
 			}
-			Message message = JGN.getConverter(c).receiveMessage(readBuffer);
-			if (messageLength < position - 4 - readPosition) {
+			Message message = JGN.getConverter(c).receiveMessage(client.getReadBuffer());
+			if (messageLength < position - 4 - client.getReadPosition()) {
 				// Still has content
-				readPosition = messageLength + 4 + readPosition;
-				readBuffer.position(position);
+				client.setReadPosition(messageLength + 4 + client.getReadPosition());
+				client.getReadBuffer().position(position);
 			} else {
 				// Clear the buffer
-				readBuffer.clear();
-				readPosition = 0;
+				client.getReadBuffer().clear();
+				client.setReadPosition(0);
 			}
 			message.setMessageClient(client);
 			return message;
@@ -229,11 +227,11 @@ public class TCPMessageServer extends MessageServer {
 			// If the capacity of the buffer has been reached
 			// we must compact it
 			// FIXME this involves a data-copy, don't
-			readBuffer.position(readPosition);
-			readBuffer.compact();
-			position = position - readPosition;
-			readPosition = 0;
-			readBuffer.position(position);
+			client.getReadBuffer().position(client.getReadPosition());
+			client.getReadBuffer().compact();
+			position = position - client.getReadPosition();
+			client.setReadPosition(0);
+			client.getReadBuffer().position(position);
 		}
 		return null;
 	}

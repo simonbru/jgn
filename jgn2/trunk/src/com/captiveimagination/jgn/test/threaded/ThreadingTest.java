@@ -39,6 +39,7 @@ import java.net.*;
 import com.captiveimagination.jgn.*;
 import com.captiveimagination.jgn.event.*;
 import com.captiveimagination.jgn.message.*;
+import com.captiveimagination.jgn.queue.*;
 import com.captiveimagination.jgn.test.basic.*;
 
 /**
@@ -61,8 +62,13 @@ public class ThreadingTest {
 		});
 		JGN.createMessageServerThread(server).start();
 		
-		for (int i = 0; i < 10; i++) {
-			startServerTest((i + 1) * 1000, 1001 + i);
+		int total = 20;
+		for (int i = 0; i < total; i++) {
+			try {
+				startServerTest((i + 1) * 1000, 1001 + i);
+			} catch(BindException exc) {
+				total++;
+			}
 		}
 	}
 	
@@ -76,12 +82,17 @@ public class ThreadingTest {
 					MessageClient client = server.connectAndWait(new InetSocketAddress(InetAddress.getLocalHost(), 1000), 5000);
 					
 					if (client == null) throw new RuntimeException("Unable to establish connection!");
+					//System.out.println("Connected: " + id);
 					int count = 0;
 					BasicMessage message = new BasicMessage();
 					while (count < 1000) {
 						message.setValue(count + id);
-						client.sendMessage(message);
-						count++;
+						try {
+							client.sendMessage(message);
+							count++;
+						} catch(QueueFullException exc) {
+							Thread.sleep(1);
+						}
 					}
 				} catch(Exception exc) {
 					exc.printStackTrace();

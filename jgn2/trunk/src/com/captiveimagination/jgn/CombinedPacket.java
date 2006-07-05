@@ -44,7 +44,7 @@ import com.captiveimagination.jgn.message.*;
  * 
  * @author Matthew CTR Hicks
  */
-class CombinedPacket {
+public class CombinedPacket {
 	private MessageClient client;
 	private ByteBuffer buffer;
 	private List<Message> messages;

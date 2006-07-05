@@ -6,8 +6,7 @@ package com.captiveimagination.jgn;
 
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import com.captiveimagination.jgn.convert.ConversionHandler;
 import com.captiveimagination.jgn.message.*;
@@ -19,9 +18,9 @@ import com.captiveimagination.jgn.queue.MessageQueue;
  * @author Skip M. B. Balk
  */
 
-class PacketCombiner {
+public class PacketCombiner {
 	// map holding the last failed message of each client, if any
-	private static Map<Object, Message> clientToFailedMessage = new HashMap<Object, Message>();
+	private static Map<MessageClient, Message> clientToFailedMessage = new HashMap<MessageClient, Message>();
 
 	private static final int bigBufferSize = 512 * 1024;
 	private static volatile ByteBuffer buffer;
@@ -37,7 +36,7 @@ class PacketCombiner {
 	 * @param client
 	 * @return CombinedPacket containing the buffer containing multiple packets, list of messages, and the message positions in the buffer
 	 */
-	public synchronized static final CombinedPacket combine(MessageClient client, int maxBytes)
+	public synchronized static final CombinedPacket combine_OLD(MessageClient client, int maxBytes)
 					throws MessageHandlingException {
 		CombinedPacket combined = null;
 		int chunkPos0 = buffer.position();
@@ -179,6 +178,72 @@ class PacketCombiner {
 		return combined;
 	}
 
+	public static final synchronized CombinedPacket combine(MessageClient client, int maxBytes) throws MessageHandlingException {
+		MessageQueue queue = client.getOutgoingQueue();
+		CombinedPacket packet = null;
+		ArrayList<Message> messages = new ArrayList<Message>();
+		ArrayList<Integer> messageLengths = new ArrayList<Integer>();
+		
+		int startPosition = buffer.position();
+		boolean bufferFull = false;
+		
+		while (true) {
+			Message message = null;
+			if (clientToFailedMessage.containsKey(client)) {
+				message = clientToFailedMessage.get(client);
+				clientToFailedMessage.remove(client);
+			} else {
+				message = queue.poll();
+			}
+			if (message == null) break;
+			// We mustn't try to send messages other than registration until the client is connected
+			if ((!(message instanceof LocalRegistrationMessage)) && (!client.isConnected())) {
+				break;
+			}
+			
+			message.setMessageClient(client);
+			message.setTimestamp(System.currentTimeMillis());
+			
+			ConversionHandler handler = ConversionHandler.getConversionHandler(message.getClass());
+			
+			int messageStart = buffer.position();
+			try {
+				// Write the length int to -1 initially until we know how large it is
+				buffer.putInt(-1);
+				
+				// Attempt to put this message into the buffer
+				handler.sendMessage(message, buffer);
+				int messageEnd = buffer.position();
+				buffer.position(messageStart);
+				buffer.putInt(messageEnd - messageStart + 4);
+				buffer.position(messageEnd);
+				messages.add(message);
+				messageLengths.add(messageEnd - startPosition);
+			} catch(BufferOverflowException exc) {
+				buffer.position(messageStart);
+				clientToFailedMessage.put(client, message);
+				bufferFull = true;
+				break;
+			}
+		}
+
+		if (messages.size() > 0) {
+			buffer.limit(buffer.position());
+			buffer.position(startPosition);
+			ByteBuffer slice = buffer.slice();
+			
+			packet = new CombinedPacket(client);
+			packet.setBuffer(slice);
+			for (int i = 0; i < messages.size(); i++) {
+				packet.add(messages.get(i), messageLengths.get(i));
+			}
+		}
+		
+		if (bufferFull) replaceBackingBuffer();		// The buffer was filled, so we need to replace it
+		
+		return packet;
+	}
+	
 	private static final void replaceBackingBuffer() {
 		buffer = ByteBuffer.allocateDirect(bigBufferSize);
 	}

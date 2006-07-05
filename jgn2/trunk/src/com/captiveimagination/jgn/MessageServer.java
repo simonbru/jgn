@@ -361,6 +361,7 @@ public abstract class MessageServer {
 					message = new NoopMessage();
 				}
 				client.sendMessage(message);
+				client.sent();
 			}
 		}
 	}

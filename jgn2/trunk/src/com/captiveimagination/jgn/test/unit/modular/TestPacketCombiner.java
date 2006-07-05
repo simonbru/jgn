@@ -112,8 +112,8 @@ public class TestPacketCombiner extends TestCase{
 	public static void main(String[] args) {
 		LocalRegistrationMessage message = JGN.generateRegistrationMessage();
 		
-		createTestThread(1, 10, 30, message);
-		createTestThread(2, 5, 25, message);
-		createTestThread(3, 5, 5, message);
+		createTestThread(1, 1, 1, message);
+		//createTestThread(2, 5, 25, message);
+		//createTestThread(3, 5, 5, message);
 	}
 }

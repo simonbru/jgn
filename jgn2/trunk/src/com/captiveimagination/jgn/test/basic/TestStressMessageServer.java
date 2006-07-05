@@ -34,7 +34,6 @@
 package com.captiveimagination.jgn.test.basic;
 
 import java.net.*;
-import java.nio.channels.*;
 
 import com.captiveimagination.jgn.*;
 import com.captiveimagination.jgn.event.*;

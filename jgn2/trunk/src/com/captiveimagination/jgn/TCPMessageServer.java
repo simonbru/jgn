@@ -201,6 +201,7 @@ public class TCPMessageServer extends MessageServer {
 		int position = readBuffer.position();
 		readBuffer.position(readPosition);
 		int messageLength = readBuffer.getInt();
+		//System.out.println("ReadMessage: " + messageLength + ", " + (position - 4 - readPosition) + " - " + position + ", " + readPosition);
 		if (messageLength <= position - 4 - readPosition) {
 			// Read message
 			short typeId = readBuffer.getShort();

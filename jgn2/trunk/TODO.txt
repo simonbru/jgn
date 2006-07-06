@@ -8,6 +8,8 @@ X Multithreaded support
 X Convert certain Message interfaces to be abstract classes
 ? Convert static ints to be enums
 X OrderedMessage and OrderedQueue
+* Convert dual HashMaps in OrderedMessageQueue to be one HashMap with custom object (TreeSet and int)
+* Disable write events on a connection when there are no messages in the queue
 * Better Exception handling
 * UDPMessageServer
 * ChatMessage implements CertifiedMessage

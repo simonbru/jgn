@@ -29,48 +29,58 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Created: Jun 24, 2006
+ * Created: Jul 5, 2006
  */
 package com.captiveimagination.jgn.queue;
 
+import java.util.*;
+import java.util.concurrent.atomic.*;
+
 import com.captiveimagination.jgn.message.*;
-import com.captiveimagination.jgn.message.type.*;
 
 /**
- * @author Administrator
+ * @author Matthew D. Hicks
  */
-public class MultiMessageQueue implements MessageQueue {
-	private BasicMessageQueue basicQueue;
-	private RealtimeMessageQueue realtimeQueue;
-	private MessagePriorityQueue priorityQueue;
-	private OrderedMessageQueue orderedQueue;
-	private final int max;
-	private volatile int size = 0;
-	private volatile int total = 0;
+public class OrderedMessageQueue implements MessageQueue {
+	private HashMap<Object,TreeSet<OrderedMessage>> queue;
+	private HashMap<Object,AtomicInteger> lastReceived;
 	
-	public MultiMessageQueue(int max) {
-		this.max = max;
-		basicQueue = new BasicMessageQueue();
-		realtimeQueue = new RealtimeMessageQueue();
-		priorityQueue = new MessagePriorityQueue(-1);
-		orderedQueue = new OrderedMessageQueue();
+	private volatile int size;
+	private volatile long total;
+	
+	public OrderedMessageQueue() {
+		queue = new HashMap<Object,TreeSet<OrderedMessage>>();
+		lastReceived = new HashMap<Object,AtomicInteger>();
+		size = 0;
+		total = 0;
 	}
 	
 	public void add(Message message) {
 		if (message == null) throw new NullPointerException("Message must not be null");
 		
-		if (size == max) throw new QueueFullException("Queue reached max size: " + max);
+		OrderedMessage m = (OrderedMessage)message;
 		
-		if (message instanceof RealtimeMessage) {
-			realtimeQueue.add(message);
-		} else if (message instanceof PriorityMessage) {
-			priorityQueue.add(message);
-		} else if (message instanceof OrderedMessage) {
-			orderedQueue.add(message);
-		} else {
-			basicQueue.add(message);
+		synchronized (queue) {
+			if (message.getGroupId() == -1) {
+				// No groupId, so we base it off the class
+				if (queue.containsKey(message.getClass())) {
+					queue.get(message.getClass()).add(m);
+				} else {
+					TreeSet<OrderedMessage> set = new TreeSet<OrderedMessage>();
+					set.add(m);
+					queue.put(message.getClass(), set);
+				}
+			} else {
+				// An groupId has been assigned, so lets use it
+				if (queue.containsKey(message.getGroupId())) {
+					queue.get(message.getGroupId()).add(m);
+				} else {
+					TreeSet<OrderedMessage> set = new TreeSet<OrderedMessage>();
+					set.add(m);
+					queue.put(message.getGroupId(), set);
+				}
+			}
 		}
-		
 		size++;
 		total++;
 	}
@@ -78,19 +88,29 @@ public class MultiMessageQueue implements MessageQueue {
 	public Message poll() {
 		if (isEmpty()) return null;
 		
-		Message m = realtimeQueue.poll();
-		if (m == null) {
-			m = priorityQueue.poll();
+		synchronized (queue) {
+			Message m = null;
+			Iterator iterator = queue.keySet().iterator();
+			while (iterator.hasNext()) {
+				Object key = iterator.next();
+				if (!queue.get(key).isEmpty()) {
+					AtomicInteger integer = lastReceived.get(key);
+					if ((integer == null) && (queue.get(key).first().getOrderId() == 0)) {
+						// First message found
+						integer = new AtomicInteger(0);
+						lastReceived.put(key, integer);
+						m = queue.get(key).first();
+						queue.get(key).remove(m);
+					} else if ((integer != null) && (queue.get(key).first().getOrderId() == integer.intValue() + 1)) {
+						integer.incrementAndGet();
+						m = queue.get(key).first();
+						queue.get(key).remove(m);
+					}
+				}
+			}
+			if (m != null) size--;
+			return m;
 		}
-		if (m == null) {
-			m = orderedQueue.poll();
-		}
-		if (m == null) {
-			m = basicQueue.poll();
-		}
-		if (m != null) size--;
-		
-		return m;
 	}
 
 	public boolean isEmpty() {

@@ -1,6 +1,9 @@
 package com.captiveimagination.jgn.test.unit;
 
+import java.net.*;
+
 import com.captiveimagination.jgn.*;
+import com.captiveimagination.jgn.event.*;
 import com.captiveimagination.jgn.message.*;
 
 public class TestDisconnect extends AbstractMessageServerTestCase {
@@ -70,5 +73,35 @@ public class TestDisconnect extends AbstractMessageServerTestCase {
 		assertTrue(client2.getStatus() == MessageClient.STATUS_DISCONNECTED);
 		assertTrue(client1Disconnected);
 		assertTrue(client2Disconnected);
+	}
+
+	public void testMulticonnect() throws Exception {
+		InetSocketAddress address3 = new InetSocketAddress(InetAddress.getLocalHost(), 3000);
+		MessageServer server3 = new TCPMessageServer(address3);
+		server3.addConnectionListener(new ConnectionListener() {
+			public void connected(MessageClient client) {
+				System.out.println("Server 3 Connected: " + client.getAddress().getPort());
+			}
+
+			public void negotiationComplete(MessageClient client) {
+				System.out.println("Server 3 Negotiated: " + client.getAddress().getPort());
+			}
+
+			public void disconnected(MessageClient client) {
+				System.out.println("Server 3 Disconnected: " + client.getAddress().getPort());
+			}
+			
+		});
+		JGN.createMessageServerThread(server3).start();
+		
+		MessageClient client3 = server3.connectAndWait(new InetSocketAddress(InetAddress.getLocalHost(), 1000), 5000);
+		if (client3 != null) {
+			System.out.println("Client 3 established to server1");
+		}
+		
+		MessageClient client4 = server3.connectAndWait(new InetSocketAddress(InetAddress.getLocalHost(), 2000), 5000);
+		if (client4 != null) {
+			System.out.println("Client 4 established to server2");
+		}
 	}
 }

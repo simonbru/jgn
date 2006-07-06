@@ -33,12 +33,10 @@
  */
 package com.captiveimagination.jgn.convert;
 
-import java.io.*;
 import java.lang.reflect.*;
 import java.nio.*;
 import java.util.*;
 
-import com.captiveimagination.jgn.*;
 import com.captiveimagination.jgn.message.*;
 
 /**

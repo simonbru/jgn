@@ -59,6 +59,9 @@ public class PacketCombiner {
 			}
 			
 			message.setMessageClient(client);
+			if (message instanceof OrderedMessage) {
+				OrderedMessage.assignOrderId((OrderedMessage)message);
+			}
 			message.setTimestamp(System.currentTimeMillis());
 			
 			ConversionHandler handler = ConversionHandler.getConversionHandler(message.getClass());

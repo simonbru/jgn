@@ -57,12 +57,14 @@ public class MessagePriorityQueue implements MessageQueue {
 		}
 	}
 
-	public void add(Message m) {
-		if (m == null) throw new NullPointerException("Message must not be null");
-
+	public void add(Message message) {
+		if (message == null) throw new NullPointerException("Message must not be null");
+		
+		PriorityMessage m = (PriorityMessage)message;
+		
 		int p = m.getPriority();
 
-		if (p < Message.PRIORITY_TRIVIAL || p > Message.PRIORITY_CRITICAL)
+		if (p < PriorityMessage.PRIORITY_TRIVIAL || p > PriorityMessage.PRIORITY_CRITICAL)
 			throw new IllegalStateException("Invalid priority: " + m.getPriority());
 
 		if (size == max) throw new QueueFullException("Queue reached max size: " + max);

@@ -47,15 +47,8 @@ import com.captiveimagination.jgn.*;
 public abstract class Message implements Cloneable {
 	private static int UNIQUE_ID = 0;
 	
-	public static final byte PRIORITY_CRITICAL = 4;
-	public static final byte PRIORITY_HIGH = 3;
-	public static final byte PRIORITY_NORMAL = 2;
-	public static final byte PRIORITY_LOW = 1;
-	public static final byte PRIORITY_TRIVIAL = 0;
-	
 	private long id;
 	private short groupId;
-	private byte priority;
 	private long timestamp;
 	private int tries;
 	private int maxTries;
@@ -63,8 +56,6 @@ public abstract class Message implements Cloneable {
 	private MessageClient client;
 	
 	public Message() {
-		// Assign default priority
-		this.priority = PRIORITY_NORMAL;
 		groupId = -1;	// Default to -1 meaning there is no group assignment
 		timestamp = -1;
 		tries = 0;
@@ -123,31 +114,6 @@ public abstract class Message implements Cloneable {
 		this.groupId = groupId;
 	}
 	
-	/**
-	 * Priority
-	 * 
-	 * @return
-	 * 		the priority of this Message object
-	 */
-	public byte getPriority() {
-		return priority;
-	}
-	
-	/**
-	 * The priority defines how the message is
-	 * handled inside the queue for sending and
-	 * receiving of messages. A high priority message
-	 * that exists in the queue at the same time
-	 * as a low priority message even if the low
-	 * priority message was received first, should
-	 * be polled before the lower priority message.
-	 * 
-	 * @param priority
-	 */
-	public void setPriority(byte priority) {
-		this.priority = priority;
-	}
-
 	/**
 	 * This method is called internally when a Message is
 	 * sent or received so there is a trace-back point of

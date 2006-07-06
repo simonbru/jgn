@@ -51,13 +51,15 @@ public class TestCertifiedMessage extends AbstractMessageServerTestCase {
 		server1.addMessageListener(new MessageAdapter() {
 			public void messageCertified(Message message) {
 				System.out.println("S1> Message was certified: " + message.getId());
-				assertEquals(message.getId(), certified1Id);
-				assertTrue(message.getId() > 0);
-				certified1 = true;
+				if (message instanceof MyCertifiedMessage) {
+					assertEquals(message.getId(), certified1Id);
+					assertTrue(message.getId() > 0);
+					certified1 = true;
+				}
 			}
 			
 			public void messageFailed(Message message) {
-				System.out.println("S1> Message failed: " + message.getId());
+				System.out.println("S1> Message failed: " + message.getId() + ", " + message);
 				failed1 = true;
 			}
 

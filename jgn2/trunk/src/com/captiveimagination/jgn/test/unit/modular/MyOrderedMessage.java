@@ -29,20 +29,23 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Created: Jun 23, 2006
+ * Created: Jul 5, 2006
  */
-package com.captiveimagination.jgn.message.type;
+package com.captiveimagination.jgn.test.unit.modular;
+
+import com.captiveimagination.jgn.message.*;
 
 /**
- * RealtimeMessage is very similar to OrderedMessage except that
- * it is not a CertifiedMessage and in many ways is quite the opposite.
- * This type of message is handled by a special RealtimeMessageQueue
- * internally that only keeps the most recently received message for its
- * associated group. RealtimeMessage also extends UniqueMessage and utilizes
- * this number to determine the most recent message as UniqueMessage's id
- * is a growing value.
- * 
  * @author Matthew D. Hicks
  */
-public interface RealtimeMessage extends GroupMessage, UniqueMessage {
+public class MyOrderedMessage extends OrderedMessage {
+	private int value;
+	
+	public int getValue() {
+		return value;
+	}
+	
+	public void setValue(int value) {
+		this.value = value;
+	}
 }

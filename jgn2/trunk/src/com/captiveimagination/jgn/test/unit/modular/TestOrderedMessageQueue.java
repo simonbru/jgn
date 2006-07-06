@@ -29,37 +29,35 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Created: Jun 10, 2006
+ * Created: Jul 5, 2006
  */
-package com.captiveimagination.jgn.message;
+package com.captiveimagination.jgn.test.unit.modular;
 
-import com.captiveimagination.jgn.message.type.*;
+
+import static org.junit.Assert.assertTrue;
+
+import org.junit.*;
+
+import com.captiveimagination.jgn.queue.*;
 
 /**
- * This is an internal message utilized during the initial
- * negotiation of a connection to let the remote machine know
- * all of the message registrations and their ids to allow for
- * proper message communication.
- * 
  * @author Matthew D. Hicks
  */
-public class LocalRegistrationMessage extends PriorityMessage implements CertifiedMessage {
-	private short[] ids;
-	private String[] messageClasses;
-	
-	public short[] getIds() {
-		return ids;
-	}
-	
-	public void setIds(short[] ids) {
-		this.ids = ids;
-	}
-	
-	public String[] getMessageClasses() {
-		return messageClasses;
-	}
-	
-	public void setMessageClasses(String[] messageClasses) {
-		this.messageClasses = messageClasses;
+public class TestOrderedMessageQueue {
+	@Test
+	public void testBasic() throws Exception {
+		OrderedMessageQueue queue = new OrderedMessageQueue();
+		MyOrderedMessage message = new MyOrderedMessage();
+		for (int i = 0; i < 10; i++) {
+			message.setValue(i);
+			message.setOrderId(9 - i);
+			queue.add(message.clone());
+		}
+
+		MyOrderedMessage m = null;
+		while ((m = (MyOrderedMessage)queue.poll()) != null) {
+			System.out.println("OrderedMessage: " + m.getValue() + ", " + m.getOrderId());
+			assertTrue(m.getValue() + m.getOrderId() == 9);
+		}
 	}
 }

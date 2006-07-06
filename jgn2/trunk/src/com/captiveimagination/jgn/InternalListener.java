@@ -74,7 +74,8 @@ class InternalListener implements MessageListener, ConnectionListener {
 		} else if (message instanceof DisconnectMessage) {
 			// Disconnect from the remote client
 			message.getMessageClient().setStatus(MessageClient.STATUS_DISCONNECTING);
-		} else if (message instanceof CertifiedMessage) {
+		}
+		if (message instanceof CertifiedMessage) {
 			// Send back a message to the sender to let them know the message was received
 			Receipt receipt = new Receipt();
 			receipt.setCertifiedId(message.getId());

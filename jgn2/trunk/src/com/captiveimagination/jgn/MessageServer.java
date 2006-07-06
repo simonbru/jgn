@@ -66,10 +66,6 @@ public abstract class MessageServer {
 	private AbstractQueue<MessageClient> clients;
 	protected boolean keepAlive;
 	protected boolean alive;
-
-	public MessageServer(InetSocketAddress address) {
-		this(address, 1024);
-	}
 	
 	public MessageServer(InetSocketAddress address, int maxQueueSize) {
 		this.address = address;
@@ -190,7 +186,20 @@ public abstract class MessageServer {
 		keepAlive = false;
 	}
 	
-	public abstract void closeAndWait(long timeout) throws IOException, InterruptedException;
+	public void closeAndWait(long timeout) throws IOException, InterruptedException {
+		close();
+		long time = System.currentTimeMillis();
+		while (System.currentTimeMillis() <= time + timeout) {
+			if (!isAlive()) return;
+			synchronized (getMessageClients()) {
+				if ((getMessageClients().size() > 0) && (getMessageClients().peek().getStatus() == MessageClient.STATUS_CONNECTED)) {
+					getMessageClients().peek().disconnect();
+				}
+			}
+			Thread.sleep(1);
+		}
+		throw new IOException("MessageServer did not shutdown within the allotted time (" + getMessageClients().size() + ").");
+	}
 	
 	/**
 	 * Processing incoming/outgoing traffic for this MessageServer

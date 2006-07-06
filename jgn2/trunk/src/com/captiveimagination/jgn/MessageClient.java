@@ -86,12 +86,12 @@ public class MessageClient {
 		this.server = server;
 		status = STATUS_NOT_CONNECTED;
 		outgoingQueue = new MultiMessageQueue(server.getMaxQueueSize());
-		incomingMessages = new BasicMessageQueue();
-		outgoingMessages = new BasicMessageQueue();
+		incomingMessages = new MultiMessageQueue(-1);
+		outgoingMessages = new MultiMessageQueue(-1);
 		certifiableMessages = new BasicMessageQueue();
-		certifiedMessages = new BasicMessageQueue();
-		failedMessages = new BasicMessageQueue();
-		messageListeners = new ArrayList<MessageListener>(server.getMaxQueueSize());
+		certifiedMessages = new MultiMessageQueue(-1);
+		failedMessages = new MultiMessageQueue(-1);
+		messageListeners = new ArrayList<MessageListener>();
 		inputStreams = new HashMap<Short,JGNInputStream>();
 		outputStreams = new HashMap<Short,JGNOutputStream>();
 		

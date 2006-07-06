@@ -35,132 +35,41 @@ package com.captiveimagination.jgn;
 
 import java.io.*;
 import java.net.*;
-import java.nio.*;
 import java.nio.channels.*;
-import java.util.*;
 
 import com.captiveimagination.jgn.message.*;
 
 /**
  * @author Matthew D. Hicks
  */
-public class TCPMessageServer extends MessageServer {
-	private Selector selector;
-
-	public TCPMessageServer(InetSocketAddress address, int maxQueueSize) throws IOException {
-		super(address, maxQueueSize);
-		selector = Selector.open();
-
-		ServerSocketChannel ssc = ServerSocketChannel.open();
-		ssc.socket().bind(address);
-		ssc.configureBlocking(false);
-		ssc.register(selector, SelectionKey.OP_ACCEPT);
-	}
-
+public class TCPMessageServer extends NIOMessageServer {
 	public TCPMessageServer(InetSocketAddress address) throws IOException {
 		this(address, 1024);
 	}
-
-	public MessageClient connect(InetSocketAddress address) throws IOException {
-		// TODO lookup to see if the connection already exists
-		MessageClient client = new MessageClient(address, this);
-		client.setStatus(MessageClient.STATUS_NEGOTIATING);
-		getMessageClients().add(client);
-		SocketChannel channel = SocketChannel.open();
-		channel.configureBlocking(false);
+	
+	public TCPMessageServer(InetSocketAddress address, int maxQueueSize) throws IOException {
+		super(address, maxQueueSize);
+	}
+	
+	protected SelectableChannel bindServer(InetSocketAddress address) throws IOException {
+		ServerSocketChannel channel = selector.provider().openServerSocketChannel();
+		channel.socket().bind(address);
+		return channel;
+	}
+	
+	protected SelectableChannel createClient() throws IOException {
+		SocketChannel channel = selector.provider().openSocketChannel();
 		channel.socket().setTcpNoDelay(true);
-		// TODO connect timeout?
-		SelectionKey key = channel.register(selector, SelectionKey.OP_CONNECT | SelectionKey.OP_READ | SelectionKey.OP_WRITE);
-		key.attach(client);
-		channel.connect(client.getAddress());
-		return null;
+		return channel;
 	}
 	
-	protected void disconnectInternal(MessageClient client, boolean graceful) throws IOException {
-		Iterator<SelectionKey> iterator = selector.keys().iterator();
-		while (iterator.hasNext()) {
-			SelectionKey key = iterator.next();
-			if (key.attachment() == client) {
-				key.channel().close();
-				key.cancel();
-			}
-		}
-		
-		// Parse through all the certified messages unsent
-		Message message;
-		while ((message = client.getCertifiableMessageQueue().poll()) != null) {
-			client.getFailedMessageQueue().add(message);
-		}
-		
-		// Execute events to invoke any visible events left
-		updateEvents();		// TODO perhaps not remove from getMessageClients() until all events are finished?
-		
-		getMessageClients().remove(client);
-		if (graceful) {
-			client.setStatus(MessageClient.STATUS_DISCONNECTED);
-		} else {
-			client.setStatus(MessageClient.STATUS_TERMINATED);
-		}
-		getDisconnectedConnectionQueue().add(client);
-	}
-	
-	public void closeAndWait(long timeout) throws IOException, InterruptedException {
-		close();
-		long time = System.currentTimeMillis();
-		while (System.currentTimeMillis() <= time + timeout) {
-			if (!isAlive()) return;
-			synchronized (getMessageClients()) {
-				if ((getMessageClients().size() > 0) && (getMessageClients().peek().getStatus() == MessageClient.STATUS_CONNECTED)) {
-					getMessageClients().peek().disconnect();
-				}
-			}
-			Thread.sleep(1);
-		}
-		throw new IOException("MessageServer did not shutdown within the allotted time (" + getMessageClients().size() + ").");
+	protected void connectClient(SelectableChannel channel, InetSocketAddress address) throws IOException {
+		((SocketChannel)channel).connect(address);
 	}
 
-	public synchronized void updateTraffic() throws IOException {
-		// Ignore if no longer alive
-		if (!isAlive()) return;
-		
-		// If should be shutting down, check
-		if ((getMessageClients().size() == 0) && (!keepAlive)) {
-			Iterator<SelectionKey> iterator = selector.keys().iterator();
-			while (iterator.hasNext()) {
-				SelectionKey key = iterator.next();
-				key.channel().close();
-				key.cancel();
-			}
-			selector.close();
-			alive = false;
-			return;
-		}
-		
-		// Handle Accept, Read, and Write
-		if (selector.selectNow() > 0) {
-			Iterator<SelectionKey> keys = selector.selectedKeys().iterator();
-			while (keys.hasNext()) {
-				SelectionKey activeKey = keys.next();
-				keys.remove();
-				if ((activeKey.isValid()) && (activeKey.isAcceptable())) {
-					accept((ServerSocketChannel) activeKey.channel());
-				}
-				if ((activeKey.isValid()) && (activeKey.isReadable())) {
-					read((SocketChannel) activeKey.channel());
-				}
-				if ((activeKey.isValid()) && (activeKey.isWritable())) {
-					while (write((SocketChannel)activeKey.channel())) continue;
-				}
-				if ((activeKey.isValid()) && (activeKey.isConnectable())) {
-					connect((SocketChannel) activeKey.channel());
-				}
-			}
-		}
-	}
-
-	private void accept(ServerSocketChannel channel) throws IOException {
+	protected void accept(SelectableChannel channel) throws IOException {
 		// TODO validate connections
-		SocketChannel connection = channel.accept();
+		SocketChannel connection = ((ServerSocketChannel)channel).accept();
 		connection.configureBlocking(false);
 		connection.socket().setTcpNoDelay(true);
 		SelectionKey key = connection.register(selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
@@ -171,10 +80,16 @@ public class TCPMessageServer extends MessageServer {
 		getMessageClients().add(client);
 	}
 
-	private void read(SocketChannel channel) throws IOException {
+	protected void connect(SelectableChannel channel) throws IOException {
+		((SocketChannel)channel).finishConnect();
+		MessageClient client = (MessageClient) channel.keyFor(selector).attachment();
+		getIncomingConnectionQueue().add(client);
+	}
+	
+	protected void read(SelectableChannel channel) throws IOException {
 		MessageClient client = (MessageClient)channel.keyFor(selector).attachment();
 		try {
-			channel.read(client.getReadBuffer());
+			((SocketChannel)channel).read(client.getReadBuffer());
 		} catch(IOException exc) {
 			// Handle connections being closed
 			disconnectInternal(client, false);
@@ -190,59 +105,15 @@ public class TCPMessageServer extends MessageServer {
 			throw new RuntimeException(exc);
 		}
 	}
+	
 
-	private Message readMessage(MessageClient client) throws MessageHandlingException {
-		client.received();
-		int position = client.getReadBuffer().position();
-		client.getReadBuffer().position(client.getReadPosition());
-		int messageLength = client.getReadBuffer().getInt();
-		//System.out.println("MessageLength(Read): " + messageLength);
-		//System.out.println("ReadMessage: " + messageLength + ", " + (position - 4 - readPosition) + " - " + position + ", " + readPosition);
-		if (messageLength <= position - 4 - client.getReadPosition()) {
-			// Read message
-			short typeId = client.getReadBuffer().getShort();
-			Class<? extends Message> c = client.getMessageClass(typeId);
-			if (c == null) {
-				if (client.isConnected()) {
-					client.getReadBuffer().position(client.getReadPosition());
-					//System.err.println("Buffer: " + client.getReadBuffer().capacity() + ", " + client.getReadBuffer() + ", " + messageLength + ", " + position + ", " + readBuffer.getInt() + ", " + readBuffer.getShort());
-					throw new MessageHandlingException("Message received from unknown messageTypeId: " + typeId);
-				}
-				client.getReadBuffer().position(position);
-				return null;
-			}
-			Message message = JGN.getConverter(c).receiveMessage(client.getReadBuffer());
-			if (messageLength < position - 4 - client.getReadPosition()) {
-				// Still has content
-				client.setReadPosition(messageLength + 4 + client.getReadPosition());
-				client.getReadBuffer().position(position);
-			} else {
-				// Clear the buffer
-				client.getReadBuffer().clear();
-				client.setReadPosition(0);
-			}
-			message.setMessageClient(client);
-			return message;
-		} else {
-			// If the capacity of the buffer has been reached
-			// we must compact it
-			// FIXME this involves a data-copy, don't
-			client.getReadBuffer().position(client.getReadPosition());
-			client.getReadBuffer().compact();
-			position = position - client.getReadPosition();
-			client.setReadPosition(0);
-			client.getReadBuffer().position(position);
-		}
-		return null;
-	}
-
-	private boolean write(SocketChannel channel) throws IOException {
+	protected boolean write(SelectableChannel channel) throws IOException {
 		SelectionKey key = channel.keyFor(selector);
 		MessageClient client = (MessageClient)key.attachment();
 				
 		if (client.getCurrentWrite() != null) {
 			client.sent();		// Let the system know something has been written
-			channel.write(client.getCurrentWrite().getBuffer());
+			((SocketChannel)channel).write(client.getCurrentWrite().getBuffer());
 			if (!client.getCurrentWrite().getBuffer().hasRemaining()) {
 				// Write all messages in combined to sent queue
 				client.getCurrentWrite().process();
@@ -264,7 +135,7 @@ public class TCPMessageServer extends MessageServer {
 			}
 
 			if (combined != null) {
-				channel.write(combined.getBuffer());
+				((SocketChannel)channel).write(combined.getBuffer());
 				if (combined.getBuffer().hasRemaining()) {
 					client.setCurrentWrite(combined);
 					
@@ -283,11 +154,5 @@ public class TCPMessageServer extends MessageServer {
 			}
 		}
 		return false;
-	}
-
-	private void connect(SocketChannel channel) throws IOException {
-		channel.finishConnect();
-		MessageClient client = (MessageClient) channel.keyFor(selector).attachment();
-		getIncomingConnectionQueue().add(client);
 	}
 }

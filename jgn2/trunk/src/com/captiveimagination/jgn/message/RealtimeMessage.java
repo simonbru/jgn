@@ -29,37 +29,22 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Created: Jun 10, 2006
+ * Created: Jun 23, 2006
  */
 package com.captiveimagination.jgn.message;
 
 import com.captiveimagination.jgn.message.type.*;
 
 /**
- * This is an internal message utilized during the initial
- * negotiation of a connection to let the remote machine know
- * all of the message registrations and their ids to allow for
- * proper message communication.
+ * RealtimeMessage is very similar to OrderedMessage except that
+ * it is not a CertifiedMessage and in many ways is quite the opposite.
+ * This type of message is handled by a special RealtimeMessageQueue
+ * internally that only keeps the most recently received message for its
+ * associated group. RealtimeMessage also extends UniqueMessage and utilizes
+ * this number to determine the most recent message as UniqueMessage's id
+ * is a growing value.
  * 
  * @author Matthew D. Hicks
  */
-public class LocalRegistrationMessage extends PriorityMessage implements CertifiedMessage {
-	private short[] ids;
-	private String[] messageClasses;
-	
-	public short[] getIds() {
-		return ids;
-	}
-	
-	public void setIds(short[] ids) {
-		this.ids = ids;
-	}
-	
-	public String[] getMessageClasses() {
-		return messageClasses;
-	}
-	
-	public void setMessageClasses(String[] messageClasses) {
-		this.messageClasses = messageClasses;
-	}
+public abstract class RealtimeMessage extends Message implements GroupMessage, UniqueMessage {
 }

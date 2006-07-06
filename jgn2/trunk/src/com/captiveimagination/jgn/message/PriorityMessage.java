@@ -29,18 +29,49 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Created: Jun 23, 2006
+ * Created: Jul 5, 2006
  */
-package com.captiveimagination.jgn.message.type;
+package com.captiveimagination.jgn.message;
 
 /**
- * Messages implementing OrderedMessage will have a guaranteed order
- * assigned for receipt on the remote machine. OrderedMessage necessarily
- * extends GroupMessage as a group assignment must exist in order for the
- * ordering to be consistent. An OrderedMessage requires that messages be
- * in exact sequence with none lost and thus also extends CertifiedMessage.
- * 
  * @author Matthew D. Hicks
  */
-public interface OrderedMessage extends GroupMessage, CertifiedMessage {
+public abstract class PriorityMessage extends Message {
+	public static final byte PRIORITY_CRITICAL = 4;
+	public static final byte PRIORITY_HIGH = 3;
+	public static final byte PRIORITY_NORMAL = 2;
+	public static final byte PRIORITY_LOW = 1;
+	public static final byte PRIORITY_TRIVIAL = 0;
+	
+	private byte priority;
+	
+	public PriorityMessage() {
+		// Assign default priority
+		this.priority = PRIORITY_NORMAL;
+	}
+	
+	/**
+	 * Priority
+	 * 
+	 * @return
+	 * 		the priority of this Message object
+	 */
+	public byte getPriority() {
+		return priority;
+	}
+	
+	/**
+	 * The priority defines how the message is
+	 * handled inside the queue for sending and
+	 * receiving of messages. A high priority message
+	 * that exists in the queue at the same time
+	 * as a low priority message even if the low
+	 * priority message was received first, should
+	 * be polled before the lower priority message.
+	 * 
+	 * @param priority
+	 */
+	public void setPriority(byte priority) {
+		this.priority = priority;
+	}
 }

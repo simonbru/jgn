@@ -39,5 +39,5 @@ import com.captiveimagination.jgn.message.type.*;
 /**
  * @author Matthew D. Hicks
  */
-public class MyRealtimeMessage extends Message implements RealtimeMessage {
+public class MyRealtimeMessage extends RealtimeMessage {
 }

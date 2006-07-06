@@ -41,5 +41,5 @@ import com.captiveimagination.jgn.message.type.*;
  * 
  * @author Matthew D. Hicks
  */
-public class NoopMessage extends Message implements RealtimeMessage {
+public class NoopMessage extends RealtimeMessage {
 }

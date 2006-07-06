@@ -4,7 +4,10 @@ X RealtimeMessage, MultiMessageQueue, and RealtimeMessageQueue (HashMap<Short,Re
 X Make NoopMessage implement RealtimeMessage
 X GroupMessage
 X CertifiedMessage
-* OrderedMessage and OrderedQueue
+X Multithreaded support
+X Convert certain Message interfaces to be abstract classes
+? Convert static ints to be enums
+X OrderedMessage and OrderedQueue
 * Better Exception handling
 * UDPMessageServer
 * ChatMessage implements CertifiedMessage
@@ -12,6 +15,7 @@ X CertifiedMessage
 * 3DSynchronizationMessage extends 2DSynchronizationMessage
 * PhysicsSynchronizationMessage extends 3DSynchronizationMessage
 * Synchronizer (replacement for Updater)
+* Implement abilities for extensions
 * ServerRegistry
 * Ping capabilities
 * Client/Server features
@@ -24,7 +28,7 @@ X CertifiedMessage
 * Lag induction
 * Bandwidth throttling
 * JUnit tests
-	* Threaded tests
+	X Threaded tests
 	* Conversion of all types
 	* Connection timeouts
 	* Connection failures

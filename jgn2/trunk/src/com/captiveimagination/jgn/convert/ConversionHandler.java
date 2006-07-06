@@ -212,7 +212,7 @@ public class ConversionHandler {
 		messageToHandler.put(messageClass, handler);
 		return handler;
 	}
-
+	
 	public static final void initConverters() {
 		if (Converter.CONVERTERS.size() == 0) {
 			Converter.CONVERTERS.put(boolean.class, new BooleanConverter());

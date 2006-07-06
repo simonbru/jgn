@@ -297,7 +297,6 @@ public abstract class MessageServer {
 		for (MessageClient client : clients) {
 			List<Message> messages = client.getCertifiableMessageQueue().clonedList();
 			for (Message m : messages) {
-				System.out.println("Checking this message: " + m.getClass());
 				if ((m.getTimestamp() != -1) && (m.getTimestamp() + m.getTimeout() < System.currentTimeMillis())) {
 					if (m.getTries() == m.getMaxTries()) {
 						// Message failed

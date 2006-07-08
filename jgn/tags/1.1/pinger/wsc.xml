@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<wsc>
+<title>JGN Pinger</title>
+<description>Ping utility to ping any JGN MessageServer</description>
+<vendor>Captive Imagination</vendor>
+<homepage>http://www.captiveimagination.com</homepage>
+<codebase>http://www.captiveimagination.com/pinger</codebase>
+<jnlp>pinger.jnlp</jnlp>
+<offline-allowed>true</offline-allowed>
+<all-permissions>true</all-permissions>
+<jre-required>1.5+</jre-required>
+<output-path>P:\workspace\jgn\pinger</output-path>
+<keystore>P:\workspace\jgn\pinger\pinger.keystore</keystore>
+<alias>pinger</alias>
+<keypass>pinger</keypass>
+<storepass>pinger</storepass>
+<main-jar>P:\workspace\jgn\javagamenetworking.jar</main-jar>
+<main-class>com/captiveimagination/jgn/util/JGNPinger.class</main-class>
+<jars>
+<jar>P:\workspace\jgn\generated.jar</jar>
+<jar>P:\workspace\jgn\lib\org.eclipse.jdt.core_3.1.2.jar</jar>
+</jars>
+</wsc>

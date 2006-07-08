@@ -55,7 +55,7 @@ public abstract class MessageServer {
 	
 	private static HashMap<Class,ArrayList<Class>> classHierarchyCache = new HashMap<Class,ArrayList<Class>>();
 	
-	private InetSocketAddress address;
+	private SocketAddress address;
 	private int maxQueueSize;
 	private long connectionTimeout;
 	private ConnectionQueue incomingConnections;		// Waiting for ConnectionListener handling
@@ -67,7 +67,7 @@ public abstract class MessageServer {
 	protected boolean keepAlive;
 	protected boolean alive;
 	
-	public MessageServer(InetSocketAddress address, int maxQueueSize) {
+	public MessageServer(SocketAddress address, int maxQueueSize) {
 		this.address = address;
 		this.maxQueueSize = maxQueueSize;
 		
@@ -112,14 +112,14 @@ public abstract class MessageServer {
 	
 	/**
 	 * @return
-	 * 		the InetSocketAddress representing the remote host
+	 * 		the SocketAddress representing the remote host
 	 * 		machine
 	 */
-	public InetSocketAddress getSocketAddress() {
+	public SocketAddress getSocketAddress() {
 		return address;
 	}
 
-	public MessageClient getMessageClient(InetSocketAddress address) {
+	public MessageClient getMessageClient(SocketAddress address) {
 		for (MessageClient client : getMessageClients()) {
 			if (client.getAddress().equals(address)) return client;
 		}
@@ -137,7 +137,7 @@ public abstract class MessageServer {
 	 * 		will always return null as this is a non-blocking method.
 	 * @throws IOException
 	 */
-	public abstract MessageClient connect(InetSocketAddress address) throws IOException;
+	public abstract MessageClient connect(SocketAddress address) throws IOException;
 	
 	/**
 	 * Exactly the same as connect, but blocks for <code>timeout</code> in milliseconds
@@ -154,7 +154,7 @@ public abstract class MessageServer {
 	 * @throws IOException
 	 * @throws InterruptedException 
 	 */
-	public MessageClient connectAndWait(InetSocketAddress address, int timeout) throws IOException, InterruptedException {
+	public MessageClient connectAndWait(SocketAddress address, int timeout) throws IOException, InterruptedException {
 		MessageClient client = connect(address);
 		if (client != null) {
 			return client;

@@ -43,28 +43,20 @@ import com.captiveimagination.jgn.message.*;
  * @author Matthew D. Hicks
  */
 public class TCPMessageServer extends NIOMessageServer {
-	public TCPMessageServer(InetSocketAddress address) throws IOException {
+	public TCPMessageServer(SocketAddress address) throws IOException {
 		this(address, 1024);
 	}
 	
-	public TCPMessageServer(InetSocketAddress address, int maxQueueSize) throws IOException {
+	public TCPMessageServer(SocketAddress address, int maxQueueSize) throws IOException {
 		super(address, maxQueueSize);
 	}
 	
-	protected SelectableChannel bindServer(InetSocketAddress address) throws IOException {
+	protected SelectableChannel bindServer(SocketAddress address) throws IOException {
 		ServerSocketChannel channel = selector.provider().openServerSocketChannel();
 		channel.socket().bind(address);
+		channel.configureBlocking(false);
+		channel.register(selector, SelectionKey.OP_ACCEPT);
 		return channel;
-	}
-	
-	protected SelectableChannel createClient() throws IOException {
-		SocketChannel channel = selector.provider().openSocketChannel();
-		channel.socket().setTcpNoDelay(true);
-		return channel;
-	}
-	
-	protected void connectClient(SelectableChannel channel, InetSocketAddress address) throws IOException {
-		((SocketChannel)channel).connect(address);
 	}
 
 	protected void accept(SelectableChannel channel) throws IOException {
@@ -73,7 +65,7 @@ public class TCPMessageServer extends NIOMessageServer {
 		connection.configureBlocking(false);
 		connection.socket().setTcpNoDelay(true);
 		SelectionKey key = connection.register(selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
-		MessageClient client = new MessageClient((InetSocketAddress) connection.socket().getRemoteSocketAddress(), this);
+		MessageClient client = new MessageClient((SocketAddress) connection.socket().getRemoteSocketAddress(), this);
 		client.setStatus(MessageClient.STATUS_NEGOTIATING);
 		key.attach(client);
 		getIncomingConnectionQueue().add(client);
@@ -105,7 +97,6 @@ public class TCPMessageServer extends NIOMessageServer {
 			throw new RuntimeException(exc);
 		}
 	}
-	
 
 	protected boolean write(SelectableChannel channel) throws IOException {
 		SelectionKey key = channel.keyFor(selector);
@@ -154,5 +145,23 @@ public class TCPMessageServer extends NIOMessageServer {
 			}
 		}
 		return false;
+	}
+	
+	public MessageClient connect(SocketAddress address) throws IOException {
+		MessageClient client = getMessageClient(address);
+		if (client != null) {
+			return client;	// Client already connected, simply return it
+		}
+		
+		client = new MessageClient(address, this);
+		client.setStatus(MessageClient.STATUS_NEGOTIATING);
+		getMessageClients().add(client);
+		SocketChannel channel = selector.provider().openSocketChannel();
+		channel.socket().setTcpNoDelay(true);
+		channel.configureBlocking(false);
+		SelectionKey key = channel.register(selector, SelectionKey.OP_CONNECT | SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+		key.attach(client);
+		channel.connect(address);
+		return null;
 	}
 }

@@ -80,15 +80,15 @@ public class TestDisconnect extends AbstractMessageServerTestCase {
 		MessageServer server3 = new TCPMessageServer(address3);
 		server3.addConnectionListener(new ConnectionListener() {
 			public void connected(MessageClient client) {
-				System.out.println("Server 3 Connected: " + client.getAddress().getPort());
+				System.out.println("Server 3 Connected: " + ((InetSocketAddress)client.getAddress()).getPort());
 			}
 
 			public void negotiationComplete(MessageClient client) {
-				System.out.println("Server 3 Negotiated: " + client.getAddress().getPort());
+				System.out.println("Server 3 Negotiated: " + ((InetSocketAddress)client.getAddress()).getPort());
 			}
 
 			public void disconnected(MessageClient client) {
-				System.out.println("Server 3 Disconnected: " + client.getAddress().getPort());
+				System.out.println("Server 3 Disconnected: " + ((InetSocketAddress)client.getAddress()).getPort());
 			}
 			
 		});

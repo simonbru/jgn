@@ -29,73 +29,34 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Created: Jul 5, 2006
+ * Created: Jul 6, 2006
  */
 package com.captiveimagination.jgn.test.basic;
 
-import java.io.*;
 import java.net.*;
 
 import com.captiveimagination.jgn.*;
-import com.captiveimagination.jgn.event.*;
-import com.captiveimagination.jgn.message.*;
 
 /**
  * @author Matthew D. Hicks
  */
-public class TestMessageServer implements MessageListener, ConnectionListener {
-	private int id;
-	
-	public TestMessageServer(int id) {
-		this.id = id;
-	}
-	
+public class TestUDPServer {
 	public static void main(String[] args) throws Exception {
 		JGN.register(BasicMessage.class);
 		
-		MessageServer server1 = new TCPMessageServer(new InetSocketAddress(InetAddress.getLocalHost(), 1000));
-		TestMessageServer tms1 = new TestMessageServer(1);
-		server1.addMessageListener(tms1);
-		server1.addConnectionListener(tms1);
+		MessageServer server1 = new UDPMessageServer(new InetSocketAddress(InetAddress.getLocalHost(), 1000));
+		TestMessageServer listener1 = new TestMessageServer(1);
+		server1.addConnectionListener(listener1);
+		server1.addMessageListener(listener1);
 		JGN.createMessageServerThread(server1).start();
 		
-		MessageServer server2 = new TCPMessageServer(new InetSocketAddress(InetAddress.getLocalHost(), 2000));
-		TestMessageServer tms2 = new TestMessageServer(2);
-		server2.addMessageListener(tms2);
-		server2.addConnectionListener(tms2);
+		MessageServer server2 = new UDPMessageServer(new InetSocketAddress(InetAddress.getLocalHost(), 2000));
+		TestMessageServer listener2 = new TestMessageServer(2);
+		server2.addConnectionListener(listener2);
+		server2.addMessageListener(listener2);
 		JGN.createMessageServerThread(server2).start();
 		
 		MessageClient client = server2.connectAndWait(new InetSocketAddress(InetAddress.getLocalHost(), 1000), 5000);
-		if (client == null) throw new IOException("Connection not established!");
-		
-		System.out.println("Connection established!");
-	}
-
-	public void messageCertified(Message message) {
-		System.out.println("MessageCertified(" + id + "): " + message);
-	}
-
-	public void messageFailed(Message message) {
-		System.out.println("MessageFailed(" + id + "): " + message);
-	}
-
-	public void messageReceived(Message message) {
-		System.out.println("MessageReceived(" + id + "): " + message);
-	}
-
-	public void messageSent(Message message) {
-		System.out.println("MessageSent(" + id + "): " + message);
-	}
-
-	public void connected(MessageClient client) {
-		System.out.println("Connected(" + id + "): " + ((InetSocketAddress)client.getAddress()).getPort());
-	}
-
-	public void disconnected(MessageClient client) {
-		System.out.println("Disconnected(" + id + "): " + ((InetSocketAddress)client.getAddress()).getPort());
-	}
-
-	public void negotiationComplete(MessageClient client) {
-		System.out.println("Negotiated(" + id + "): " + ((InetSocketAddress)client.getAddress()).getPort());
+		System.out.println("Client: " + client);
 	}
 }

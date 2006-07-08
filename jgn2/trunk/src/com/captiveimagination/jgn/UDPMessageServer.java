@@ -53,7 +53,7 @@ public class UDPMessageServer extends NIOMessageServer {
 	
 	public UDPMessageServer(SocketAddress address, int maxQueueSize) throws IOException {
 		super(address, maxQueueSize);
-		readLookup = ByteBuffer.allocateDirect(1024 * 10);
+		readLookup = ByteBuffer.allocateDirect(1024 * 5);
 	}
 
 	protected SelectableChannel bindServer(SocketAddress address) throws IOException {

@@ -155,6 +155,7 @@ public abstract class NIOMessageServer extends MessageServer {
 				// Still has content
 				client.setReadPosition(messageLength + 4 + client.getReadPosition());
 				client.getReadBuffer().position(position);
+				System.out.println("There is still content: " + position + ", " + messageLength + ", " + client.getReadPosition());
 			} else {
 				// Clear the buffer
 				client.getReadBuffer().clear();

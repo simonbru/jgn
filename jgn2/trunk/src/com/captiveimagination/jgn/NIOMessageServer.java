@@ -46,20 +46,14 @@ import com.captiveimagination.jgn.message.*;
 public abstract class NIOMessageServer extends MessageServer {
 	protected Selector selector;
 	
-	public NIOMessageServer(InetSocketAddress address, int maxQueueSize) throws IOException {
+	public NIOMessageServer(SocketAddress address, int maxQueueSize) throws IOException {
 		super(address, maxQueueSize);
 		
 		selector = Selector.open();
-		SelectableChannel channel = bindServer(address);
-		channel.configureBlocking(false);
-		channel.register(selector, SelectionKey.OP_ACCEPT);
+		bindServer(address);
 	}
 	
-	protected abstract SelectableChannel bindServer(InetSocketAddress address) throws IOException;
-	
-	protected abstract SelectableChannel createClient() throws IOException;
-	
-	protected abstract void connectClient(SelectableChannel channel, InetSocketAddress address) throws IOException;
+	protected abstract SelectableChannel bindServer(SocketAddress address) throws IOException;
 
 	protected abstract void accept(SelectableChannel channel) throws IOException;
 	
@@ -95,23 +89,6 @@ public abstract class NIOMessageServer extends MessageServer {
 			client.setStatus(MessageClient.STATUS_TERMINATED);
 		}
 		getDisconnectedConnectionQueue().add(client);
-	}
-
-	public MessageClient connect(InetSocketAddress address) throws IOException {
-		MessageClient client = getMessageClient(address);
-		if (client != null) {
-			return client;	// Client already connected, simply return it
-		}
-		
-		client = new MessageClient(address, this);
-		client.setStatus(MessageClient.STATUS_NEGOTIATING);
-		getMessageClients().add(client);
-		SelectableChannel channel = createClient();
-		channel.configureBlocking(false);
-		SelectionKey key = channel.register(selector, SelectionKey.OP_CONNECT | SelectionKey.OP_READ | SelectionKey.OP_WRITE);
-		key.attach(client);
-		connectClient(channel, address);
-		return null;
 	}
 	
 	public synchronized void updateTraffic() throws IOException {

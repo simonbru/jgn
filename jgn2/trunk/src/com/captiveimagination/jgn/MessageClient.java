@@ -59,7 +59,7 @@ public class MessageClient {
 	public static final int STATUS_DISCONNECTED = 5;
 	public static final int STATUS_TERMINATED = 6;
 	
-	private InetSocketAddress address;
+	private SocketAddress address;
 	private MessageServer server;
 	private int status;
 	private long lastReceived;
@@ -81,7 +81,7 @@ public class MessageClient {
 	private HashMap<Short,Class<? extends Message>> registry;
 	private HashMap<Class<? extends Message>,Short> registryReverse;
 	
-	public MessageClient(InetSocketAddress address, MessageServer server) {
+	public MessageClient(SocketAddress address, MessageServer server) {
 		this.address = address;
 		this.server = server;
 		status = STATUS_NOT_CONNECTED;
@@ -125,7 +125,7 @@ public class MessageClient {
 		this.currentWrite = currentWrite;
 	}
 
-	public InetSocketAddress getAddress() {
+	public SocketAddress getAddress() {
 		return address;
 	}
 	

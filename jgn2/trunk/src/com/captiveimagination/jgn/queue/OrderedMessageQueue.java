@@ -42,15 +42,13 @@ import com.captiveimagination.jgn.message.*;
  * @author Matthew D. Hicks
  */
 public class OrderedMessageQueue implements MessageQueue {
-	private HashMap<Object,TreeSet<OrderedMessage>> queue;
-	private HashMap<Object,AtomicInteger> lastReceived;
+	private HashMap<Object,OrderedQueue> queue;
 	
 	private volatile int size;
 	private volatile long total;
 	
 	public OrderedMessageQueue() {
-		queue = new HashMap<Object,TreeSet<OrderedMessage>>();
-		lastReceived = new HashMap<Object,AtomicInteger>();
+		queue = new HashMap<Object,OrderedQueue>();
 		size = 0;
 		total = 0;
 	}
@@ -64,20 +62,21 @@ public class OrderedMessageQueue implements MessageQueue {
 			if (message.getGroupId() == -1) {
 				// No groupId, so we base it off the class
 				if (queue.containsKey(message.getClass())) {
-					queue.get(message.getClass()).add(m);
+					queue.get(message.getClass()).queue.add(m);
 				} else {
-					TreeSet<OrderedMessage> set = new TreeSet<OrderedMessage>();
-					set.add(m);
-					queue.put(message.getClass(), set);
+					//TreeSet<OrderedMessage> set = new TreeSet<OrderedMessage>();
+					OrderedQueue q = new OrderedQueue();
+					q.queue.add(m);
+					queue.put(message.getClass(), q);
 				}
 			} else {
 				// An groupId has been assigned, so lets use it
 				if (queue.containsKey(message.getGroupId())) {
-					queue.get(message.getGroupId()).add(m);
+					queue.get(message.getGroupId()).queue.add(m);
 				} else {
-					TreeSet<OrderedMessage> set = new TreeSet<OrderedMessage>();
-					set.add(m);
-					queue.put(message.getGroupId(), set);
+					OrderedQueue q = new OrderedQueue();
+					q.queue.add(m);
+					queue.put(message.getGroupId(), q);
 				}
 			}
 		}
@@ -93,18 +92,19 @@ public class OrderedMessageQueue implements MessageQueue {
 			Iterator iterator = queue.keySet().iterator();
 			while (iterator.hasNext()) {
 				Object key = iterator.next();
-				if (!queue.get(key).isEmpty()) {
-					AtomicInteger integer = lastReceived.get(key);
-					if ((integer == null) && (queue.get(key).first().getOrderId() == 0)) {
+				OrderedQueue q = queue.get(key);
+				if (!q.queue.isEmpty()) {
+					AtomicInteger integer = q.lastReceived;
+					if ((integer == null) && (q.queue.first().getOrderId() == 0)) {
 						// First message found
 						integer = new AtomicInteger(0);
-						lastReceived.put(key, integer);
-						m = queue.get(key).first();
-						queue.get(key).remove(m);
-					} else if ((integer != null) && (queue.get(key).first().getOrderId() == integer.intValue() + 1)) {
+						q.lastReceived = integer;
+						m = q.queue.first();
+						q.queue.remove(m);
+					} else if ((integer != null) && (q.queue.first().getOrderId() == integer.intValue() + 1)) {
 						integer.incrementAndGet();
-						m = queue.get(key).first();
-						queue.get(key).remove(m);
+						m = q.queue.first();
+						q.queue.remove(m);
 					}
 				}
 			}
@@ -124,5 +124,13 @@ public class OrderedMessageQueue implements MessageQueue {
 	public int getSize() {
 		return size;
 	}
+}
 
+class OrderedQueue {
+	protected TreeSet<OrderedMessage> queue;
+	protected AtomicInteger lastReceived;
+	
+	OrderedQueue() {
+		queue = new TreeSet<OrderedMessage>();
+	}
 }

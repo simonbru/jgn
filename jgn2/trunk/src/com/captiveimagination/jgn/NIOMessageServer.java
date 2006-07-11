@@ -140,7 +140,7 @@ public abstract class NIOMessageServer extends MessageServer {
 		if (messageLength <= position - 4 - client.getReadPosition()) {
 			// Read message
 			short typeId = client.getReadBuffer().getShort();
-			Class<? extends Message> c = client.getMessageClass(typeId);
+			Class<? extends Message> c = JGN.getMessageTypeClass(typeId); //client.getMessageClass(typeId);
 			if (c == null) {
 				if (client.isConnected()) {
 					client.getReadBuffer().position(client.getReadPosition());

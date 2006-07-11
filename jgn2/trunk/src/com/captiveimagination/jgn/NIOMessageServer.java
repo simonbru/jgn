@@ -84,9 +84,9 @@ public abstract class NIOMessageServer extends MessageServer {
 		
 		getMessageClients().remove(client);
 		if (graceful) {
-			client.setStatus(MessageClient.STATUS_DISCONNECTED);
+			client.setStatus(MessageClient.Status.DISCONNECTED);
 		} else {
-			client.setStatus(MessageClient.STATUS_TERMINATED);
+			client.setStatus(MessageClient.Status.TERMINATED);
 		}
 		getDisconnectedConnectionQueue().add(client);
 	}
@@ -135,8 +135,6 @@ public abstract class NIOMessageServer extends MessageServer {
 		int position = client.getReadBuffer().position();
 		client.getReadBuffer().position(client.getReadPosition());
 		int messageLength = client.getReadBuffer().getInt();
-		//System.out.println("MessageLength(Read): " + messageLength);
-		//System.out.println("ReadMessage: " + messageLength + ", " + (position - 4 - readPosition) + " - " + position + ", " + readPosition);
 		if (messageLength <= position - 4 - client.getReadPosition()) {
 			// Read message
 			short typeId = client.getReadBuffer().getShort();
@@ -144,7 +142,6 @@ public abstract class NIOMessageServer extends MessageServer {
 			if (c == null) {
 				if (client.isConnected()) {
 					client.getReadBuffer().position(client.getReadPosition());
-					//System.err.println("Buffer: " + client.getReadBuffer().capacity() + ", " + client.getReadBuffer() + ", " + messageLength + ", " + position + ", " + readBuffer.getInt() + ", " + readBuffer.getShort());
 					throw new MessageHandlingException("Message received from unknown messageTypeId: " + typeId);
 				}
 				client.getReadBuffer().position(position);
@@ -155,7 +152,6 @@ public abstract class NIOMessageServer extends MessageServer {
 				// Still has content
 				client.setReadPosition(messageLength + 4 + client.getReadPosition());
 				client.getReadBuffer().position(position);
-				System.out.println("There is still content: " + position + ", " + messageLength + ", " + client.getReadPosition());
 			} else {
 				// Clear the buffer
 				client.getReadBuffer().clear();

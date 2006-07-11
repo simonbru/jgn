@@ -52,6 +52,15 @@ import com.captiveimagination.jgn.stream.*;
  * @author Matthew D. Hicks
  */
 public class MessageClient {
+	public static enum Status {
+		NOT_CONNECTED,
+		NEGOTIATING,
+		CONNECTED,
+		DISCONNECTING,
+		DISCONNECTED,
+		TERMINATED
+	}
+	
 	public static final int STATUS_NOT_CONNECTED = 1;
 	public static final int STATUS_NEGOTIATING = 2;
 	public static final int STATUS_CONNECTED = 3;
@@ -61,7 +70,7 @@ public class MessageClient {
 	
 	private SocketAddress address;
 	private MessageServer server;
-	private int status;
+	private Status status;
 	private long lastReceived;
 	private long lastSent;
 	private MessageQueue outgoingQueue;				// Waiting to be sent via updateTraffic()
@@ -84,7 +93,7 @@ public class MessageClient {
 	public MessageClient(SocketAddress address, MessageServer server) {
 		this.address = address;
 		this.server = server;
-		status = STATUS_NOT_CONNECTED;
+		status = Status.NOT_CONNECTED;
 		outgoingQueue = new MultiMessageQueue(server.getMaxQueueSize());
 		incomingMessages = new MultiMessageQueue(-1);
 		outgoingMessages = new MultiMessageQueue(-1);
@@ -105,16 +114,16 @@ public class MessageClient {
 		sent();
 	}
 	
-	public int getStatus() {
+	public Status getStatus() {
 		return status;
 	}
 	
-	public void setStatus(int status) {
+	public void setStatus(Status status) {
 		this.status = status;
 	}
 	
 	public boolean isConnected() {
-		return status == STATUS_CONNECTED;
+		return status == Status.CONNECTED;
 	}
 	
 	public CombinedPacket getCurrentWrite() {
@@ -149,9 +158,9 @@ public class MessageClient {
 	 * @param message
 	 */
 	public void sendMessage(Message message) {
-		if (getStatus() == STATUS_DISCONNECTING) {
+		if (getStatus() == Status.DISCONNECTING) {
 			throw new RuntimeException("Connection is closing, no more messages being accepted.");
-		} else if (getStatus() == STATUS_DISCONNECTED) {
+		} else if (getStatus() == Status.DISCONNECTED) {
 			throw new RuntimeException("Connection is closed, no more messages being accepted.");
 		}
 		try {
@@ -350,7 +359,7 @@ public class MessageClient {
 	
 	public void disconnect() throws IOException {
 		sendMessage(new DisconnectMessage());
-		setStatus(STATUS_DISCONNECTING);
+		setStatus(Status.DISCONNECTING);
 	}
 
 	protected ByteBuffer getReadBuffer() {

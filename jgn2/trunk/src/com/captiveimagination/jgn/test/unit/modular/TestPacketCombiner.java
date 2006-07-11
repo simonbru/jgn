@@ -62,7 +62,7 @@ public class TestPacketCombiner extends TestCase{
 					JGN.register(message.getClass());
 					MessageServer server = new TCPMessageServer(null);
 					MessageClient client = new MessageClient(null, server);
-					client.setStatus(MessageClient.STATUS_CONNECTED);
+					client.setStatus(MessageClient.Status.CONNECTED);
 					client.register(JGN.getMessageTypeId(message.getClass()), message.getClass());
 					int count = 0;
 					while (count < totalMessages) {

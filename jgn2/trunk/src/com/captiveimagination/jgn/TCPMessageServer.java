@@ -66,7 +66,7 @@ public class TCPMessageServer extends NIOMessageServer {
 		connection.socket().setTcpNoDelay(true);
 		SelectionKey key = connection.register(selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
 		MessageClient client = new MessageClient((SocketAddress) connection.socket().getRemoteSocketAddress(), this);
-		client.setStatus(MessageClient.STATUS_NEGOTIATING);
+		client.setStatus(MessageClient.Status.NEGOTIATING);
 		key.attach(client);
 		getIncomingConnectionQueue().add(client);
 		getMessageClients().add(client);
@@ -140,7 +140,7 @@ public class TCPMessageServer extends NIOMessageServer {
 					
 					return true;
 				}
-			} else if (client.getStatus() == MessageClient.STATUS_DISCONNECTING) {
+			} else if (client.getStatus() == MessageClient.Status.DISCONNECTING) {
 				disconnectInternal(client, true);
 			}
 		}
@@ -154,7 +154,7 @@ public class TCPMessageServer extends NIOMessageServer {
 		}
 		
 		client = new MessageClient(address, this);
-		client.setStatus(MessageClient.STATUS_NEGOTIATING);
+		client.setStatus(MessageClient.Status.NEGOTIATING);
 		getMessageClients().add(client);
 		SocketChannel channel = selector.provider().openSocketChannel();
 		channel.socket().setTcpNoDelay(true);

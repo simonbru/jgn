@@ -12,14 +12,14 @@ public class TestDisconnect extends AbstractMessageServerTestCase {
 		long time = System.currentTimeMillis();
 		long timeout = 5000;
 		while (System.currentTimeMillis() <= timeout + time) {
-			if ((client1.getStatus() == MessageClient.STATUS_DISCONNECTED) && (client2.getStatus() == MessageClient.STATUS_DISCONNECTED)) {
+			if ((client1.getStatus() == MessageClient.Status.DISCONNECTED) && (client2.getStatus() == MessageClient.Status.DISCONNECTED)) {
 				break;
 			}
 			Thread.sleep(1);
 		}
 		Thread.sleep(1000);
-		assertTrue(client1.getStatus() == MessageClient.STATUS_DISCONNECTED);
-		assertTrue(client2.getStatus() == MessageClient.STATUS_DISCONNECTED);
+		assertTrue(client1.getStatus() == MessageClient.Status.DISCONNECTED);
+		assertTrue(client2.getStatus() == MessageClient.Status.DISCONNECTED);
 		assertTrue(client1Disconnected);
 		assertTrue(client2Disconnected);
 		System.out.println("Disconnection took: " + (System.currentTimeMillis() - time) + "ms");
@@ -30,14 +30,14 @@ public class TestDisconnect extends AbstractMessageServerTestCase {
 		long time = System.currentTimeMillis();
 		long timeout = 5000;
 		while (System.currentTimeMillis() <= timeout + time) {
-			if ((client1.getStatus() == MessageClient.STATUS_DISCONNECTED) && (client2.getStatus() == MessageClient.STATUS_DISCONNECTED)) {
+			if ((client1.getStatus() == MessageClient.Status.DISCONNECTED) && (client2.getStatus() == MessageClient.Status.DISCONNECTED)) {
 				break;
 			}
 			Thread.sleep(1);
 		}
 		Thread.sleep(1000);
-		assertTrue(client1.getStatus() == MessageClient.STATUS_DISCONNECTED);
-		assertTrue(client2.getStatus() == MessageClient.STATUS_DISCONNECTED);
+		assertTrue(client1.getStatus() == MessageClient.Status.DISCONNECTED);
+		assertTrue(client2.getStatus() == MessageClient.Status.DISCONNECTED);
 		assertTrue(client1Disconnected);
 		assertTrue(client2Disconnected);
 		System.out.println("Disconnection took: " + (System.currentTimeMillis() - time) + "ms");
@@ -52,8 +52,8 @@ public class TestDisconnect extends AbstractMessageServerTestCase {
 		}
 		Thread.sleep(1000);
 		System.out.println("Elapsed: " + (System.currentTimeMillis() - time) + "ms");
-		assertTrue(client1.getStatus() == MessageClient.STATUS_TERMINATED);
-		assertTrue(client2.getStatus() == MessageClient.STATUS_DISCONNECTED);
+		assertTrue(client1.getStatus() == MessageClient.Status.TERMINATED);
+		assertTrue(client2.getStatus() == MessageClient.Status.DISCONNECTED);
 		assertTrue(client1Disconnected);
 		assertTrue(client2Disconnected);
 	}
@@ -69,8 +69,8 @@ public class TestDisconnect extends AbstractMessageServerTestCase {
 		}
 		Thread.sleep(1000);
 		System.out.println("Elapsed: " + (System.currentTimeMillis() - time) + "ms");
-		assertTrue(client1.getStatus() == MessageClient.STATUS_TERMINATED);
-		assertTrue(client2.getStatus() == MessageClient.STATUS_DISCONNECTED);
+		assertTrue(client1.getStatus() == MessageClient.Status.TERMINATED);
+		assertTrue(client2.getStatus() == MessageClient.Status.DISCONNECTED);
 		assertTrue(client1Disconnected);
 		assertTrue(client2Disconnected);
 	}

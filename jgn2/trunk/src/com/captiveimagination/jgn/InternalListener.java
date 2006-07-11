@@ -64,7 +64,7 @@ class InternalListener implements MessageListener, ConnectionListener {
 				for (; i < messages.length; i++) {
 					message.getMessageClient().register(ids[i], (Class<? extends Message>)Class.forName(messages[i]));
 				}
-				message.getMessageClient().setStatus(MessageClient.STATUS_CONNECTED);
+				message.getMessageClient().setStatus(MessageClient.Status.CONNECTED);
 				message.getMessageClient().getMessageServer().getNegotiatedConnectionQueue().add(message.getMessageClient());
 			} catch(ClassNotFoundException exc) {
 				System.err.println("Unable to find the message: " + messages[i] + " in the ClassLoader. Trace follows:");
@@ -73,7 +73,7 @@ class InternalListener implements MessageListener, ConnectionListener {
 			}
 		} else if (message instanceof DisconnectMessage) {
 			// Disconnect from the remote client
-			message.getMessageClient().setStatus(MessageClient.STATUS_DISCONNECTING);
+			message.getMessageClient().setStatus(MessageClient.Status.DISCONNECTING);
 		}
 		if (message instanceof CertifiedMessage) {
 			// Send back a message to the sender to let them know the message was received

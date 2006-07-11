@@ -34,7 +34,6 @@
 package com.captiveimagination.jgn.queue;
 
 import com.captiveimagination.jgn.message.*;
-import com.captiveimagination.jgn.message.type.*;
 
 /**
  * @author Administrator
@@ -104,5 +103,4 @@ public class MultiMessageQueue implements MessageQueue {
 	public int getSize() {
 		return size;
 	}
-
 }

@@ -8,13 +8,10 @@ X Multithreaded support
 X Convert certain Message interfaces to be abstract classes
 ? Convert static ints to be enums
 X OrderedMessage and OrderedQueue
-* Convert dual HashMaps in OrderedMessageQueue to be one HashMap with custom object (TreeSet and int)
+X Convert dual HashMaps in OrderedMessageQueue to be one HashMap with custom object (TreeSet and int)
 * Disable write events on a connection when there are no messages in the queue
 * Better Exception handling
-* Implement Serializable support?
-* Implement RPC support (RemoteProcedure interface)
-* UDPMessageServer
-	* Disable CertifiedMessage Receipts and OrderedMessageQueue on TCPMessageServers
+X UDPMessageServer
 * ChatMessage implements CertifiedMessage
 * 2DSynchronizationMessage implements RealtimeMessage
 * 3DSynchronizationMessage extends 2DSynchronizationMessage
@@ -42,3 +39,5 @@ X OrderedMessage and OrderedQueue
 	* Chat Application
 	* Bandwidth Monitor
 	* PingTool
+* Implement Serializable support?
+* Implement RPC support (RemoteProcedure interface)

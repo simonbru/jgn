@@ -81,7 +81,7 @@ public class UDPMessageServer extends NIOMessageServer {
 			client = getMessageClient(address);
 			if (client == null) {
 				client = new MessageClient(address, this);
-				client.setStatus(MessageClient.STATUS_NEGOTIATING);
+				client.setStatus(MessageClient.Status.NEGOTIATING);
 				getIncomingConnectionQueue().add(client);
 				getMessageClients().add(client);
 			}
@@ -145,7 +145,7 @@ public class UDPMessageServer extends NIOMessageServer {
 						
 						return true;
 					}
-				} else if (client.getStatus() == MessageClient.STATUS_DISCONNECTING) {
+				} else if (client.getStatus() == MessageClient.Status.DISCONNECTING) {
 					disconnectInternal(client, true);
 				}
 			}
@@ -159,7 +159,7 @@ public class UDPMessageServer extends NIOMessageServer {
 			return client;		// Client already connected, simply return it
 		}
 		client = new MessageClient(address, this);
-		client.setStatus(MessageClient.STATUS_NEGOTIATING);
+		client.setStatus(MessageClient.Status.NEGOTIATING);
 		getMessageClients().add(client);
 		client.sendMessage(JGN.generateRegistrationMessage());
 		return null;

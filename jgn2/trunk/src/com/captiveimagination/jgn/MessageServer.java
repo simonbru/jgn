@@ -192,7 +192,7 @@ public abstract class MessageServer {
 		while (System.currentTimeMillis() <= time + timeout) {
 			if (!isAlive()) return;
 			synchronized (getMessageClients()) {
-				if ((getMessageClients().size() > 0) && (getMessageClients().peek().getStatus() == MessageClient.STATUS_CONNECTED)) {
+				if ((getMessageClients().size() > 0) && (getMessageClients().peek().getStatus() == MessageClient.Status.CONNECTED)) {
 					getMessageClients().peek().disconnect();
 				}
 			}

@@ -142,8 +142,6 @@ public class UDPMessageServer extends NIOMessageServer {
 						
 						// Write all messages in combined to sent queue
 						combined.process();
-						
-						return true;
 					}
 				} else if (client.getStatus() == MessageClient.Status.DISCONNECTING) {
 					disconnectInternal(client, true);

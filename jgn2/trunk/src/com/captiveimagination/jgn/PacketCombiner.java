@@ -45,9 +45,8 @@ public class PacketCombiner {
 		boolean bufferFull = false;
 		
 		while (true) {
-			Message message = null;
-			if (clientToFailedMessage.containsKey(client)) {
-				message = clientToFailedMessage.get(client);
+			Message message = clientToFailedMessage.get(client);
+			if (message != null) {
 				clientToFailedMessage.remove(client);
 			} else {
 				message = queue.poll();

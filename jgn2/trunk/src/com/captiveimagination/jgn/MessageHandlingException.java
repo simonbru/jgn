@@ -6,31 +6,26 @@ package com.captiveimagination.jgn;
 
 import com.captiveimagination.jgn.message.Message;
 
-public class MessageHandlingException extends Exception
-{
-   public MessageHandlingException(String msg)
-   {
-      this(msg, null, null);
-   }
-   
-   public MessageHandlingException(String msg, Message failed)
-   {
-      this(msg, failed, null);
-   }
+public class MessageHandlingException extends Exception {
+	private static final long serialVersionUID = 1L;
 
-   public MessageHandlingException(String msg, Message failed, Throwable cause)
-   {
-      super(msg, cause);
+	public MessageHandlingException(String msg) {
+		this(msg, null, null);
+	}
 
-      this.failed = failed;
-   }
+	public MessageHandlingException(String msg, Message failed) {
+		this(msg, failed, null);
+	}
 
-   //
+	public MessageHandlingException(String msg, Message failed, Throwable cause) {
+		super(msg, cause);
 
-   private final Message failed;
+		this.failed = failed;
+	}
 
-   public final Message getFailedMessage() // cannot use getMessage()
-   {
-      return failed;
-   }
+	private final Message failed;
+
+	public final Message getFailedMessage() {
+		return failed;
+	}
 }

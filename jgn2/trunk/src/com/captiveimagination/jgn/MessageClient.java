@@ -61,13 +61,6 @@ public class MessageClient {
 		TERMINATED
 	}
 	
-	public static final int STATUS_NOT_CONNECTED = 1;
-	public static final int STATUS_NEGOTIATING = 2;
-	public static final int STATUS_CONNECTED = 3;
-	public static final int STATUS_DISCONNECTING = 4;
-	public static final int STATUS_DISCONNECTED = 5;
-	public static final int STATUS_TERMINATED = 6;
-	
 	private SocketAddress address;
 	private MessageServer server;
 	private Status status;

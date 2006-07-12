@@ -12,6 +12,7 @@ X Convert dual HashMaps in OrderedMessageQueue to be one HashMap with custom obj
 * Disable write events on a connection when there are no messages in the queue
 * Better Exception handling
 X UDPMessageServer
+* Remove clientToFailedMessage from PacketCombiner and add property to MessageClient
 * ChatMessage implements CertifiedMessage
 * 2DSynchronizationMessage implements RealtimeMessage
 * 3DSynchronizationMessage extends 2DSynchronizationMessage

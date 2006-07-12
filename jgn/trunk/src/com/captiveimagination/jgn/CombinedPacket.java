@@ -99,4 +99,8 @@ public class CombinedPacket {
 			remove();
 		}
 	}
+
+	public int size() {
+		return messages.size();
+	}
 }

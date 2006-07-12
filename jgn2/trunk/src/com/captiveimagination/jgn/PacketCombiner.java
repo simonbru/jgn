@@ -15,7 +15,6 @@ import com.captiveimagination.jgn.queue.MessageQueue;
 /**
  * The <code>PacketCombiner</code> combines packets.
  * 
- * @author Skip M. B. Balk
  * @author Matthew D. Hicks
  */
 

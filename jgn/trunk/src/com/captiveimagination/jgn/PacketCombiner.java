@@ -45,10 +45,8 @@ public class PacketCombiner {
 		boolean bufferFull = false;
 		
 		while (true) {
-			Message message = clientToFailedMessage.get(client);
-			if (message != null) {
-				clientToFailedMessage.remove(client);
-			} else {
+			Message message = clientToFailedMessage.remove(client);
+			if (message == null) {
 				message = queue.poll();
 			}
 			if (message == null) break;
@@ -100,7 +98,12 @@ public class PacketCombiner {
 			packet = null;		// There is nothing to send, so we return null
 		}
 		
-		if (bufferFull) replaceBackingBuffer();		// The buffer was filled, so we need to replace it
+		if (bufferFull) {
+			replaceBackingBuffer();		// The buffer was filled, so we need to replace it
+			if ((startPosition == 0) && (packet.size() == 0)) {
+				throw new MessageHandlingException("Message is larger than ByteBuffer's capacity!");
+			}
+		}
 		
 		return packet;
 	}

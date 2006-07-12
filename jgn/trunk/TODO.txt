@@ -1,0 +1,43 @@
+X Connection closing and timeouts
+X Finish work on UniqueMessage
+X RealtimeMessage, MultiMessageQueue, and RealtimeMessageQueue (HashMap<Short,RealtimeMessage>)
+X Make NoopMessage implement RealtimeMessage
+X GroupMessage
+X CertifiedMessage
+X Multithreaded support
+X Convert certain Message interfaces to be abstract classes
+? Convert static ints to be enums
+X OrderedMessage and OrderedQueue
+X Convert dual HashMaps in OrderedMessageQueue to be one HashMap with custom object (TreeSet and int)
+* Disable write events on a connection when there are no messages in the queue
+* Better Exception handling
+X UDPMessageServer
+* ChatMessage implements CertifiedMessage
+* 2DSynchronizationMessage implements RealtimeMessage
+* 3DSynchronizationMessage extends 2DSynchronizationMessage
+* PhysicsSynchronizationMessage extends 3DSynchronizationMessage
+* Synchronizer (replacement for Updater)
+* Implement abilities for extensions
+* ServerRegistry
+* Ping capabilities
+* Client/Server features
+* P2P features
+* Compression
+* Code cleanup work
+* Encryption
+* Performance tuning
+* Bandwidth tester
+* Lag induction
+* Bandwidth throttling
+* JUnit tests
+	X Threaded tests
+	* Conversion of all types
+	* Connection timeouts
+	* Connection failures
+	* MessageServer shutdown
+* Examples
+	* Chat Application
+	* Bandwidth Monitor
+	* PingTool
+* Implement Serializable support?
+* Implement RPC support (RemoteProcedure interface)

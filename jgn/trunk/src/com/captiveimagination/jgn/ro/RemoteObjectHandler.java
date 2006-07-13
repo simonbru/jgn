@@ -35,22 +35,29 @@ package com.captiveimagination.jgn.ro;
 
 import java.lang.reflect.*;
 
+import com.captiveimagination.jgn.*;
+import com.captiveimagination.jgn.event.*;
+
 /**
  * @author Matthew D. Hicks
  */
-public class RemoteObjectHandler implements InvocationHandler {
+public class RemoteObjectHandler extends MessageAdapter implements InvocationHandler {
+	private Class<? extends RemoteObject> remoteClass;
+	private MessageClient client;
+	
+	protected RemoteObjectHandler(Class<? extends RemoteObject> remoteClass, MessageClient client) {
+		this.remoteClass = remoteClass;
+		this.client = client;
+		
+		//client.addMessageListener(this);
+	}
+	
 	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-		System.out.println("Method: " + method.getName());
-		if (method.getName().equals("testRemote")) System.out.println("Proxy: " + proxy + ", " + method.getName() + ", " + args);
+		System.out.println("Method invoked: " + remoteClass.getName() + ":" + method.getName());
 		return null;
 	}
 	
-	public static void main(String[] args) throws Exception {
-		TestRemoteObject obj = (TestRemoteObject) Proxy.newProxyInstance(Thread.currentThread().getContextClassLoader(), new Class[] {TestRemoteObject.class}, new RemoteObjectHandler());
-		obj.testRemote();
+	public void close() {
+		client.removeMessageListener(this);
 	}
-}
-
-interface TestRemoteObject extends RemoteObject {
-	public String testRemote();
 }

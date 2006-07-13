@@ -33,10 +33,45 @@
  */
 package com.captiveimagination.jgn.ro;
 
+import java.io.*;
+import java.lang.reflect.*;
+import java.util.*;
+
+import com.captiveimagination.jgn.*;
+
 /**
- * RemoteObject provides a mechanism for invoking methods on an object remotely.
- * 
  * @author Matthew D. Hicks
  */
-public interface RemoteObject {
+public class RemoteObjectManager {
+	private static final HashMap<MessageClient,HashMap<Class<? extends RemoteObject>, RemoteObjectHandler>> map = new HashMap<MessageClient,HashMap<Class<? extends RemoteObject>, RemoteObjectHandler>>();
+	
+	@SuppressWarnings("all")
+	public static final <T extends RemoteObject> T createRemoteObject(Class<? extends T> remoteClass, MessageClient client) throws IOException {
+		HashMap<Class<? extends RemoteObject>, RemoteObjectHandler> clientMap = map.get(client);
+		if (clientMap == null) {
+			clientMap = new HashMap<Class<? extends RemoteObject>, RemoteObjectHandler>();
+			map.put(client, clientMap);
+		}
+		if (clientMap.containsKey(remoteClass)) throw new IOException("A remote object by this name already exists for this MessageClient: " + remoteClass.getName());
+		RemoteObjectHandler handler = new RemoteObjectHandler(remoteClass, client);
+		
+		Object o = Proxy.newProxyInstance(Thread.currentThread().getContextClassLoader(), new Class[] {remoteClass}, handler);
+		
+		clientMap.put(remoteClass, handler);
+		
+		return (T)o;
+	}
+	
+	public static final void destroyRemoteObject(Class<? extends RemoteObject> remoteClass, MessageClient client) {
+		
+	}
+	
+	public static void main(String[] args) throws Exception {
+		MyRemoteObject object = createRemoteObject(MyRemoteObject.class, null);
+		System.out.println("Object: " + object.getClass());
+	}
+}
+
+interface MyRemoteObject extends RemoteObject {
+	public void test();
 }

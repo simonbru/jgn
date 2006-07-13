@@ -51,16 +51,17 @@ public class SerializableConverter implements Converter {
             for (int i = 0; i < length; i++) {
                 array[i] = buffer.get();
             }
-        }
-        try {
-            ByteArrayInputStream bais = new ByteArrayInputStream(array);
-            ObjectInputStream ois = new ObjectInputStream(bais);
-            Object obj = ois.readObject();
-            setter.invoke(message, new Object[] {obj});
-        } catch(IOException exc) {
-            exc.printStackTrace();
-        } catch(ClassNotFoundException exc) {
-            exc.printStackTrace();
+            
+            try {
+                ByteArrayInputStream bais = new ByteArrayInputStream(array);
+                ObjectInputStream ois = new ObjectInputStream(bais);
+                Object obj = ois.readObject();
+                setter.invoke(message, new Object[] {obj});
+            } catch(IOException exc) {
+                exc.printStackTrace();
+            } catch(ClassNotFoundException exc) {
+                exc.printStackTrace();
+            }
         }
     }
 

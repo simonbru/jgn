@@ -31,64 +31,32 @@
  *
  * Created: Jul 13, 2006
  */
-package com.captiveimagination.jgn.ro;
+package com.captiveimagination.jgn.test.unit;
 
-import java.lang.reflect.*;
-
-import com.captiveimagination.jgn.*;
-import com.captiveimagination.jgn.event.*;
-import com.captiveimagination.jgn.message.*;
+import com.captiveimagination.jgn.ro.*;
 
 /**
  * @author Matthew D. Hicks
  */
-public class RemoteObjectHandler extends MessageAdapter implements InvocationHandler {
-	private Class<? extends RemoteObject> remoteClass;
-	private MessageClient client;
-	private long timeout;
-	
-	private boolean received;
-	private Object response;
-	
-	protected RemoteObjectHandler(Class<? extends RemoteObject> remoteClass, MessageClient client, long timeout) {
-		this.remoteClass = remoteClass;
-		this.client = client;
-		this.timeout = timeout;
+public class TestRemoteObject extends AbstractMessageServerTestCase {
+	public void testRemoteObject() throws Exception {
+		MyRemoteObject ro = new MyRemoteObject();
+		RemoteObjectManager.registerRemoteObject(MyRemoteObjectInterface.class, ro, server1);
 		
-		client.addMessageListener(this);
-	}
-	
-	public synchronized Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-		received = false;
-		RemoteObjectRequest request = new RemoteObjectRequest();
-		request.setRemoteObjectName(remoteClass.getName());
-		request.setMethodName(method.getName());
-		request.setParameters(args);
-		client.sendMessage(request);
-		
+		MyRemoteObjectInterface remote = RemoteObjectManager.createRemoteObject(MyRemoteObjectInterface.class, client2);
 		long time = System.currentTimeMillis();
-		while (System.currentTimeMillis() < time + timeout) {
-			if (received) break;
-			Thread.sleep(1);
-		}
-		
-		Object obj = response;
-		response = null;
-		
-		return obj;
+		System.out.println("Received: " + remote.testRemote("Hello World!"));
+		System.out.println("Took: " + (System.currentTimeMillis() - time) + "ms to complete");
+		Thread.sleep(5000);
 	}
-	
-	public void messageReceived(Message message) {
-		if (message instanceof RemoteObjectResponse) {
-			RemoteObjectResponse m = (RemoteObjectResponse)message;
-			if (m.getRemoteObjectName().equals(remoteClass.getName())) {
-				response = m.getResponse();
-				received = true;
-			}
-		}
-	}
-	
-	public void close() {
-		client.removeMessageListener(this);
+}
+
+interface MyRemoteObjectInterface extends RemoteObject {
+	public String testRemote(String s);
+}
+
+class MyRemoteObject implements MyRemoteObjectInterface {
+	public String testRemote(String s) {
+		return s.toUpperCase();
 	}
 }

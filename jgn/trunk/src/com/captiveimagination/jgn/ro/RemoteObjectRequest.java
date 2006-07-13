@@ -33,62 +33,38 @@
  */
 package com.captiveimagination.jgn.ro;
 
-import java.lang.reflect.*;
-
-import com.captiveimagination.jgn.*;
-import com.captiveimagination.jgn.event.*;
 import com.captiveimagination.jgn.message.*;
+import com.captiveimagination.jgn.message.type.*;
 
 /**
  * @author Matthew D. Hicks
  */
-public class RemoteObjectHandler extends MessageAdapter implements InvocationHandler {
-	private Class<? extends RemoteObject> remoteClass;
-	private MessageClient client;
-	private long timeout;
-	
-	private boolean received;
-	private Object response;
-	
-	protected RemoteObjectHandler(Class<? extends RemoteObject> remoteClass, MessageClient client, long timeout) {
-		this.remoteClass = remoteClass;
-		this.client = client;
-		this.timeout = timeout;
-		
-		client.addMessageListener(this);
+public class RemoteObjectRequest extends PriorityMessage implements CertifiedMessage {
+	private String remoteObjectName;
+	private String methodName;
+	private Object[] parameters;
+
+	public String getMethodName() {
+		return methodName;
 	}
-	
-	public synchronized Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-		received = false;
-		RemoteObjectRequest request = new RemoteObjectRequest();
-		request.setRemoteObjectName(remoteClass.getName());
-		request.setMethodName(method.getName());
-		request.setParameters(args);
-		client.sendMessage(request);
-		
-		long time = System.currentTimeMillis();
-		while (System.currentTimeMillis() < time + timeout) {
-			if (received) break;
-			Thread.sleep(1);
-		}
-		
-		Object obj = response;
-		response = null;
-		
-		return obj;
+
+	public void setMethodName(String methodName) {
+		this.methodName = methodName;
 	}
-	
-	public void messageReceived(Message message) {
-		if (message instanceof RemoteObjectResponse) {
-			RemoteObjectResponse m = (RemoteObjectResponse)message;
-			if (m.getRemoteObjectName().equals(remoteClass.getName())) {
-				response = m.getResponse();
-				received = true;
-			}
-		}
+
+	public Object[] getParameters() {
+		return parameters;
 	}
-	
-	public void close() {
-		client.removeMessageListener(this);
+
+	public void setParameters(Object[] parameters) {
+		this.parameters = parameters;
+	}
+
+	public String getRemoteObjectName() {
+		return remoteObjectName;
+	}
+
+	public void setRemoteObjectName(String remoteObjectName) {
+		this.remoteObjectName = remoteObjectName;
 	}
 }

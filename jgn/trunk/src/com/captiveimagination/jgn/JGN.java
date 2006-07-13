@@ -38,6 +38,7 @@ import java.util.*;
 
 import com.captiveimagination.jgn.convert.*;
 import com.captiveimagination.jgn.message.*;
+import com.captiveimagination.jgn.ro.*;
 
 /**
  * Foundational static class for various functionality that is abstract from any other
@@ -56,6 +57,8 @@ public class JGN {
 		register(NoopMessage.class);
 		register(Receipt.class);
 		register(DisconnectMessage.class);
+		register(RemoteObjectRequest.class);
+		register(RemoteObjectResponse.class);
 	}
 	
 	/**

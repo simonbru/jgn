@@ -33,6 +33,7 @@
  */
 package com.captiveimagination.jgn.ro;
 
+import java.io.*;
 import java.lang.reflect.*;
 
 import com.captiveimagination.jgn.*;
@@ -42,53 +43,51 @@ import com.captiveimagination.jgn.message.*;
 /**
  * @author Matthew D. Hicks
  */
-public class RemoteObjectHandler extends MessageAdapter implements InvocationHandler {
+public class RemoteInvocationListener extends MessageAdapter {
 	private Class<? extends RemoteObject> remoteClass;
-	private MessageClient client;
-	private long timeout;
+	private RemoteObject object;
+	private MessageServer server;
 	
-	private boolean received;
-	private Object response;
-	
-	protected RemoteObjectHandler(Class<? extends RemoteObject> remoteClass, MessageClient client, long timeout) {
+	protected RemoteInvocationListener(Class<? extends RemoteObject> remoteClass, RemoteObject object, MessageServer server) {
 		this.remoteClass = remoteClass;
-		this.client = client;
-		this.timeout = timeout;
-		
-		client.addMessageListener(this);
-	}
-	
-	public synchronized Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-		received = false;
-		RemoteObjectRequest request = new RemoteObjectRequest();
-		request.setRemoteObjectName(remoteClass.getName());
-		request.setMethodName(method.getName());
-		request.setParameters(args);
-		client.sendMessage(request);
-		
-		long time = System.currentTimeMillis();
-		while (System.currentTimeMillis() < time + timeout) {
-			if (received) break;
-			Thread.sleep(1);
-		}
-		
-		Object obj = response;
-		response = null;
-		
-		return obj;
+		this.object = object;
+		this.server = server;
+		server.addMessageListener(this);
 	}
 	
 	public void messageReceived(Message message) {
-		if (message instanceof RemoteObjectResponse) {
-			RemoteObjectResponse m = (RemoteObjectResponse)message;
+		if (message instanceof RemoteObjectRequest) {
+			RemoteObjectRequest m = (RemoteObjectRequest)message;
 			if (m.getRemoteObjectName().equals(remoteClass.getName())) {
-				response = m.getResponse();
-				received = true;
+				RemoteObjectResponse response = new RemoteObjectResponse();
+				response.setMethodName(m.getMethodName());
+				response.setRemoteObjectName(m.getRemoteObjectName());
+				try {
+					Class[] classes;
+					if (m.getParameters() != null) {
+						classes = new Class[m.getParameters().length];
+						for (int i = 0; i < m.getParameters().length; i++) {
+							if (m.getParameters()[i] != null) {
+								classes[i] = m.getParameters()[i].getClass();
+							}
+						}
+					} else {
+						classes = new Class[0];
+					}
+					Method method = remoteClass.getMethod(m.getMethodName(), classes);
+					method.setAccessible(true);
+					Object obj = method.invoke(object, m.getParameters());
+					response.setResponse((Serializable)obj);
+				} catch(Exception exc) {
+					exc.printStackTrace();
+					response.setResponse(exc);
+				}
+				m.getMessageClient().sendMessage(response);
 			}
 		}
 	}
 	
 	public void close() {
-		client.removeMessageListener(this);
+		server.removeMessageListener(this);
 	}
 }

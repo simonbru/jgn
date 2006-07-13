@@ -33,6 +33,7 @@
  */
 package com.captiveimagination.jgn.convert;
 
+import java.io.*;
 import java.lang.reflect.*;
 import java.nio.*;
 
@@ -41,12 +42,46 @@ import com.captiveimagination.jgn.message.*;
 /**
  * @author Matthew D. Hicks
  */
-public class FloatConverter implements Converter {
-	public void set(Message message, Method setter, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
-		setter.invoke(message, new Object[] {new Float(buffer.getFloat())});
-	}
+public class SerializableConverter implements Converter {
+    public void set(Message message, Method setter, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
+        int length = buffer.getInt();
+        byte[] array = null;
+        if (length != -1) {
+            array = new byte[length];
+            for (int i = 0; i < length; i++) {
+                array[i] = buffer.get();
+            }
+        }
+        try {
+            ByteArrayInputStream bais = new ByteArrayInputStream(array);
+            ObjectInputStream ois = new ObjectInputStream(bais);
+            Object obj = ois.readObject();
+            setter.invoke(message, new Object[] {obj});
+        } catch(IOException exc) {
+            exc.printStackTrace();
+        } catch(ClassNotFoundException exc) {
+            exc.printStackTrace();
+        }
+    }
 
-	public void get(Message message, Method getter, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
-		buffer.putFloat(((Float)getter.invoke(message, EMPTY_ARRAY)).floatValue());
-	}
+    public void get(Message message, Method getter, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
+        Object obj = getter.invoke(message, EMPTY_ARRAY);
+        if (obj == null) {
+            buffer.putInt(-1);
+        } else {
+            try {
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                ObjectOutputStream oos = new ObjectOutputStream(baos);
+                oos.writeObject(obj);
+                byte[] array = baos.toByteArray();
+                
+                buffer.putInt(array.length);
+                for (byte b : array) {
+                    buffer.put(b);
+                }
+            } catch(IOException exc) {
+                exc.printStackTrace();
+            }
+        }
+    }
 }

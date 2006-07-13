@@ -29,24 +29,25 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Created: Jun 3, 2006
+ * Created: Jul 12, 2006
  */
-package com.captiveimagination.jgn.convert;
+package com.captiveimagination.jgn.test.unit;
 
-import java.lang.reflect.*;
-import java.nio.*;
+import java.util.*;
 
 import com.captiveimagination.jgn.message.*;
 
 /**
  * @author Matthew D. Hicks
  */
-public class FloatConverter implements Converter {
-	public void set(Message message, Method setter, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
-		setter.invoke(message, new Object[] {new Float(buffer.getFloat())});
+public class MySerializableMessage extends Message {
+	private Calendar calendar;
+	
+	public Calendar getCalendar() {
+		return calendar;
 	}
-
-	public void get(Message message, Method getter, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
-		buffer.putFloat(((Float)getter.invoke(message, EMPTY_ARRAY)).floatValue());
+	
+	public void setCalendar(Calendar calendar) {
+		this.calendar = calendar;
 	}
 }

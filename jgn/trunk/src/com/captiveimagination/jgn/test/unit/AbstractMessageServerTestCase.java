@@ -20,6 +20,7 @@ public class AbstractMessageServerTestCase extends TestCase {
 		JGN.register(MyCertifiedMessage.class);
 		JGN.register(MyRealtimeMessage.class);
 		JGN.register(MyUniqueMessage.class);
+		JGN.register(MySerializableMessage.class);
 		
 		// Create first MessageServer
 		InetSocketAddress address1 = new InetSocketAddress(InetAddress.getLocalHost(), 1000);

@@ -33,6 +33,7 @@
  */
 package com.captiveimagination.jgn.convert;
 
+import java.io.*;
 import java.lang.reflect.*;
 import java.nio.*;
 import java.util.*;
@@ -183,21 +184,26 @@ public class ConversionHandler {
 		for (Method getter : methods) {
 			if (!getter.getName().startsWith("get")) continue; // Make sure it's a getter
 			if (ignore.contains(getter.getName())) continue; // Methods to be ignored
-
+			
 			String name = getter.getName().substring(3);
 			Method setter = null;
 			for (Method m : methods) {
 				if (m.getName().equals("set" + name)) {
-					if ((m.getParameterTypes().length == 1) && (m.getParameterTypes()[0] == getter.getReturnType())) {
+					if (m.getParameterTypes().length == 1) {
 						setter = m;
 						break;
 					}
 				}
 			}
 
-			if (setter == null) continue;
+			if (setter == null) {
+				continue;
+			}
 
 			Converter converter = Converter.CONVERTERS.get(getter.getReturnType());
+            if ((converter == null) && (Serializable.class.isAssignableFrom(getter.getReturnType()))) {
+                converter = Converter.CONVERTERS.get(Serializable.class);
+            }
 			if (converter != null) {
 				converters.add(converter);
 				getter.setAccessible(true);
@@ -235,6 +241,7 @@ public class ConversionHandler {
 			Converter.CONVERTERS.put(long[].class, new LongArrayConverter());
 			Converter.CONVERTERS.put(float[].class, new FloatArrayConverter());
 			Converter.CONVERTERS.put(double[].class, new DoubleArrayConverter());
+            Converter.CONVERTERS.put(Serializable.class, new SerializableConverter());
 		}
 	}
 }

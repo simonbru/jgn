@@ -70,6 +70,7 @@ public abstract class Message implements Cloneable {
 	 * 
 	 * @return
 	 */
+	@Hide
 	public long getId() {
 		return id;
 	}
@@ -98,6 +99,7 @@ public abstract class Message implements Cloneable {
 	 * @return
 	 * 		groupId reference for this Message as a short
 	 */
+	@Hide
 	public short getGroupId() {
 		return groupId;
 	}
@@ -110,6 +112,7 @@ public abstract class Message implements Cloneable {
 	 * 
 	 * @param groupId
 	 */
+	@Hide
 	public void setGroupId(short groupId) {
 		this.groupId = groupId;
 	}
@@ -121,6 +124,7 @@ public abstract class Message implements Cloneable {
 	 * 
 	 * @param client
 	 */
+	@Hide
 	public void setMessageClient(MessageClient client) {
 		this.client = client;
 	}
@@ -135,46 +139,56 @@ public abstract class Message implements Cloneable {
 	 * 		the MessageClient this message was received to or
 	 * 		sent from
 	 */
+	@Hide
 	public MessageClient getMessageClient() {
 		return client;
 	}
-
+	
 	public Message clone() throws CloneNotSupportedException {
 		return (Message)super.clone();
 	}
 
+	@Hide
 	public long getTimestamp() {
 		return timestamp;
 	}
 	
+	@Hide
 	public void setTimestamp(long timestamp) {
 		this.timestamp = timestamp;
 	}
 	
+	@Hide
 	public int getTries() {
 		return tries;
 	}
 	
+	@Hide
 	public void setTries(int tries) {
 		this.tries = tries;
 	}
 	
+	@Hide
 	public int getMaxTries() {
 		return maxTries;
 	}
 	
+	@Hide
 	public void setMaxTries(int maxTries) {
 		this.maxTries = maxTries;
 	}
 	
+	@Hide
 	public long getTimeout() {
 		return timeout;
 	}
 	
+	@Hide
 	public void setTimeout(long timeout) {
 		this.timeout = timeout;
 	}
 	
+	@Hide
 	public static synchronized int nextUniqueId() {
 		return ++UNIQUE_ID;
 	}

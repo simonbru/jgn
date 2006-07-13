@@ -52,13 +52,7 @@ public class ConversionHandler {
 	private static final HashSet<String> ignore = new HashSet<String>();
 	private static final HashMap<Class<? extends Message>, ConversionHandler> messageToHandler = new HashMap<Class<? extends Message>, ConversionHandler>();
 	static {
-		ignore.add("getId");
-		ignore.add("getGroupId");
-		ignore.add("getTimestamp");
-		ignore.add("getTries");
-		ignore.add("getMaxTries");
-		ignore.add("getTimeout");
-		ignore.add("getMessageClient");
+		ignore.add("getClass");
 	}
 
 	private Converter[] converters;
@@ -183,8 +177,10 @@ public class ConversionHandler {
 		// Add standard getter/setter aspects
 		for (Method getter : methods) {
 			if (!getter.getName().startsWith("get")) continue; // Make sure it's a getter
+			if (getter.getAnnotation(Hide.class) != null) {
+				continue;
+			}
 			if (ignore.contains(getter.getName())) continue; // Methods to be ignored
-			
 			String name = getter.getName().substring(3);
 			Method setter = null;
 			for (Method m : methods) {

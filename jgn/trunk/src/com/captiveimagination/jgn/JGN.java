@@ -53,12 +53,12 @@ public class JGN {
 	static {
 		// Certain messages must be known before negotiation so this is explicitly done here
 		register(LocalRegistrationMessage.class, (short)-1);
-		register(StreamMessage.class);
-		register(NoopMessage.class);
-		register(Receipt.class);
-		register(DisconnectMessage.class);
-		register(RemoteObjectRequest.class);
-		register(RemoteObjectResponse.class);
+		register(StreamMessage.class, (short)-2);
+		register(NoopMessage.class, (short)-3);
+		register(Receipt.class, (short)-4);
+		register(DisconnectMessage.class, (short)-5);
+		register(RemoteObjectRequest.class, (short)-6);
+		register(RemoteObjectResponse.class, (short)-7);
 	}
 	
 	/**
@@ -87,7 +87,6 @@ public class JGN {
 	
 	private static final short generateId() {
 		short id = (short)Math.round(Math.random() * Short.MAX_VALUE);
-        id += Math.round(Math.random() * Short.MIN_VALUE);
         return id;
 	}
 		
@@ -112,19 +111,27 @@ public class JGN {
 		return registry.get(typeId);
 	}
 
-	public static final LocalRegistrationMessage generateRegistrationMessage() {
-		LocalRegistrationMessage message = new LocalRegistrationMessage();
+	public static final void populateRegistrationMessage(LocalRegistrationMessage message) {
 		message.setPriority(PriorityMessage.PRIORITY_HIGH);
 		Short[] shorts = (Short[])registry.keySet().toArray(new Short[registry.keySet().size()]);
-		short[] ids = new short[shorts.length];
-		String[] names = new String[shorts.length];
+		
+		// Determine non-system message count
+		int nonSystem = 0;
+		for (short s : shorts) {
+			if (s >= 0) nonSystem++;
+		}
+		
+		short[] ids = new short[nonSystem];
+		String[] names = new String[nonSystem];
+		int count = 0;
 		for (int i = 0; i < shorts.length; i++) {
-			ids[i] = shorts[i];
-			names[i] = registry.get(shorts[i]).getName();
+			if (shorts[i] < 0) continue;
+			ids[count] = shorts[i];
+			names[count] = registry.get(shorts[i]).getName();
+			count++;
 		}
 		message.setIds(ids);
 		message.setMessageClasses(names);
-		return message;
 	}
 
 	public static final Runnable createMessageServerRunnable(final MessageServer server) {

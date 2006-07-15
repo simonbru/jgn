@@ -296,6 +296,8 @@ public class MessageClient {
 	
 	public short getMessageTypeId(Class<? extends Message> c) {
 		if (!registryReverse.containsKey(c)) {
+			short id = JGN.getMessageTypeId(c);
+			if (id < 0) return id;		// if it's a system id we return the internal value
 			throw new NoClassDefFoundError("The Message " + c.getName() + " is not registered, make sure to register with JGN.register() before using.");
 		}
 		return registryReverse.get(c);
@@ -351,7 +353,7 @@ public class MessageClient {
 	}
 	
 	public void disconnect() throws IOException {
-		sendMessage(new DisconnectMessage());
+		getMessageServer().getConnectionController().disconnect(this);
 		setStatus(Status.DISCONNECTING);
 	}
 

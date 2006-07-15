@@ -107,7 +107,7 @@ class InternalListener implements MessageListener, ConnectionListener {
 
 	public void connected(MessageClient client) {
 		// Send the registration message
-		client.sendMessage(JGN.generateRegistrationMessage());
+		client.getMessageServer().getConnectionController().negotiate(client);
 	}
 
 	public void negotiationComplete(MessageClient client) {	

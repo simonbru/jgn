@@ -64,14 +64,14 @@ public class RemoteObjectManager {
 	}
 	
 	@SuppressWarnings("all")
-	public static final <T extends RemoteObject> T createRemoteObject(Class<? extends T> remoteClass, MessageClient client) throws IOException {
+	public static final <T extends RemoteObject> T createRemoteObject(Class<? extends T> remoteClass, MessageClient client, long timeout) throws IOException {
 		HashMap<Class<? extends RemoteObject>, RemoteObjectHandler> clientMap = remoteProxyMap.get(client);
 		if (clientMap == null) {
 			clientMap = new HashMap<Class<? extends RemoteObject>, RemoteObjectHandler>();
 			remoteProxyMap.put(client, clientMap);
 		}
 		if (clientMap.containsKey(remoteClass)) throw new IOException("A remote object by this name already exists for this MessageClient: " + remoteClass.getName());
-		RemoteObjectHandler handler = new RemoteObjectHandler(remoteClass, client, 15000);
+		RemoteObjectHandler handler = new RemoteObjectHandler(remoteClass, client, timeout);
 		
 		Object o = Proxy.newProxyInstance(Thread.currentThread().getContextClassLoader(), new Class[] {remoteClass}, handler);
 		

@@ -159,7 +159,7 @@ public class UDPMessageServer extends NIOMessageServer {
 		client = new MessageClient(address, this);
 		client.setStatus(MessageClient.Status.NEGOTIATING);
 		getMessageClients().add(client);
-		client.sendMessage(JGN.generateRegistrationMessage());
+		getIncomingConnectionQueue().add(client);
 		return null;
 	}
 }

@@ -52,6 +52,7 @@ import com.captiveimagination.jgn.queue.*;
  */
 public abstract class MessageServer {
 	public static long DEFAULT_TIMEOUT = 60 * 1000;
+	public static ConnectionController DEFAULT_CONNECTION_CONTROLLER = new DefaultConnectionController();
 	
 	private static HashMap<Class,ArrayList<Class>> classHierarchyCache = new HashMap<Class,ArrayList<Class>>();
 	
@@ -67,6 +68,8 @@ public abstract class MessageServer {
 	protected boolean keepAlive;
 	protected boolean alive;
 	
+	private ConnectionController controller;
+	
 	public MessageServer(SocketAddress address, int maxQueueSize) {
 		this.address = address;
 		this.maxQueueSize = maxQueueSize;
@@ -81,6 +84,8 @@ public abstract class MessageServer {
 		connectionListeners = new ArrayList<ConnectionListener>();
 		messageListeners = new ArrayList<MessageListener>();
 		clients = new LinkedBlockingQueue<MessageClient>();
+		
+		controller = DEFAULT_CONNECTION_CONTROLLER;
 		
 		addConnectionListener(InternalListener.getInstance());
 		addMessageListener(InternalListener.getInstance());
@@ -108,6 +113,20 @@ public abstract class MessageServer {
 	
 	protected AbstractQueue<MessageClient> getMessageClients() {
 		return clients;
+	}
+	
+	protected ConnectionController getConnectionController() {
+		return controller;
+	}
+	
+	/**
+	 * Replace the current implementation of ConnectionController with another
+	 * alternative.
+	 * 
+	 * @param controller
+	 */
+	public void setConnectionController(ConnectionController controller) {
+		this.controller = controller;
 	}
 	
 	/**

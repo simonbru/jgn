@@ -33,6 +33,7 @@
  */
 package com.captiveimagination.jgn.ro;
 
+import java.io.*;
 import java.lang.reflect.*;
 
 import com.captiveimagination.jgn.*;
@@ -71,9 +72,12 @@ public class RemoteObjectHandler extends MessageAdapter implements InvocationHan
 			if (received) break;
 			Thread.sleep(1);
 		}
+		if (!received) throw new IOException("Timeout waiting for response from remote machine.");
 		
 		Object obj = response;
 		response = null;
+		
+		if (obj instanceof Throwable) throw (Throwable)obj;
 		
 		return obj;
 	}

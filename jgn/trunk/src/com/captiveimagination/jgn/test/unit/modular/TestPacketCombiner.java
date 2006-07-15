@@ -57,8 +57,6 @@ public class TestPacketCombiner extends TestCase{
 		Thread t = new Thread() {
 			public void run() {
 				try {
-					Integer size = null;
-					
 					JGN.register(message.getClass());
 					MessageServer server = new TCPMessageServer(null);
 					MessageClient client = new MessageClient(null, server);
@@ -77,7 +75,6 @@ public class TestPacketCombiner extends TestCase{
 						CombinedPacket packet = PacketCombiner.combine(client, 50000);
 						ByteBuffer buffer = packet.getBuffer();
 						
-						int packetLength = buffer.position();
 						buffer.position(0);
 						int j = 0;
 						while (j < messageCount) {
@@ -85,7 +82,6 @@ public class TestPacketCombiner extends TestCase{
 								packet = PacketCombiner.combine(client, 50000);
 								buffer = packet.getBuffer();
 							}
-							int messageLength = buffer.getInt();
 							short typeId = buffer.getShort();
 							Class<? extends Message> c = client.getMessageClass(typeId);
 							Message m = JGN.getConverter(c).receiveMessage(buffer);
@@ -110,7 +106,8 @@ public class TestPacketCombiner extends TestCase{
 	}
 	
 	public static void main(String[] args) {
-		LocalRegistrationMessage message = JGN.generateRegistrationMessage();
+		LocalRegistrationMessage message = new LocalRegistrationMessage();
+		JGN.populateRegistrationMessage(message);
 		
 		createTestThread(1, 1, 1, message);
 		//createTestThread(2, 5, 25, message);

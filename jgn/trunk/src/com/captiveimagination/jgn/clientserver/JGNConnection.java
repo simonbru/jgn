@@ -29,34 +29,13 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Created: Jul 13, 2006
+ * Created: Jul 14, 2006
  */
-package com.captiveimagination.jgn.test.unit;
-
-import com.captiveimagination.jgn.ro.*;
+package com.captiveimagination.jgn.clientserver;
 
 /**
  * @author Matthew D. Hicks
  */
-public class TestRemoteObject extends AbstractMessageServerTestCase {
-	public void testRemoteObject() throws Exception {
-		MyRemoteObject ro = new MyRemoteObject();
-		RemoteObjectManager.registerRemoteObject(MyRemoteObjectInterface.class, ro, server1);
-		
-		MyRemoteObjectInterface remote = RemoteObjectManager.createRemoteObject(MyRemoteObjectInterface.class, client2, 15000);
-		long time = System.currentTimeMillis();
-		System.out.println("Received: " + remote.testRemote("Hello World!"));
-		System.out.println("Took: " + (System.currentTimeMillis() - time) + "ms to complete");
-		Thread.sleep(5000);
-	}
-}
+public class JGNConnection {
 
-interface MyRemoteObjectInterface extends RemoteObject {
-	public String testRemote(String s);
-}
-
-class MyRemoteObject implements MyRemoteObjectInterface {
-	public String testRemote(String s) {
-		return s.toUpperCase();
-	}
 }

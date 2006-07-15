@@ -18,10 +18,11 @@ X UDPMessageServer
 * 3DSynchronizationMessage extends 2DSynchronizationMessage
 * PhysicsSynchronizationMessage extends 3DSynchronizationMessage
 * Synchronizer (replacement for Updater)
-* Implement abilities for extensions
+X Implement abilities for extensions
 * ServerRegistry
 * Ping capabilities
 * Client/Server features
+* Create feature SynchronizedObject that can be registered with a MessageServer and gets synchronized by name to all clients
 * P2P features
 * Compression
 * Code cleanup work
@@ -40,5 +41,5 @@ X UDPMessageServer
 	* Chat Application
 	* Bandwidth Monitor
 	* PingTool
-* Implement Serializable support?
-* Implement RPC support (RemoteProcedure interface)
+X Implement Serializable support?
+X Implement RPC support (RemoteProcedure interface)

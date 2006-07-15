@@ -29,34 +29,32 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Created: Jul 13, 2006
+ * Created: Jul 14, 2006
  */
-package com.captiveimagination.jgn.test.unit;
-
-import com.captiveimagination.jgn.ro.*;
+package com.captiveimagination.jgn;
 
 /**
+ * ConnectionController is the controlling element defined for every MessageServer.
+ * There is a default implementation that is set for each MessageServer when it is
+ * instantiated, but can be explicitly set if there are more advanced features that
+ * must be implemented.
+ * 
  * @author Matthew D. Hicks
  */
-public class TestRemoteObject extends AbstractMessageServerTestCase {
-	public void testRemoteObject() throws Exception {
-		MyRemoteObject ro = new MyRemoteObject();
-		RemoteObjectManager.registerRemoteObject(MyRemoteObjectInterface.class, ro, server1);
-		
-		MyRemoteObjectInterface remote = RemoteObjectManager.createRemoteObject(MyRemoteObjectInterface.class, client2, 15000);
-		long time = System.currentTimeMillis();
-		System.out.println("Received: " + remote.testRemote("Hello World!"));
-		System.out.println("Took: " + (System.currentTimeMillis() - time) + "ms to complete");
-		Thread.sleep(5000);
-	}
-}
-
-interface MyRemoteObjectInterface extends RemoteObject {
-	public String testRemote(String s);
-}
-
-class MyRemoteObject implements MyRemoteObjectInterface {
-	public String testRemote(String s) {
-		return s.toUpperCase();
-	}
+public interface ConnectionController {
+	/**
+	 * This method is called when a connection is successfully established and is ready to
+	 * send a negotiation message to the remote server.
+	 * 
+	 * @param client
+	 */
+	public void negotiate(MessageClient client);
+	
+	/**
+	 * This method is invoked when a MessageClient is manually told to disconnect. This method
+	 * is responsible for notifying the remote server of the disconnection.
+	 * 
+	 * @param client
+	 */
+	public void disconnect(MessageClient client);
 }

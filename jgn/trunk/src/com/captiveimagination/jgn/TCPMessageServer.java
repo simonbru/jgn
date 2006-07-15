@@ -74,7 +74,7 @@ public class TCPMessageServer extends NIOMessageServer {
 
 	protected void connect(SelectableChannel channel) throws IOException {
 		((SocketChannel)channel).finishConnect();
-		MessageClient client = (MessageClient) channel.keyFor(selector).attachment();
+		MessageClient client = (MessageClient)channel.keyFor(selector).attachment();
 		getIncomingConnectionQueue().add(client);
 	}
 	

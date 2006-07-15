@@ -56,6 +56,7 @@ public abstract class MessageServer {
 	
 	private static HashMap<Class,ArrayList<Class>> classHierarchyCache = new HashMap<Class,ArrayList<Class>>();
 	
+	private long serverId;
 	private SocketAddress address;
 	private int maxQueueSize;
 	private long connectionTimeout;
@@ -71,6 +72,8 @@ public abstract class MessageServer {
 	private ConnectionController controller;
 	
 	public MessageServer(SocketAddress address, int maxQueueSize) {
+		serverId = generateMessageServerId();
+		
 		this.address = address;
 		this.maxQueueSize = maxQueueSize;
 		
@@ -89,6 +92,14 @@ public abstract class MessageServer {
 		
 		addConnectionListener(InternalListener.getInstance());
 		addMessageListener(InternalListener.getInstance());
+	}
+	
+	public void setMessageServerId(long serverId) {
+		this.serverId = serverId;
+	}
+	
+	public long getMessageServerId() {
+		return serverId;
 	}
 	
 	public int getMaxQueueSize() {
@@ -540,5 +551,11 @@ public abstract class MessageServer {
 
 	public boolean isAlive() {
 		return alive;
+	}
+
+	private static final long generateMessageServerId() {
+		long id = Math.round(Math.random() * Long.MAX_VALUE);
+		id += Math.round(Math.random() * Long.MIN_VALUE);
+		return id;
 	}
 }

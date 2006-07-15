@@ -43,7 +43,7 @@ import com.captiveimagination.jgn.message.type.*;
  * 
  * @author Matthew D. Hicks
  */
-public class LocalRegistrationMessage extends PriorityMessage implements CertifiedMessage {
+public class LocalRegistrationMessage extends PriorityMessage implements CertifiedMessage, IdentityMessage {
 	private short[] ids;
 	private String[] messageClasses;
 	

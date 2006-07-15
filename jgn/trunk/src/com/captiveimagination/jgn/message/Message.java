@@ -190,6 +190,7 @@ public abstract class Message implements Cloneable {
 	
 	@Hide
 	public static synchronized int nextUniqueId() {
+		if (UNIQUE_ID == Integer.MAX_VALUE - 1) UNIQUE_ID = 0;
 		return ++UNIQUE_ID;
 	}
 }

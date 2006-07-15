@@ -33,9 +33,31 @@
  */
 package com.captiveimagination.jgn.clientserver;
 
+import com.captiveimagination.jgn.*;
+
 /**
  * @author Matthew D. Hicks
  */
 public class JGNConnection {
-
+	private MessageServer reliableServer;
+	private MessageServer fastServer;
+	
+	public JGNConnection() {
+	}
+	
+	protected void setReliableServer(MessageServer reliableServer) {
+		this.reliableServer = reliableServer;
+	}
+	
+	protected MessageServer getReliableServer() {
+		return reliableServer;
+	}
+	
+	protected void setFastServer(MessageServer fastServer) {
+		this.fastServer = fastServer;
+	}
+	
+	protected MessageServer getFastServer() {
+		return fastServer;
+	}
 }

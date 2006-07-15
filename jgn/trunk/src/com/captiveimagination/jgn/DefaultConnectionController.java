@@ -41,6 +41,7 @@ import com.captiveimagination.jgn.message.*;
 public class DefaultConnectionController implements ConnectionController {
 	public void negotiate(MessageClient client) {
 		LocalRegistrationMessage message = new LocalRegistrationMessage();
+		message.setId(client.getMessageServer().getMessageServerId());
 		JGN.populateRegistrationMessage(message);
 		client.sendMessage(message);
 	}

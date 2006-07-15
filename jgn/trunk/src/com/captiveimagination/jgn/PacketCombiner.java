@@ -4,13 +4,11 @@
 
 package com.captiveimagination.jgn;
 
-import java.nio.BufferOverflowException;
-import java.nio.ByteBuffer;
-import java.util.*;
+import java.nio.*;
 
-import com.captiveimagination.jgn.convert.ConversionHandler;
+import com.captiveimagination.jgn.convert.*;
 import com.captiveimagination.jgn.message.*;
-import com.captiveimagination.jgn.queue.MessageQueue;
+import com.captiveimagination.jgn.queue.*;
 
 /**
  * The <code>PacketCombiner</code> combines packets.
@@ -18,11 +16,7 @@ import com.captiveimagination.jgn.queue.MessageQueue;
  * @author Skip M. B. Balk
  * @author Matthew D. Hicks
  */
-
 public class PacketCombiner {
-	// map holding the last failed message of each client, if any
-	private static Map<MessageClient, Message> clientToFailedMessage = new HashMap<MessageClient, Message>();
-
 	private static final int bigBufferSize = 512 * 1024;
 	private static volatile ByteBuffer buffer;
 
@@ -45,7 +39,8 @@ public class PacketCombiner {
 		boolean bufferFull = false;
 		
 		while (true) {
-			Message message = clientToFailedMessage.remove(client);
+			Message message = client.getFailedMessage();
+			client.setFailedMessage(null);
 			if (message == null) {
 				message = queue.poll();
 			}
@@ -78,7 +73,7 @@ public class PacketCombiner {
 				//System.out.println("MessageLength(Write): " + (messageEnd - messageStart - 4));
 			} catch(BufferOverflowException exc) {
 				buffer.position(messageStart);
-				clientToFailedMessage.put(client, message);
+				client.setFailedMessage(message);
 				bufferFull = true;
 				break;
 			}

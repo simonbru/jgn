@@ -79,6 +79,7 @@ public class MessageClient {
 	
 	private int readPosition;
 	private ByteBuffer readBuffer;
+	private Message failedMessage;
 	
 	private HashMap<Short,Class<? extends Message>> registry;
 	private HashMap<Class<? extends Message>,Short> registryReverse;
@@ -367,5 +368,13 @@ public class MessageClient {
 	
 	protected void setReadPosition(int readPosition) {
 		this.readPosition = readPosition;
+	}
+
+	protected Message getFailedMessage() {
+		return failedMessage;
+	}
+	
+	protected void setFailedMessage(Message failedMessage) {
+		this.failedMessage = failedMessage;
 	}
 }

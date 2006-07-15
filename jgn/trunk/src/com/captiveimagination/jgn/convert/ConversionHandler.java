@@ -125,7 +125,7 @@ public class ConversionHandler {
 		Collections.sort(methods, methodComparator);
 		
 		// Special circumstances handled here
-		if (UniqueMessage.class.isAssignableFrom(messageClass)) {
+		if ((UniqueMessage.class.isAssignableFrom(messageClass)) || (IdentityMessage.class.isAssignableFrom(messageClass))) {
 			// Add validation for UniqueMessage
 			try {
 				converters.add(Converter.CONVERTERS.get(long.class));

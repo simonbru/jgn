@@ -61,6 +61,7 @@ public class MessageClient {
 		TERMINATED
 	}
 	
+	private long id;
 	private SocketAddress address;
 	private MessageServer server;
 	private Status status;
@@ -106,6 +107,14 @@ public class MessageClient {
 		register((short)-1, LocalRegistrationMessage.class);
 		received();
 		sent();
+	}
+	
+	public void setId(long id) {
+		this.id = id;
+	}
+	
+	public long getId() {
+		return id;
 	}
 	
 	public Status getStatus() {

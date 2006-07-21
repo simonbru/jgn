@@ -35,8 +35,10 @@ package com.captiveimagination.jgn.clientserver;
 
 import java.io.*;
 import java.net.*;
+import java.util.concurrent.*;
 
 import com.captiveimagination.jgn.*;
+import com.captiveimagination.jgn.event.*;
 
 /**
  * @author Matthew D. Hicks
@@ -44,15 +46,21 @@ import com.captiveimagination.jgn.*;
 public class JGNServer {
 	private MessageServer reliableServer;
 	private MessageServer fastServer;
+	private ConcurrentHashMap<Long,JGNConnection> registry;
 	
 	public JGNServer(MessageServer reliableServer, MessageServer fastServer) {
 		this.reliableServer = reliableServer;
 		this.fastServer = fastServer;
+		registry = new ConcurrentHashMap<Long,JGNConnection>();
+		
+		ServerListener listener = new ServerListener(this);
+		
+		if (reliableServer != null) reliableServer.addConnectionListener(listener);
+		if (fastServer != null) fastServer.addConnectionListener(listener);
 	}
 	
 	public JGNServer(SocketAddress reliableAddress, SocketAddress fastAddress) throws IOException {
-		if (reliableAddress != null) reliableServer = new TCPMessageServer(reliableAddress);
-		if (fastAddress != null) fastServer = new UDPMessageServer(fastAddress);
+		this(reliableAddress != null ? new TCPMessageServer(reliableAddress) : null, fastAddress != null ? new UDPMessageServer(fastAddress) : null);
 	}
 	
 	public void update() throws IOException {
@@ -74,5 +82,35 @@ public class JGNServer {
 	public void updateEvents() {
 		if (reliableServer != null) reliableServer.updateEvents();
 		if (fastServer != null) fastServer.updateEvents();
+	}
+
+	public JGNConnection[] getConnections() {
+		return registry.values().toArray(new JGNConnection[registry.size()]);
+	}
+	
+	protected void register(MessageClient client) {
+		JGNConnection connection = registry.get(client.getId());
+		if (connection == null) {
+			connection = new JGNConnection();
+			registry.put(client.getId(), connection);
+		}
+		// TODO handle this without explicit knowledge of the MessageServer type
+		if (client.getMessageServer() instanceof TCPMessageServer) {
+			connection.setReliableClient(client);
+		} else {
+			connection.setFastClient(client);
+		}
+	}
+}
+
+class ServerListener extends ConnectionAdapter {
+	private JGNServer server;
+	
+	public ServerListener(JGNServer server) {
+		this.server = server;
+	}
+	
+	public void negotiationComplete(MessageClient client) {
+		server.register(client);
 	}
 }

@@ -72,7 +72,7 @@ public abstract class MessageServer {
 	private ConnectionController controller;
 	
 	public MessageServer(SocketAddress address, int maxQueueSize) {
-		serverId = generateMessageServerId();
+		serverId = JGN.generateUniqueId();
 		
 		this.address = address;
 		this.maxQueueSize = maxQueueSize;
@@ -162,9 +162,10 @@ public abstract class MessageServer {
 	 * 
 	 * @param address
 	 * @return
-	 * 		MessageClient will only be returned if a connection has
-	 * 		already been established to this client, otherwise, it
-	 * 		will always return null as this is a non-blocking method.
+	 * 		A MessageClient will always be returned that references the connection
+	 * 		either in-progress or that has already been established. Only one connection
+	 * 		can exist from one MessageServer to another, so if a second request is made
+	 * 		the original MessageClient will be returned and a new one will not be created.
 	 * @throws IOException
 	 */
 	public abstract MessageClient connect(SocketAddress address) throws IOException;
@@ -186,10 +187,6 @@ public abstract class MessageServer {
 	 */
 	public MessageClient connectAndWait(SocketAddress address, int timeout) throws IOException, InterruptedException {
 		MessageClient client = connect(address);
-		if (client != null) {
-			return client;
-		}
-		client = getMessageClient(address);
 		long time = System.currentTimeMillis();
 		while (System.currentTimeMillis() < time + timeout) {
 			if (client.isConnected()) {
@@ -551,11 +548,5 @@ public abstract class MessageServer {
 
 	public boolean isAlive() {
 		return alive;
-	}
-
-	private static final long generateMessageServerId() {
-		long id = Math.round(Math.random() * Long.MAX_VALUE);
-		id += Math.round(Math.random() * Long.MIN_VALUE);
-		return id;
 	}
 }

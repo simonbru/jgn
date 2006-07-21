@@ -162,6 +162,6 @@ public class TCPMessageServer extends NIOMessageServer {
 		SelectionKey key = channel.register(selector, SelectionKey.OP_CONNECT | SelectionKey.OP_READ | SelectionKey.OP_WRITE);
 		key.attach(client);
 		channel.connect(address);
-		return null;
+		return client;
 	}
 }

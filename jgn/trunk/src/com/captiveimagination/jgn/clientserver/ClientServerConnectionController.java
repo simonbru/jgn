@@ -29,46 +29,27 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Created: Jul 14, 2006
+ * Created: Jul 20, 2006
  */
 package com.captiveimagination.jgn.clientserver;
 
 import com.captiveimagination.jgn.*;
+import com.captiveimagination.jgn.message.*;
 
 /**
  * @author Matthew D. Hicks
  */
-public class JGNConnection {
-	private MessageClient reliableClient;
-	private MessageClient fastClient;
+public class ClientServerConnectionController extends DefaultConnectionController {
+	private JGNClient client;
 	
-	public JGNConnection() {
-	}
-
-	public MessageClient getFastClient() {
-		return fastClient;
-	}
-
-	public void setFastClient(MessageClient fastClient) {
-		this.fastClient = fastClient;
-	}
-
-	public MessageClient getReliableClient() {
-		return reliableClient;
-	}
-
-	public void setReliableClient(MessageClient reliableClient) {
-		this.reliableClient = reliableClient;
+	public ClientServerConnectionController(JGNClient client) {
+		this.client = client;
 	}
 	
-	public boolean isConnected() {
-		if ((reliableClient != null) && (!reliableClient.isConnected())) {
-			return false;
-		} else if ((fastClient != null) && (!fastClient.isConnected())) {
-			return false;
-		} else if ((reliableClient == null) && (fastClient == null)) {
-			return false;
-		}
-		return true;
+	public void negotiate(MessageClient client) {
+		LocalRegistrationMessage message = new LocalRegistrationMessage();
+		message.setId(this.client.getId());
+		JGN.populateRegistrationMessage(message);
+		client.sendMessage(message);
 	}
 }

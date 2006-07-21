@@ -29,46 +29,22 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Created: Jul 14, 2006
+ * Created: Jul 20, 2006
  */
-package com.captiveimagination.jgn.clientserver;
+package com.captiveimagination.jgn.event;
 
 import com.captiveimagination.jgn.*;
 
 /**
  * @author Matthew D. Hicks
  */
-public class JGNConnection {
-	private MessageClient reliableClient;
-	private MessageClient fastClient;
-	
-	public JGNConnection() {
+public class ConnectionAdapter implements ConnectionListener {
+	public void connected(MessageClient client) {
 	}
 
-	public MessageClient getFastClient() {
-		return fastClient;
+	public void disconnected(MessageClient client) {
 	}
 
-	public void setFastClient(MessageClient fastClient) {
-		this.fastClient = fastClient;
-	}
-
-	public MessageClient getReliableClient() {
-		return reliableClient;
-	}
-
-	public void setReliableClient(MessageClient reliableClient) {
-		this.reliableClient = reliableClient;
-	}
-	
-	public boolean isConnected() {
-		if ((reliableClient != null) && (!reliableClient.isConnected())) {
-			return false;
-		} else if ((fastClient != null) && (!fastClient.isConnected())) {
-			return false;
-		} else if ((reliableClient == null) && (fastClient == null)) {
-			return false;
-		}
-		return true;
+	public void negotiationComplete(MessageClient client) {
 	}
 }

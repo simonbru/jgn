@@ -157,4 +157,10 @@ public class JGN {
 	public static final Thread createMessageServerThread(MessageServer server) {
 		return new Thread(createMessageServerRunnable(server));
 	}
+
+	public static final long generateUniqueId() {
+		long id = Math.round(Math.random() * Long.MAX_VALUE);
+		id += Math.round(Math.random() * Long.MIN_VALUE);
+		return id;
+	}
 }

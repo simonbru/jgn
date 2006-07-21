@@ -42,17 +42,30 @@ import com.captiveimagination.jgn.*;
  * @author Matthew D. Hicks
  */
 public class JGNClient {
+	private long id;
 	private MessageServer reliableServer;
 	private MessageServer fastServer;
+	private ClientServerConnectionController controller;
+	
+	private JGNConnection serverConnection;
 	
 	public JGNClient(MessageServer reliableServer, MessageServer fastServer) {
+		id = JGN.generateUniqueId();
 		this.reliableServer = reliableServer;
 		this.fastServer = fastServer;
+		
+		controller = new ClientServerConnectionController(this);
+		
+		if (reliableServer != null) reliableServer.setConnectionController(controller);
+		if (fastServer != null) fastServer.setConnectionController(controller);
 	}
 	
 	public JGNClient(SocketAddress reliableAddress, SocketAddress fastAddress) throws IOException {
-		if (reliableAddress != null) reliableServer = new TCPMessageServer(reliableAddress);
-		if (fastAddress != null) fastServer = new UDPMessageServer(fastAddress);
+		this(reliableAddress != null ? new TCPMessageServer(reliableAddress) : null, fastAddress != null ? new UDPMessageServer(fastAddress) : null);
+	}
+	
+	public long getId() {
+		return id;
 	}
 	
 	public void update() throws IOException {
@@ -74,5 +87,33 @@ public class JGNClient {
 	public void updateEvents() {
 		if (reliableServer != null) reliableServer.updateEvents();
 		if (fastServer != null) fastServer.updateEvents();
+	}
+
+	public void connect(InetSocketAddress reliableRemoteAddress, InetSocketAddress fastRemoteAddress) throws IOException {
+		if (serverConnection != null) throw new IOException("A connection already exists. Only one connection to a server may exist.");
+		
+		serverConnection = new JGNConnection();
+		if (reliableRemoteAddress != null) {
+			serverConnection.setReliableClient(reliableServer.connect(reliableRemoteAddress));
+		}
+		if (fastRemoteAddress != null) {
+			serverConnection.setFastClient(fastServer.connect(fastRemoteAddress));
+		}
+	}
+	
+	public void connectAndWait(InetSocketAddress reliableRemoteAddress, InetSocketAddress fastRemoteAddress, long timeout) throws IOException, InterruptedException {
+		connect(reliableRemoteAddress, fastRemoteAddress);
+		
+		long time = System.currentTimeMillis();
+		while (System.currentTimeMillis() < time + timeout) {
+			if (serverConnection.isConnected()) return;
+			Thread.sleep(10);
+		}
+
+		// Last attempt before failing
+		if (!serverConnection.isConnected()) {
+			// fastClient exists and is not connected
+			throw new IOException("Connection to fastRemoteAddress failed.");
+		}
 	}
 }

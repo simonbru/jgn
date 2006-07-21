@@ -57,6 +57,7 @@ class InternalListener implements MessageListener, ConnectionListener {
 		if (message instanceof LocalRegistrationMessage) {
 			// Handle incoming negotiation information
 			LocalRegistrationMessage m = (LocalRegistrationMessage)message;
+			message.getMessageClient().setId(m.getId());
 			String[] messages = m.getMessageClasses();
 			short[] ids = m.getIds();
 			int i = 0;

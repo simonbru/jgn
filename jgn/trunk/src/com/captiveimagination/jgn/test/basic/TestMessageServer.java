@@ -57,13 +57,13 @@ public class TestMessageServer implements MessageListener, ConnectionListener {
 		TestMessageServer tms1 = new TestMessageServer(1);
 		server1.addMessageListener(tms1);
 		server1.addConnectionListener(tms1);
-		JGN.createMessageServerThread(server1).start();
+		JGN.createThread(server1).start();
 		
 		MessageServer server2 = new TCPMessageServer(new InetSocketAddress(InetAddress.getLocalHost(), 2000));
 		TestMessageServer tms2 = new TestMessageServer(2);
 		server2.addMessageListener(tms2);
 		server2.addConnectionListener(tms2);
-		JGN.createMessageServerThread(server2).start();
+		JGN.createThread(server2).start();
 		
 		MessageClient client = server2.connectAndWait(new InetSocketAddress(InetAddress.getLocalHost(), 1000), 5000);
 		if (client == null) throw new IOException("Connection not established!");

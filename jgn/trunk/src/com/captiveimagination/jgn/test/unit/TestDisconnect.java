@@ -92,7 +92,7 @@ public class TestDisconnect extends AbstractMessageServerTestCase {
 			}
 			
 		});
-		JGN.createMessageServerThread(server3).start();
+		JGN.createThread(server3).start();
 		
 		MessageClient client3 = server3.connectAndWait(new InetSocketAddress(InetAddress.getLocalHost(), 1000), 5000);
 		if (client3 != null) {

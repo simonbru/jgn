@@ -29,28 +29,29 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Created: Jul 20, 2006
+ * Created: Jul 22, 2006
  */
-package com.captiveimagination.jgn.clientserver;
+package com.captiveimagination.jgn.clientserver.message;
+
+import com.captiveimagination.jgn.message.*;
+import com.captiveimagination.jgn.message.type.*;
 
 /**
+ * Used internally, not necessary to use directly.
+ * 
  * @author Matthew D. Hicks
  */
-public interface ClientConnectionListener {
-	/**
-	 * This method is invoked when a connection has
-	 * been successfully established with a JGNConnection
-	 * 
-	 * @param connection
-	 */
-	public void connected(JGNConnection connection);
+public class PlayerStatusMessage extends Message implements PlayerMessage, CertifiedMessage {
+	public static final int STATUS_CONNECTED = 1;
+	public static final int STATUS_DISCONNECTED = 2;
 	
-	/**
-	 * This method is invoked when a connection has
-	 * been disconnected either gracefully or via
-	 * timeout.
-	 * 
-	 * @param connection
-	 */
-	public void disconnected(JGNConnection connection);
+	private int playerStatus;
+	
+	public int getPlayerStatus() {
+		return playerStatus;
+	}
+	
+	public void setPlayerStatus(int status) {
+		this.playerStatus = status;
+	}
 }

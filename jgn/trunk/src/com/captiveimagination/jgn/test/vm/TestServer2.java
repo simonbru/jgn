@@ -50,7 +50,7 @@ public class TestServer2 {
 		TestMessageServer tms = new TestMessageServer(1);
 		server.addMessageListener(tms);
 		server.addConnectionListener(tms);
-		JGN.createMessageServerThread(server).start();
+		JGN.createThread(server).start();
 		
 		MessageClient client = server.connectAndWait(new InetSocketAddress(InetAddress.getLocalHost(), 1000), 5000);
 		if (client == null) throw new IOException("Connection not established!");

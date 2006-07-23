@@ -39,6 +39,8 @@ import java.util.concurrent.*;
 
 import com.captiveimagination.jgn.*;
 import com.captiveimagination.jgn.event.*;
+import com.captiveimagination.jgn.message.*;
+import com.captiveimagination.jgn.message.type.*;
 
 /**
  * @author Matthew D. Hicks
@@ -47,16 +49,19 @@ public class JGNServer {
 	private MessageServer reliableServer;
 	private MessageServer fastServer;
 	private ConcurrentHashMap<Long,JGNConnection> registry;
+	private ServerClientConnectionController controller;
+	private ConcurrentLinkedQueue<ClientConnectionListener> listeners;
 	
 	public JGNServer(MessageServer reliableServer, MessageServer fastServer) {
 		this.reliableServer = reliableServer;
 		this.fastServer = fastServer;
 		registry = new ConcurrentHashMap<Long,JGNConnection>();
 		
-		ServerListener listener = new ServerListener(this);
+		listeners = new ConcurrentLinkedQueue<ClientConnectionListener>();
 		
-		if (reliableServer != null) reliableServer.addConnectionListener(listener);
-		if (fastServer != null) fastServer.addConnectionListener(listener);
+		controller = new ServerClientConnectionController(this);
+		if (reliableServer != null) reliableServer.setConnectionController(controller);
+		if (fastServer != null) fastServer.setConnectionController(controller);
 	}
 	
 	public JGNServer(SocketAddress reliableAddress, SocketAddress fastAddress) throws IOException {
@@ -88,10 +93,14 @@ public class JGNServer {
 		return registry.values().toArray(new JGNConnection[registry.size()]);
 	}
 	
-	protected void register(MessageClient client) {
-		JGNConnection connection = registry.get(client.getId());
+	public JGNConnection getConnection(MessageClient client) {
+		return registry.get(client.getId());
+	}
+	
+	protected synchronized JGNConnection register(MessageClient client) {
+		JGNDirectConnection connection = (JGNDirectConnection)getConnection(client);
 		if (connection == null) {
-			connection = new JGNConnection();
+			connection = new JGNDirectConnection();
 			registry.put(client.getId(), connection);
 		}
 		// TODO handle this without explicit knowledge of the MessageServer type
@@ -100,17 +109,70 @@ public class JGNServer {
 		} else {
 			connection.setFastClient(client);
 		}
+		return connection;
 	}
-}
+	
+	protected synchronized JGNConnection unregister(MessageClient client) {
+		JGNDirectConnection connection = (JGNDirectConnection)getConnection(client);
+		if (connection.getFastClient() == client) {
+			connection.setFastClient(null);
+		} else if (connection.getReliableClient() == client) {
+			connection.setReliableClient(null);
+		}
+		if ((connection.getFastClient() == null) && (connection.getReliableClient() == null)) {
+			registry.remove(client.getId());
+		}
+		return connection;
+	}
 
-class ServerListener extends ConnectionAdapter {
-	private JGNServer server;
-	
-	public ServerListener(JGNServer server) {
-		this.server = server;
+	public <T extends Message & PlayerMessage> void sendToAllExcept(T message, short exceptionPlayerId) {
+		JGNConnection[] connections = getConnections();
+		for (int i = 0; i < connections.length; i++) {
+			if (connections[i].getPlayerId() != exceptionPlayerId) {
+				connections[i].sendMessage(message);
+			}
+		}
 	}
 	
-	public void negotiationComplete(MessageClient client) {
-		server.register(client);
+	public <T extends Message & PlayerMessage> void sendToAll(T message) {
+		sendToAllExcept(message, (short)-1);
+	}
+	
+	public void addClientConnectionListener(ClientConnectionListener listener) {
+		listeners.add(listener);
+	}
+	
+	public boolean removeClientConnectionListener(ClientConnectionListener listener) {
+		return listeners.remove(listener);
+	}
+	
+	protected ConcurrentLinkedQueue<ClientConnectionListener> getListeners() {
+		return listeners;
+	}
+	
+	public void addMessageListener(MessageListener listener) {
+		if (reliableServer != null) reliableServer.addMessageListener(listener);
+		if (fastServer != null) fastServer.addMessageListener(listener);
+	}
+	
+	public void removeMessageListener(MessageListener listener) {
+		if (reliableServer != null) reliableServer.removeMessageListener(listener);
+		if (fastServer != null) fastServer.removeMessageListener(listener);
+	}
+	
+	public void close() throws IOException {
+		if (reliableServer != null) reliableServer.close();
+		if (fastServer != null) fastServer.close();
+	}
+	
+	public boolean isAlive() {
+		if ((reliableServer != null) && (reliableServer.isAlive())) return true;
+		if ((fastServer != null) && (fastServer.isAlive())) return true;
+		return false;
+	}
+	
+	protected boolean hasBoth() {
+		if ((reliableServer != null) && (fastServer != null)) return true;
+		return false;
 	}
 }

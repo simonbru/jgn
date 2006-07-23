@@ -60,7 +60,7 @@ public class ThreadingTest {
 				}
 			}
 		});
-		JGN.createMessageServerThread(server).start();
+		JGN.createThread(server).start();
 		
 		int total = 20;
 		for (int i = 0; i < total; i++) {
@@ -74,7 +74,7 @@ public class ThreadingTest {
 	
 	public static final void startServerTest(final int id, int port) throws UnknownHostException, IOException, InterruptedException {
 		final MessageServer server = new TCPMessageServer(new InetSocketAddress(InetAddress.getLocalHost(), port));
-		JGN.createMessageServerThread(server).start();
+		JGN.createThread(server).start();
 		
 		Runnable r = new Runnable() {
 			public void run() {

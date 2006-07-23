@@ -29,28 +29,69 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Created: Jul 20, 2006
+ * Created: Jul 14, 2006
  */
 package com.captiveimagination.jgn.clientserver;
+
+import com.captiveimagination.jgn.*;
+import com.captiveimagination.jgn.message.*;
+import com.captiveimagination.jgn.message.type.*;
 
 /**
  * @author Matthew D. Hicks
  */
-public interface ClientConnectionListener {
-	/**
-	 * This method is invoked when a connection has
-	 * been successfully established with a JGNConnection
-	 * 
-	 * @param connection
-	 */
-	public void connected(JGNConnection connection);
+public class JGNDirectConnection implements JGNConnection {
+	private short playerId;
+	private MessageClient reliableClient;
+	private MessageClient fastClient;
 	
-	/**
-	 * This method is invoked when a connection has
-	 * been disconnected either gracefully or via
-	 * timeout.
-	 * 
-	 * @param connection
-	 */
-	public void disconnected(JGNConnection connection);
+	public JGNDirectConnection() {
+		playerId = -1;
+	}
+	
+	public void setPlayerId(short playerId) {
+		this.playerId = playerId;
+	}
+	
+	public short getPlayerId() {
+		return playerId;
+	}
+
+	public MessageClient getFastClient() {
+		return fastClient;
+	}
+
+	public void setFastClient(MessageClient fastClient) {
+		this.fastClient = fastClient;
+	}
+
+	public MessageClient getReliableClient() {
+		return reliableClient;
+	}
+
+	public void setReliableClient(MessageClient reliableClient) {
+		this.reliableClient = reliableClient;
+	}
+	
+	public boolean isConnected() {
+		if ((reliableClient != null) && (!reliableClient.isConnected())) {
+			return false;
+		} else if ((fastClient != null) && (!fastClient.isConnected())) {
+			return false;
+		} else if ((reliableClient == null) && (fastClient == null)) {
+			return false;
+		}
+		return true;
+	}
+
+	public <T extends Message & PlayerMessage> void sendMessage(T message) {
+		message.setPlayerId(getPlayerId());
+		if ((message instanceof CertifiedMessage) && (reliableClient != null)) {
+			reliableClient.sendMessage(message);
+		} else if (fastClient != null) {
+			fastClient.sendMessage(message);
+		} else {
+			reliableClient.sendMessage(message);
+		}
+	}
 }

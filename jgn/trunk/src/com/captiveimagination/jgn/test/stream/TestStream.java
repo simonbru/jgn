@@ -42,11 +42,11 @@ public class TestStream {
 			public void disconnected(MessageClient client) {
 			}
 		});
-		Thread t1 = JGN.createMessageServerThread(server1);
+		Thread t1 = JGN.createThread(server1);
 		t1.start();
 		
 		MessageServer server2 = new TCPMessageServer(new InetSocketAddress((InetAddress)null, 2000));
-		Thread t2 = JGN.createMessageServerThread(server2);
+		Thread t2 = JGN.createThread(server2);
 		t2.start();
 		
 		MessageClient client = server2.connectAndWait(new InetSocketAddress((InetAddress)null, 1000), 5000);

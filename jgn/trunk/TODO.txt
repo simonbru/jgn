@@ -19,6 +19,7 @@ X Remove clientToFailedMessage from PacketCombiner and add property to MessageCl
 * PhysicsSynchronizationMessage extends 3DSynchronizationMessage
 * Synchronizer (replacement for Updater)
 X Implement abilities for extensions
+* Time synchronization
 * ServerRegistry
 * Ping capabilities
 * Client/Server features

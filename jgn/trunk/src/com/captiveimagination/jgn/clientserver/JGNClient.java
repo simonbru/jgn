@@ -35,8 +35,13 @@ package com.captiveimagination.jgn.clientserver;
 
 import java.io.*;
 import java.net.*;
+import java.util.*;
+import java.util.concurrent.*;
 
 import com.captiveimagination.jgn.*;
+import com.captiveimagination.jgn.clientserver.message.*;
+import com.captiveimagination.jgn.event.*;
+import com.captiveimagination.jgn.message.*;
 
 /**
  * @author Matthew D. Hicks
@@ -46,18 +51,49 @@ public class JGNClient {
 	private MessageServer reliableServer;
 	private MessageServer fastServer;
 	private ClientServerConnectionController controller;
+	private ConcurrentLinkedQueue<ClientConnectionListener> listeners;
 	
-	private JGNConnection serverConnection;
+	private JGNDirectConnection serverConnection;
+	private ConcurrentLinkedQueue<JGNConnection> connections;
 	
 	public JGNClient(MessageServer reliableServer, MessageServer fastServer) {
 		id = JGN.generateUniqueId();
 		this.reliableServer = reliableServer;
 		this.fastServer = fastServer;
 		
+		connections = new ConcurrentLinkedQueue<JGNConnection>();
+		
+		listeners = new ConcurrentLinkedQueue<ClientConnectionListener>();
+		MessageListener ml = new MessageAdapter() {
+			public void messageReceived(Message message) {
+				if (message instanceof PlayerStatusMessage) {
+					PlayerStatusMessage psm = (PlayerStatusMessage)message;
+					JGNConnection connection = getConnection(psm.getPlayerId());
+					if (connection == null) {
+						connection = register(psm.getPlayerId());
+					}
+					Iterator<ClientConnectionListener> iterator = listeners.iterator();
+					while (iterator.hasNext()) {
+						if (psm.getPlayerStatus() == PlayerStatusMessage.STATUS_CONNECTED) {
+							iterator.next().connected(connection);
+						} else {
+							iterator.next().disconnected(connection);
+						}
+					}
+				}
+			}
+		};
+		
 		controller = new ClientServerConnectionController(this);
 		
-		if (reliableServer != null) reliableServer.setConnectionController(controller);
-		if (fastServer != null) fastServer.setConnectionController(controller);
+		if (reliableServer != null) {
+			reliableServer.setConnectionController(controller);
+			reliableServer.addMessageListener(ml);
+		}
+		if (fastServer != null) {
+			fastServer.setConnectionController(controller);
+			fastServer.addMessageListener(ml);
+		}
 	}
 	
 	public JGNClient(SocketAddress reliableAddress, SocketAddress fastAddress) throws IOException {
@@ -89,10 +125,10 @@ public class JGNClient {
 		if (fastServer != null) fastServer.updateEvents();
 	}
 
-	public void connect(InetSocketAddress reliableRemoteAddress, InetSocketAddress fastRemoteAddress) throws IOException {
+	public void connect(SocketAddress reliableRemoteAddress, SocketAddress fastRemoteAddress) throws IOException {
 		if (serverConnection != null) throw new IOException("A connection already exists. Only one connection to a server may exist.");
 		
-		serverConnection = new JGNConnection();
+		serverConnection = new JGNDirectConnection();
 		if (reliableRemoteAddress != null) {
 			serverConnection.setReliableClient(reliableServer.connect(reliableRemoteAddress));
 		}
@@ -101,19 +137,95 @@ public class JGNClient {
 		}
 	}
 	
-	public void connectAndWait(InetSocketAddress reliableRemoteAddress, InetSocketAddress fastRemoteAddress, long timeout) throws IOException, InterruptedException {
+	/**
+	 * Invokes connect() and then waits <code>timeout</code> for the connection to complete successfully.
+	 * If it is unable to connect within the allocated time an IOException will be thrown.
+	 * 
+	 * @param reliableRemoteAddress
+	 * @param fastRemoteAddress
+	 * @param timeout
+	 * @throws IOException
+	 * @throws InterruptedException
+	 */
+	public void connectAndWait(SocketAddress reliableRemoteAddress, SocketAddress fastRemoteAddress, long timeout) throws IOException, InterruptedException {
 		connect(reliableRemoteAddress, fastRemoteAddress);
 		
 		long time = System.currentTimeMillis();
 		while (System.currentTimeMillis() < time + timeout) {
-			if (serverConnection.isConnected()) return;
+			if (isServerConnected()) return;
 			Thread.sleep(10);
 		}
 
 		// Last attempt before failing
-		if (!serverConnection.isConnected()) {
+		if (!isServerConnected()) {
 			// fastClient exists and is not connected
 			throw new IOException("Connection to fastRemoteAddress failed.");
 		}
+	}
+
+	private boolean isServerConnected() {
+		if (serverConnection.isConnected()) {
+			if ((reliableServer == null) == (serverConnection.getReliableClient() == null)) {
+				if ((fastServer == null) == (serverConnection.getFastClient() == null)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+	
+	private JGNConnection register(short playerId) {
+		JGNConnection connection = new JGNRelayConnection(serverConnection, playerId);
+		connections.add(connection);
+		return connection;
+	}
+	
+	public JGNConnection[] getConnections() {
+		synchronized(connections) {
+			return connections.toArray(new JGNConnection[connections.size()]);
+		}
+	}
+	
+	public JGNConnection getConnection(short playerId) {
+		Iterator<JGNConnection> iterator = connections.iterator();
+		while (iterator.hasNext()) {
+			JGNConnection connection = iterator.next();
+			if (connection.getPlayerId() == playerId) return connection;
+		}
+		return null;
+	}
+	
+	public void addClientConnectionListener(ClientConnectionListener listener) {
+		listeners.add(listener);
+	}
+	
+	public boolean removeClientConnectionListener(ClientConnectionListener listener) {
+		return listeners.remove(listener);
+	}
+	
+	public void addMessageListener(MessageListener listener) {
+		if (reliableServer != null) reliableServer.addMessageListener(listener);
+		if (fastServer != null) fastServer.addMessageListener(listener);
+	}
+	
+	public void removeMessageListener(MessageListener listener) {
+		if (reliableServer != null) reliableServer.removeMessageListener(listener);
+		if (fastServer != null) fastServer.removeMessageListener(listener);
+	}
+	
+	public void close() throws IOException {
+		if (reliableServer != null) reliableServer.close();
+		if (fastServer != null) fastServer.close();
+	}
+	
+	public boolean isAlive() {
+		if ((reliableServer != null) && (reliableServer.isAlive())) return true;
+		if ((fastServer != null) && (fastServer.isAlive())) return true;
+		return false;
+	}
+
+	protected boolean hasBoth() {
+		if ((reliableServer != null) && (fastServer != null)) return true;
+		return false;
 	}
 }

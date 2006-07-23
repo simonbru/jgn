@@ -49,6 +49,6 @@ public class TestServer1 {
 		TestMessageServer tms = new TestMessageServer(1);
 		server.addMessageListener(tms);
 		server.addConnectionListener(tms);
-		JGN.createMessageServerThread(server).start();
+		JGN.createThread(server).start();
 	}
 }

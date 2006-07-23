@@ -29,34 +29,49 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Created: Jul 6, 2006
+ * Created: Jul 22, 2006
  */
-package com.captiveimagination.jgn.test.basic;
+package com.captiveimagination.jgn.test.clientserver;
 
 import java.net.*;
 
 import com.captiveimagination.jgn.*;
+import com.captiveimagination.jgn.clientserver.*;
 
 /**
  * @author Matthew D. Hicks
  */
-public class TestUDPServer {
+public class BasicClientServer {
 	public static void main(String[] args) throws Exception {
-		JGN.register(BasicMessage.class);
+		// Create Server
+		SocketAddress serverReliableAddress = new InetSocketAddress(InetAddress.getLocalHost(), 1000);
+		SocketAddress serverFastAddress = new InetSocketAddress(InetAddress.getLocalHost(), 2000);
+		JGNServer server = new JGNServer(serverReliableAddress, serverFastAddress);
+		server.addClientConnectionListener(new ClientConnectionListener() {
+			public void connected(JGNConnection connection) {
+				System.out.println("Client connected on server: " + connection.getPlayerId());
+			}
+
+			public void disconnected(JGNConnection connection) {
+				System.out.println("Client disconnected on server: " + connection.getPlayerId());
+			}
+		});
+		JGN.createThread(server).start();
 		
-		MessageServer server1 = new UDPMessageServer(new InetSocketAddress(InetAddress.getLocalHost(), 1000));
-		TestMessageServer listener1 = new TestMessageServer(1);
-		server1.addConnectionListener(listener1);
-		server1.addMessageListener(listener1);
-		JGN.createThread(server1).start();
-		
-		MessageServer server2 = new UDPMessageServer(new InetSocketAddress(InetAddress.getLocalHost(), 2000));
-		TestMessageServer listener2 = new TestMessageServer(2);
-		server2.addConnectionListener(listener2);
-		server2.addMessageListener(listener2);
-		JGN.createThread(server2).start();
-		
-		MessageClient client = server2.connectAndWait(new InetSocketAddress(InetAddress.getLocalHost(), 1000), 5000);
-		System.out.println("Client: " + client);
+		// Create Client1
+		JGNClient client1 = new JGNClient(new InetSocketAddress(InetAddress.getLocalHost(), 1100), new InetSocketAddress(InetAddress.getLocalHost(), 2100));
+		client1.addClientConnectionListener(new ClientConnectionListener() {
+			public void connected(JGNConnection connection) {
+				System.out.println("Client connected on client1: " + connection.getPlayerId());
+			}
+
+			public void disconnected(JGNConnection connection) {
+				System.out.println("Client disconnected on client1: " + connection.getPlayerId());
+			}
+		});
+		JGN.createThread(client1).start();
+		client1.connectAndWait(serverReliableAddress, serverFastAddress, 15000);
+		System.out.println("Connected!");
+		client1.close();
 	}
 }

@@ -40,7 +40,7 @@ public class AbstractMessageServerTestCase extends TestCase {
 			}
 			
 		});
-		JGN.createMessageServerThread(server1).start();
+		JGN.createThread(server1).start();
 		
 		// Create second MessageServer
 		InetSocketAddress address2 = new InetSocketAddress(InetAddress.getLocalHost(), 2000);
@@ -60,7 +60,7 @@ public class AbstractMessageServerTestCase extends TestCase {
 			}
 			
 		});
-		JGN.createMessageServerThread(server2).start();
+		JGN.createThread(server2).start();
 		
 		// Connect server2 to server1
 		MessageClient client = server2.connectAndWait(address1, 5000);

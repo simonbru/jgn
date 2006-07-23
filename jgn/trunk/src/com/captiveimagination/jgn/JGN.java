@@ -36,6 +36,8 @@ package com.captiveimagination.jgn;
 import java.io.*;
 import java.util.*;
 
+import com.captiveimagination.jgn.clientserver.*;
+import com.captiveimagination.jgn.clientserver.message.*;
 import com.captiveimagination.jgn.convert.*;
 import com.captiveimagination.jgn.message.*;
 import com.captiveimagination.jgn.ro.*;
@@ -59,6 +61,7 @@ public class JGN {
 		register(DisconnectMessage.class, (short)-5);
 		register(RemoteObjectRequest.class, (short)-6);
 		register(RemoteObjectResponse.class, (short)-7);
+		register(PlayerStatusMessage.class, (short)-8);
 	}
 	
 	/**
@@ -134,7 +137,7 @@ public class JGN {
 		message.setMessageClasses(names);
 	}
 
-	public static final Runnable createMessageServerRunnable(final MessageServer server) {
+	public static final Runnable createRunnable(final MessageServer server) {
 		Runnable r = new Runnable() {
 			public void run() {
 				while (server.isAlive()) {
@@ -154,8 +157,56 @@ public class JGN {
 		return r;
 	}
 	
-	public static final Thread createMessageServerThread(MessageServer server) {
-		return new Thread(createMessageServerRunnable(server));
+	public static final Runnable createRunnable(final JGNServer server) {
+		Runnable r = new Runnable() {
+			public void run() {
+				while (server.isAlive()) {
+					try {
+						server.update();
+					} catch(IOException exc) {
+						throw new RuntimeException(exc);
+					}
+					try {
+						Thread.sleep(1);
+					} catch(InterruptedException exc) {
+						exc.printStackTrace();
+					}
+				}
+			}
+		};
+		return r;
+	}
+	
+	public static final Runnable createRunnable(final JGNClient client) {
+		Runnable r = new Runnable() {
+			public void run() {
+				while (client.isAlive()) {
+					try {
+						client.update();
+					} catch(IOException exc) {
+						throw new RuntimeException(exc);
+					}
+					try {
+						Thread.sleep(1);
+					} catch(InterruptedException exc) {
+						exc.printStackTrace();
+					}
+				}
+			}
+		};
+		return r;
+	}
+	
+	public static final Thread createThread(MessageServer server) {
+		return new Thread(createRunnable(server));
+	}
+	
+	public static final Thread createThread(JGNServer server) {
+		return new Thread(createRunnable(server));
+	}
+	
+	public static final Thread createThread(JGNClient client) {
+		return new Thread(createRunnable(client));
 	}
 
 	public static final long generateUniqueId() {

@@ -141,6 +141,30 @@ public class ConversionHandler {
 				exc.printStackTrace();
 			}
 		}
+		if (PlayerMessage.class.isAssignableFrom(messageClass)) {
+			// Add validation for PlayerMessage
+			try {
+				converters.add(Converter.CONVERTERS.get(short.class));
+				Method getter = messageClass.getMethod("getPlayerId", new Class[0]);
+				getter.setAccessible(true);
+				Method setter = messageClass.getMethod("setPlayerId", new Class[] {short.class});
+				setter.setAccessible(true);
+				getters.add(getter);
+				setters.add(setter);
+				
+				converters.add(Converter.CONVERTERS.get(short.class));
+				getter = messageClass.getMethod("getDestinationPlayerId", new Class[0]);
+				getter.setAccessible(true);
+				setter = messageClass.getMethod("setDestinationPlayerId", new Class[] {short.class});
+				setter.setAccessible(true);
+				getters.add(getter);
+				setters.add(setter);
+			} catch(SecurityException exc) {
+				exc.printStackTrace();
+			} catch(NoSuchMethodException exc) {
+				exc.printStackTrace();
+			}
+		}
 		if (GroupMessage.class.isAssignableFrom(messageClass)) {
 			// Add validation for GroupMessage
 			try {

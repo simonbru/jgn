@@ -49,6 +49,8 @@ public abstract class Message implements Cloneable {
 	
 	private long id;
 	private short groupId;
+	private short playerId;
+	private short destinationPlayerId;
 	private long timestamp;
 	private int tries;
 	private int maxTries;
@@ -57,6 +59,8 @@ public abstract class Message implements Cloneable {
 	
 	public Message() {
 		groupId = -1;	// Default to -1 meaning there is no group assignment
+		playerId = -1;
+		destinationPlayerId = -1;
 		timestamp = -1;
 		tries = 0;
 		maxTries = 5;
@@ -115,6 +119,55 @@ public abstract class Message implements Cloneable {
 	@Hide
 	public void setGroupId(short groupId) {
 		this.groupId = groupId;
+	}
+	
+	/*
+	 * Ignored unless the extending Message implements
+	 * PlayerMessage. This is useful for distinguishing
+	 * between players on a game server.
+	 */
+	@Hide
+	public short getPlayerId() {
+		return playerId;
+	}
+	
+	/**
+	 * Ignored unless the extending Message implements
+	 * PlayerMessage. This is useful for distinguishing
+	 * between players on a game server.
+	 * 
+	 * @param playerId
+	 */
+	@Hide
+	public void setPlayerId(short playerId) {
+		this.playerId = playerId;
+	}
+	
+	/**
+	 * Ignored unless the extending Message implements
+	 * PlayerMessage. This is utilized for routing of
+	 * messages typically through a server to a destination
+	 * player.
+	 * 
+	 * @return
+	 * 		destinationPlayerId
+	 */
+	@Hide
+	public short getDestinationPlayerId() {
+		return destinationPlayerId;
+	}
+	
+	/**
+	 * Ignored unless the extending Message implements
+	 * PlayerMessage. This is utilized for routing of
+	 * messages typically through a server to a destination
+	 * player.
+	 * 
+	 * @param destinationPlayerId
+	 */
+	@Hide
+	public void setDestinationPlayerId(short destinationPlayerId) {
+		this.destinationPlayerId = destinationPlayerId;
 	}
 	
 	/**

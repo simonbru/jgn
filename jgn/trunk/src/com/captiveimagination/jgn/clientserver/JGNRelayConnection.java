@@ -29,28 +29,45 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Created: Jul 20, 2006
+ * Created: Jul 22, 2006
  */
 package com.captiveimagination.jgn.clientserver;
 
+import com.captiveimagination.jgn.message.*;
+import com.captiveimagination.jgn.message.type.*;
+
 /**
  * @author Matthew D. Hicks
+ *
  */
-public interface ClientConnectionListener {
-	/**
-	 * This method is invoked when a connection has
-	 * been successfully established with a JGNConnection
-	 * 
-	 * @param connection
-	 */
-	public void connected(JGNConnection connection);
+public class JGNRelayConnection implements JGNConnection {
+	private JGNDirectConnection serverConnection;
+	private short playerId;
+	private short representativePlayerId;
 	
-	/**
-	 * This method is invoked when a connection has
-	 * been disconnected either gracefully or via
-	 * timeout.
-	 * 
-	 * @param connection
-	 */
-	public void disconnected(JGNConnection connection);
+	public JGNRelayConnection(JGNDirectConnection serverConnection, short representativePlayerId) {
+		this.serverConnection = serverConnection;
+		this.representativePlayerId = representativePlayerId;
+		playerId = -1;
+	}
+	
+	public short getPlayerId() {
+		if (playerId == -1) {
+			if ((serverConnection.getReliableClient() != null) && (serverConnection.getReliableClient().isConnected())) {
+				playerId = (short)serverConnection.getReliableClient().getId();
+			} else if ((serverConnection.getFastClient() != null) && (serverConnection.getFastClient().isConnected())) {
+				playerId = (short)serverConnection.getFastClient().getId();
+			}
+		}
+		return playerId;
+	}
+	
+	public <T extends Message & PlayerMessage> void sendMessage(T message) {
+		message.setDestinationPlayerId(representativePlayerId);
+		serverConnection.sendMessage(message);
+	}
+	
+	public boolean isConnected() {
+		return serverConnection.isConnected();
+	}
 }

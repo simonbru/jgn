@@ -29,28 +29,16 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Created: Jul 20, 2006
+ * Created: Jul 22, 2006
  */
-package com.captiveimagination.jgn.clientserver;
+package com.captiveimagination.jgn.message.type;
 
 /**
+ * Messages that implement PlayerMessage will be able to utilize the
+ * getPlayerId/setPlayerId/getDestinationPlayerId/setDestinationPlayerId
+ * methods of Message.
+ * 
  * @author Matthew D. Hicks
  */
-public interface ClientConnectionListener {
-	/**
-	 * This method is invoked when a connection has
-	 * been successfully established with a JGNConnection
-	 * 
-	 * @param connection
-	 */
-	public void connected(JGNConnection connection);
-	
-	/**
-	 * This method is invoked when a connection has
-	 * been disconnected either gracefully or via
-	 * timeout.
-	 * 
-	 * @param connection
-	 */
-	public void disconnected(JGNConnection connection);
+public interface PlayerMessage {
 }

@@ -17,6 +17,9 @@ public class AbstractMessageServerTestCase extends TestCase {
 	protected boolean client2Disconnected;
 	
 	protected void setUp() throws IOException, InterruptedException {
+		boolean tcp = true;
+		boolean debug = true;
+		
 		JGN.register(MyCertifiedMessage.class);
 		JGN.register(MyRealtimeMessage.class);
 		JGN.register(MyUniqueMessage.class);
@@ -24,7 +27,15 @@ public class AbstractMessageServerTestCase extends TestCase {
 		
 		// Create first MessageServer
 		InetSocketAddress address1 = new InetSocketAddress(InetAddress.getLocalHost(), 1000);
-		server1 = new TCPMessageServer(address1);
+		if (tcp) {
+			server1 = new TCPMessageServer(address1);
+		} else {
+			server1 = new UDPMessageServer(address1);
+		}
+		if (debug) {
+			server1.addMessageListener(DebugListener.getInstance());
+			server1.addConnectionListener(DebugListener.getInstance());
+		}
 		server1.addConnectionListener(new ConnectionListener() {
 			public void connected(MessageClient client) {
 				client1Disconnected = false;
@@ -44,7 +55,15 @@ public class AbstractMessageServerTestCase extends TestCase {
 		
 		// Create second MessageServer
 		InetSocketAddress address2 = new InetSocketAddress(InetAddress.getLocalHost(), 2000);
-		server2 = new TCPMessageServer(address2);
+		if (tcp) {
+			server2 = new TCPMessageServer(address2);
+		} else {
+			server2 = new UDPMessageServer(address2);
+		}
+		if (debug) {
+			server2.addMessageListener(DebugListener.getInstance());
+			server2.addConnectionListener(DebugListener.getInstance());
+		}
 		server2.addConnectionListener(new ConnectionListener() {
 			public void connected(MessageClient client) {
 				client2Disconnected = false;

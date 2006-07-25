@@ -29,80 +29,57 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Created: Jul 14, 2006
+ * Created: Jul 24, 2006
  */
-package com.captiveimagination.jgn.clientserver;
-
-import java.io.*;
+package com.captiveimagination.jgn.event;
 
 import com.captiveimagination.jgn.*;
 import com.captiveimagination.jgn.message.*;
-import com.captiveimagination.jgn.message.type.*;
 
 /**
+ * A simple debug listener for MessageListener and ConnectionListener that
+ * prints out method invocations.
+ * 
  * @author Matthew D. Hicks
  */
-public class JGNDirectConnection implements JGNConnection {
-	private short playerId;
-	private MessageClient reliableClient;
-	private MessageClient fastClient;
+public class DebugListener implements MessageListener, ConnectionListener {
+	private static DebugListener listener;
 	
-	public JGNDirectConnection() {
-		playerId = -1;
+	private DebugListener() {
 	}
 	
-	public void setPlayerId(short playerId) {
-		this.playerId = playerId;
+	public void messageCertified(Message message) {
+		System.out.println("messageCertified() - " + message.getMessageClient().getAddress() + " - " + message);
+	}
+
+	public void messageFailed(Message message) {
+		System.out.println("messageFailed() - " + message.getMessageClient().getAddress() + " - " + message);
+	}
+
+	public void messageReceived(Message message) {
+		System.out.println("messageReceived() - " + message.getMessageClient().getAddress() + " - " + message);
+	}
+
+	public void messageSent(Message message) {
+		System.out.println("messageSent() - " + message.getMessageClient().getAddress() + " - " + message);
+	}
+
+	public void connected(MessageClient client) {
+		System.out.println("connected() - " + client.getAddress() + " - " + client.getId());
+	}
+
+	public void disconnected(MessageClient client) {
+		System.out.println("disconnected() - " + client.getAddress() + " - " + client.getId());
+	}
+
+	public void negotiationComplete(MessageClient client) {
+		System.out.println("negotiationComplete() - " + client.getAddress() + " - " + client.getId());
 	}
 	
-	public short getPlayerId() {
-		return playerId;
-	}
-
-	public MessageClient getFastClient() {
-		return fastClient;
-	}
-
-	public void setFastClient(MessageClient fastClient) {
-		this.fastClient = fastClient;
-	}
-
-	public MessageClient getReliableClient() {
-		return reliableClient;
-	}
-
-	public void setReliableClient(MessageClient reliableClient) {
-		this.reliableClient = reliableClient;
-	}
-	
-	public boolean isConnected() {
-		if ((reliableClient != null) && (!reliableClient.isConnected())) {
-			return false;
-		} else if ((fastClient != null) && (!fastClient.isConnected())) {
-			return false;
-		} else if ((reliableClient == null) && (fastClient == null)) {
-			return false;
+	public static final DebugListener getInstance() {
+		if (listener == null) {
+			listener = new DebugListener();
 		}
-		return true;
-	}
-
-	public void disconnect() throws IOException {
-		if (reliableClient != null) {
-			reliableClient.disconnect();
-		}
-		if (fastClient != null) {
-			fastClient.disconnect();
-		}
-	}
-	
-	public <T extends Message & PlayerMessage> void sendMessage(T message) {
-		message.setPlayerId(getPlayerId());
-		if ((message instanceof CertifiedMessage) && (reliableClient != null)) {
-			reliableClient.sendMessage(message);
-		} else if (fastClient != null) {
-			fastClient.sendMessage(message);
-		} else {
-			reliableClient.sendMessage(message);
-		}
+		return listener;
 	}
 }

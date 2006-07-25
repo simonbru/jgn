@@ -113,6 +113,7 @@ public class JGNServer {
 	}
 	
 	protected synchronized JGNConnection unregister(MessageClient client) {
+		System.out.println("Unregister: " + client);
 		JGNDirectConnection connection = (JGNDirectConnection)getConnection(client);
 		if (connection.getFastClient() == client) {
 			connection.setFastClient(null);

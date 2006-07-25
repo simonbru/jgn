@@ -72,6 +72,6 @@ public class BasicClientServer {
 		JGN.createThread(client1).start();
 		client1.connectAndWait(serverReliableAddress, serverFastAddress, 15000);
 		System.out.println("Connected!");
-		client1.close();
+		client1.disconnect();
 	}
 }

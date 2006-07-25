@@ -213,9 +213,10 @@ public class JGNClient {
 		if (fastServer != null) fastServer.removeMessageListener(listener);
 	}
 	
-	public void close() throws IOException {
-		if (reliableServer != null) reliableServer.close();
-		if (fastServer != null) fastServer.close();
+	public void disconnect() throws IOException {
+		serverConnection.disconnect();
+		//if (reliableServer != null) reliableServer.close();
+		//if (fastServer != null) fastServer.close();
 	}
 	
 	public boolean isAlive() {

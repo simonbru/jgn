@@ -46,8 +46,11 @@ public class PacketCombiner {
 			}
 			if (message == null) break;
 			// We mustn't try to send messages other than registration until the client is connected
-			if ((!(message instanceof LocalRegistrationMessage)) && (!client.isConnected())) {
-				break;
+			if (!(message instanceof LocalRegistrationMessage)) {
+				if ((client.getStatus() != MessageClient.Status.CONNECTED) && (client.getStatus() != MessageClient.Status.DISCONNECTING)) {
+					queue.add(message);
+					break;
+				}
 			}
 			
 			message.setMessageClient(client);

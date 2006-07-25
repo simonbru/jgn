@@ -8,6 +8,7 @@ import com.captiveimagination.jgn.message.*;
 
 public class TestDisconnect extends AbstractMessageServerTestCase {
 	public void testDisconnect1() throws Exception {
+		Thread.sleep(1000);		// TODO this is necessary or messages stop getting certified too soon - fix this
 		client1.disconnect();
 		long time = System.currentTimeMillis();
 		long timeout = 5000;
@@ -18,6 +19,7 @@ public class TestDisconnect extends AbstractMessageServerTestCase {
 			Thread.sleep(1);
 		}
 		Thread.sleep(1000);
+		System.out.println("Status: " + client1.getStatus() + ", " + client2.getStatus());
 		assertTrue(client1.getStatus() == MessageClient.Status.DISCONNECTED);
 		assertTrue(client2.getStatus() == MessageClient.Status.DISCONNECTED);
 		assertTrue(client1Disconnected);
@@ -103,5 +105,12 @@ public class TestDisconnect extends AbstractMessageServerTestCase {
 		if (client4 != null) {
 			System.out.println("Client 4 established to server2");
 		}
+	}
+
+	public static void main(String[] args) throws Exception {
+		TestDisconnect test = new TestDisconnect();
+		test.setUp();
+		test.testDisconnect1();
+		test.tearDown();
 	}
 }

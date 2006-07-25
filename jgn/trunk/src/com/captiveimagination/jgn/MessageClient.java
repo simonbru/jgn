@@ -161,17 +161,17 @@ public class MessageClient {
 	 * @param message
 	 */
 	public void sendMessage(Message message) {
-		if (getStatus() == Status.DISCONNECTING) {
-			throw new RuntimeException("Connection is closing, no more messages being accepted.");
-		} else if (getStatus() == Status.DISCONNECTED) {
-			throw new RuntimeException("Connection is closed, no more messages being accepted.");
-		}
 		try {
 			Message m = message.clone();
 			m.setMessageClient(this);
 			// Assign unique id if this is a UniqueMessage
 			if (m instanceof UniqueMessage) {
 				m.setId(Message.nextUniqueId());
+			}
+			if (getStatus() == Status.DISCONNECTING) {
+				throw new RuntimeException("Connection is closing, no more messages being accepted.");
+			} else if (getStatus() == Status.DISCONNECTED) {
+				throw new RuntimeException("Connection is closed, no more messages being accepted.");
 			}
 			outgoingQueue.add(m);
 		} catch(CloneNotSupportedException exc) {
@@ -385,5 +385,18 @@ public class MessageClient {
 	
 	protected void setFailedMessage(Message failedMessage) {
 		this.failedMessage = failedMessage;
+	}
+
+	protected boolean isDisconnectable() {
+		if (status == Status.DISCONNECTING) {
+			if (!outgoingQueue.isEmpty()) return false;
+			if (!incomingMessages.isEmpty()) return false;
+			if (!outgoingMessages.isEmpty()) return false;
+			if (!certifiableMessages.isEmpty()) return false;
+			if (!certifiedMessages.isEmpty()) return false;
+			if (!failedMessages.isEmpty()) return false;
+			return true;
+		}
+		return false;
 	}
 }

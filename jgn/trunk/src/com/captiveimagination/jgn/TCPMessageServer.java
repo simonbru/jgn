@@ -140,7 +140,7 @@ public class TCPMessageServer extends NIOMessageServer {
 					
 					return true;
 				}
-			} else if (client.getStatus() == MessageClient.Status.DISCONNECTING) {
+			} else if (client.isDisconnectable()) {
 				disconnectInternal(client, true);
 			}
 		}

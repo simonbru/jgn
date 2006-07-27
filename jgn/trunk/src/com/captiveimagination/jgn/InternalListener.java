@@ -72,6 +72,10 @@ class InternalListener implements MessageListener, ConnectionListener {
 				// TODO handle more gracefully
 				throw new RuntimeException(exc);
 			}
+			
+			if (!message.getMessageClient().hasSentRegistration()) {
+				message.getMessageClient().getMessageServer().getConnectionController().negotiate(message.getMessageClient());
+			}
 		} else if (message instanceof DisconnectMessage) {
 			// Disconnect from the remote client
 			message.getMessageClient().setStatus(MessageClient.Status.DISCONNECTING);
@@ -108,7 +112,7 @@ class InternalListener implements MessageListener, ConnectionListener {
 
 	public void connected(MessageClient client) {
 		// Send the registration message
-		client.getMessageServer().getConnectionController().negotiate(client);
+		//client.getMessageServer().getConnectionController().negotiate(client);
 	}
 
 	public void negotiationComplete(MessageClient client) {	

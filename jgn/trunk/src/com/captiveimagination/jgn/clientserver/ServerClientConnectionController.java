@@ -57,7 +57,6 @@ public class ServerClientConnectionController extends DefaultConnectionControlle
 		JGNDirectConnection connection = (JGNDirectConnection)server.register(client);
 		
 		LocalRegistrationMessage message = new LocalRegistrationMessage();
-		
 		short playerId = connection.getPlayerId();
 		if (playerId == -1) {
 			playerId = nextPlayerId();

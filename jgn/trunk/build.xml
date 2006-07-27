@@ -21,7 +21,7 @@
     </target>
     	
     <target name="compile" depends="clean" description="Compiles the Task">
-        <javac srcdir="${src}" destdir="${build}" excludes="com/captiveimagination/jgn_old/**" classpath="${cp}" source="1.5" target="1.5" debug="true"/>
+        <javac srcdir="${src}" destdir="${build}" classpath="${cp}" source="1.5" target="1.5" debug="true"/>
     </target>
 	
 	<target name="javadoc" depends="compile" description="Generates the JavaDocs">

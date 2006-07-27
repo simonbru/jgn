@@ -41,6 +41,7 @@ import com.captiveimagination.jgn.clientserver.message.*;
 import com.captiveimagination.jgn.convert.*;
 import com.captiveimagination.jgn.message.*;
 import com.captiveimagination.jgn.ro.*;
+import com.captiveimagination.jgn.sync.message.*;
 
 /**
  * Foundational static class for various functionality that is abstract from any other
@@ -62,6 +63,10 @@ public class JGN {
 		register(RemoteObjectRequest.class, (short)-6);
 		register(RemoteObjectResponse.class, (short)-7);
 		register(PlayerStatusMessage.class, (short)-8);
+		register(ChatMessage.class, (short)-9);
+		register(Synchronize2DMessage.class, (short)-10);
+		register(Synchronize3DMessage.class, (short)-11);
+		register(SynchronizePhysicsMessage.class, (short)-12);
 	}
 	
 	/**

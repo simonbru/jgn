@@ -77,6 +77,7 @@ public class MessageClient {
 	private HashMap<Short,JGNInputStream> inputStreams;
 	private HashMap<Short,JGNOutputStream> outputStreams;
 	private CombinedPacket currentWrite;
+	private boolean sentRegistration;				// Refers to if registration message has been sent
 	
 	private int readPosition;
 	private ByteBuffer readBuffer;
@@ -104,7 +105,6 @@ public class MessageClient {
 		
 		registry = new HashMap<Short,Class<? extends Message>>();
 		registryReverse = new HashMap<Class<? extends Message>,Short>();
-		register((short)-1, LocalRegistrationMessage.class);
 		received();
 		sent();
 	}
@@ -164,6 +164,11 @@ public class MessageClient {
 		try {
 			Message m = message.clone();
 			m.setMessageClient(this);
+			
+			// Make sure we know if we've already sent a registration message
+			if (m instanceof LocalRegistrationMessage) {
+				sentRegistration = true;
+			}
 			// Assign unique id if this is a UniqueMessage
 			if (m instanceof IdentityMessage) {
 				// Ignore setting an id
@@ -320,6 +325,7 @@ public class MessageClient {
 	}
 	
 	public void register(short typeId, Class<? extends Message> c) {
+		System.out.println("Registering: " + c);
 		registry.put(typeId, c);
 		registryReverse.put(c, typeId);
 	}
@@ -400,5 +406,9 @@ public class MessageClient {
 			return true;
 		}
 		return false;
+	}
+
+	protected boolean hasSentRegistration() {
+		return sentRegistration;
 	}
 }

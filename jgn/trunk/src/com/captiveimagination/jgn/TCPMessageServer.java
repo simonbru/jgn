@@ -76,6 +76,7 @@ public class TCPMessageServer extends NIOMessageServer {
 		((SocketChannel)channel).finishConnect();
 		MessageClient client = (MessageClient)channel.keyFor(selector).attachment();
 		getIncomingConnectionQueue().add(client);
+		client.getMessageServer().getConnectionController().negotiate(client);
 	}
 	
 	protected void read(SelectableChannel channel) throws IOException {

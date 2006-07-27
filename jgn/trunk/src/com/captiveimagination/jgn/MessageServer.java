@@ -399,6 +399,18 @@ public abstract class MessageServer {
 				client.sent();
 			}
 		}
+		
+		// If attempting to shutdown make sure all MessageClients are closed before alive = false
+		if ((!keepAlive) && (alive)) {
+			synchronized (getMessageClients()) {
+				for (MessageClient client : getMessageClients()) {
+					if (client.getStatus() != MessageClient.Status.DISCONNECTED) {
+						break;
+					}
+				}
+				alive = false;
+			}
+		}
 	}
 	
 	/**

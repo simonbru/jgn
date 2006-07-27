@@ -96,7 +96,9 @@ public class JGNDirectConnection implements JGNConnection {
 	}
 	
 	public <T extends Message & PlayerMessage> void sendMessage(T message) {
-		message.setPlayerId(getPlayerId());
+		if (message.getPlayerId() == -1) {
+			message.setPlayerId(getPlayerId());
+		}
 		if ((message instanceof CertifiedMessage) && (reliableClient != null)) {
 			reliableClient.sendMessage(message);
 		} else if (fastClient != null) {

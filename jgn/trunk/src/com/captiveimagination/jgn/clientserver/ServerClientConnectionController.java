@@ -38,12 +38,13 @@ import java.util.concurrent.*;
 
 import com.captiveimagination.jgn.*;
 import com.captiveimagination.jgn.clientserver.message.*;
+import com.captiveimagination.jgn.event.*;
 import com.captiveimagination.jgn.message.*;
 
 /**
  * @author Matthew D. Hicks
  */
-public class ServerClientConnectionController extends DefaultConnectionController {
+public class ServerClientConnectionController extends DefaultConnectionController implements ConnectionListener {
 	private JGNServer server;
 	private boolean[] playerIds;
 	
@@ -93,9 +94,21 @@ public class ServerClientConnectionController extends DefaultConnectionControlle
 			}
 		}
 	}
-	
-	public void disconnect(MessageClient client) {
-		super.disconnect(client);
+		
+	private synchronized short nextPlayerId() {
+		for (int i = 0; i < playerIds.length; i++) {
+			if (!playerIds[i]) {
+				playerIds[i] = true;
+				return (short)i;
+			}
+		}
+		throw new RuntimeException("Ran out of player ids.");
+	}
+
+	public void connected(MessageClient client) {
+	}
+
+	public void disconnected(MessageClient client) {
 		JGNDirectConnection connection = (JGNDirectConnection)server.unregister(client);
 		PlayerStatusMessage psm = new PlayerStatusMessage();
 		psm.setPlayerId(connection.getPlayerId());
@@ -109,14 +122,7 @@ public class ServerClientConnectionController extends DefaultConnectionControlle
 			iterator.next().disconnected(connection);
 		}
 	}
-	
-	private synchronized short nextPlayerId() {
-		for (int i = 0; i < playerIds.length; i++) {
-			if (!playerIds[i]) {
-				playerIds[i] = true;
-				return (short)i;
-			}
-		}
-		throw new RuntimeException("Ran out of player ids.");
+
+	public void negotiationComplete(MessageClient client) {
 	}
 }

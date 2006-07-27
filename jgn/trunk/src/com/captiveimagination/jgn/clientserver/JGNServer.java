@@ -35,6 +35,7 @@ package com.captiveimagination.jgn.clientserver;
 
 import java.io.*;
 import java.net.*;
+import java.util.*;
 import java.util.concurrent.*;
 
 import com.captiveimagination.jgn.*;
@@ -48,20 +49,27 @@ import com.captiveimagination.jgn.message.type.*;
 public class JGNServer {
 	private MessageServer reliableServer;
 	private MessageServer fastServer;
-	private ConcurrentHashMap<Long,JGNConnection> registry;
+	private ConcurrentLinkedQueue<JGNDirectConnection> registry;
+	//private ConcurrentHashMap<Long,JGNConnection> registry;
 	private ServerClientConnectionController controller;
 	private ConcurrentLinkedQueue<ClientConnectionListener> listeners;
 	
 	public JGNServer(MessageServer reliableServer, MessageServer fastServer) {
 		this.reliableServer = reliableServer;
 		this.fastServer = fastServer;
-		registry = new ConcurrentHashMap<Long,JGNConnection>();
+		registry = new ConcurrentLinkedQueue<JGNDirectConnection>();
 		
 		listeners = new ConcurrentLinkedQueue<ClientConnectionListener>();
 		
 		controller = new ServerClientConnectionController(this);
-		if (reliableServer != null) reliableServer.setConnectionController(controller);
-		if (fastServer != null) fastServer.setConnectionController(controller);
+		if (reliableServer != null) {
+			reliableServer.setConnectionController(controller);
+			reliableServer.addConnectionListener(controller);
+		}
+		if (fastServer != null) {
+			fastServer.setConnectionController(controller);
+			fastServer.addConnectionListener(controller);
+		}
 	}
 	
 	public JGNServer(SocketAddress reliableAddress, SocketAddress fastAddress) throws IOException {
@@ -90,18 +98,26 @@ public class JGNServer {
 	}
 
 	public JGNConnection[] getConnections() {
-		return registry.values().toArray(new JGNConnection[registry.size()]);
+		return registry.toArray(new JGNConnection[registry.size()]);
 	}
 	
 	public JGNConnection getConnection(MessageClient client) {
-		return registry.get(client.getId());
+		Iterator<JGNDirectConnection> iterator = registry.iterator();
+		while (iterator.hasNext()) {
+			JGNDirectConnection connection = iterator.next();
+			if ((connection.getFastClient() == client) || (connection.getReliableClient() == client)) {
+				return connection;
+			}
+		}
+		return null;
 	}
 	
 	protected synchronized JGNConnection register(MessageClient client) {
-		JGNDirectConnection connection = (JGNDirectConnection)getConnection(client);
+		System.err.println("Registering: " + client + ": " + client.getId());
+		JGNDirectConnection connection = (JGNDirectConnection)getConnection(client);	// NOOOO! Must use id
 		if (connection == null) {
 			connection = new JGNDirectConnection();
-			registry.put(client.getId(), connection);
+			registry.add(connection);
 		}
 		// TODO handle this without explicit knowledge of the MessageServer type
 		if (client.getMessageServer() instanceof TCPMessageServer) {
@@ -121,6 +137,7 @@ public class JGNServer {
 			connection.setReliableClient(null);
 		}
 		if ((connection.getFastClient() == null) && (connection.getReliableClient() == null)) {
+			System.err.println("Removing: " + client);
 			registry.remove(client.getId());
 		}
 		return connection;

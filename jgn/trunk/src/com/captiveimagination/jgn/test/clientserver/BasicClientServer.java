@@ -37,6 +37,8 @@ import java.net.*;
 
 import com.captiveimagination.jgn.*;
 import com.captiveimagination.jgn.clientserver.*;
+import com.captiveimagination.jgn.event.*;
+import com.captiveimagination.jgn.message.*;
 
 /**
  * @author Matthew D. Hicks
@@ -47,6 +49,12 @@ public class BasicClientServer {
 		SocketAddress serverReliableAddress = new InetSocketAddress(InetAddress.getLocalHost(), 1000);
 		SocketAddress serverFastAddress = new InetSocketAddress(InetAddress.getLocalHost(), 2000);
 		JGNServer server = new JGNServer(serverReliableAddress, serverFastAddress);
+		//server.addMessageListener(DebugListener.getInstance());
+		server.addMessageListener(new DynamicMessageAdapter() {
+			public void messageReceived(LocalRegistrationMessage message) {
+				System.out.println("LocalReg: " + message.getId());
+			}
+		});
 		server.addClientConnectionListener(new ClientConnectionListener() {
 			public void connected(JGNConnection connection) {
 				System.out.println("Client connected on server: " + connection.getPlayerId());
@@ -60,6 +68,12 @@ public class BasicClientServer {
 		
 		// Create Client1
 		JGNClient client1 = new JGNClient(new InetSocketAddress(InetAddress.getLocalHost(), 1100), new InetSocketAddress(InetAddress.getLocalHost(), 2100));
+		//client1.addMessageListener(DebugListener.getInstance());
+		client1.addMessageListener(new DynamicMessageAdapter() {
+			public void messageSent(LocalRegistrationMessage message) {
+				System.out.println("Sending: " + message.getId());
+			}
+		});
 		client1.addClientConnectionListener(new ClientConnectionListener() {
 			public void connected(JGNConnection connection) {
 				System.out.println("Client connected on client1: " + connection.getPlayerId());

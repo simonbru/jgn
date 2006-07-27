@@ -165,7 +165,9 @@ public class MessageClient {
 			Message m = message.clone();
 			m.setMessageClient(this);
 			// Assign unique id if this is a UniqueMessage
-			if (m instanceof UniqueMessage) {
+			if (m instanceof IdentityMessage) {
+				// Ignore setting an id
+			} else if (m instanceof UniqueMessage) {
 				m.setId(Message.nextUniqueId());
 			}
 			if (getStatus() == Status.DISCONNECTING) {

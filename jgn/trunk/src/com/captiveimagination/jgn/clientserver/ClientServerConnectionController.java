@@ -48,8 +48,8 @@ public class ClientServerConnectionController extends DefaultConnectionControlle
 	
 	public void negotiate(MessageClient client) {
 		LocalRegistrationMessage message = new LocalRegistrationMessage();
-		message.setId(this.client.getId());
 		JGN.populateRegistrationMessage(message);
+		message.setId(this.client.getId());
 		client.sendMessage(message);
 	}
 }

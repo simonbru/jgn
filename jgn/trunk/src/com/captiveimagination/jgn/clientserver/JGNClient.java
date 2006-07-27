@@ -48,6 +48,7 @@ import com.captiveimagination.jgn.message.*;
  */
 public class JGNClient {
 	private long id;
+	private short playerId;
 	private MessageServer reliableServer;
 	private MessageServer fastServer;
 	private ClientServerConnectionController controller;
@@ -80,6 +81,9 @@ public class JGNClient {
 							iterator.next().disconnected(connection);
 						}
 					}
+				} else if (message instanceof LocalRegistrationMessage) {
+					LocalRegistrationMessage lrm = (LocalRegistrationMessage)message;
+					setPlayerId((short)lrm.getId());
 				}
 			}
 		};
@@ -102,6 +106,14 @@ public class JGNClient {
 	
 	public long getId() {
 		return id;
+	}
+	
+	public short getPlayerId() {
+		return playerId;
+	}
+	
+	protected void setPlayerId(short playerId) {
+		this.playerId = playerId;
 	}
 	
 	public void update() throws IOException {
@@ -175,7 +187,7 @@ public class JGNClient {
 	}
 	
 	private JGNConnection register(short playerId) {
-		JGNConnection connection = new JGNRelayConnection(serverConnection, playerId);
+		JGNConnection connection = new JGNRelayConnection(this, playerId);
 		connections.add(connection);
 		return connection;
 	}
@@ -193,6 +205,10 @@ public class JGNClient {
 			if (connection.getPlayerId() == playerId) return connection;
 		}
 		return null;
+	}
+	
+	protected JGNDirectConnection getServerConnection() {
+		return serverConnection;
 	}
 	
 	public void addClientConnectionListener(ClientConnectionListener listener) {
@@ -215,8 +231,8 @@ public class JGNClient {
 	
 	public void disconnect() throws IOException {
 		serverConnection.disconnect();
-		//if (reliableServer != null) reliableServer.close();
-		//if (fastServer != null) fastServer.close();
+		if (reliableServer != null) reliableServer.close();
+		if (fastServer != null) fastServer.close();
 	}
 	
 	public boolean isAlive() {

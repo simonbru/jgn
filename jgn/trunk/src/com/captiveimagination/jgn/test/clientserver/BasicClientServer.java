@@ -50,11 +50,6 @@ public class BasicClientServer {
 		SocketAddress serverFastAddress = new InetSocketAddress(InetAddress.getLocalHost(), 2000);
 		JGNServer server = new JGNServer(serverReliableAddress, serverFastAddress);
 		//server.addMessageListener(DebugListener.getInstance());
-		server.addMessageListener(new DynamicMessageAdapter() {
-			public void messageReceived(LocalRegistrationMessage message) {
-				System.out.println("LocalReg: " + message.getId());
-			}
-		});
 		server.addClientConnectionListener(new ClientConnectionListener() {
 			public void connected(JGNConnection connection) {
 				System.out.println("Client connected on server: " + connection.getPlayerId());
@@ -69,11 +64,6 @@ public class BasicClientServer {
 		// Create Client1
 		JGNClient client1 = new JGNClient(new InetSocketAddress(InetAddress.getLocalHost(), 1100), new InetSocketAddress(InetAddress.getLocalHost(), 2100));
 		//client1.addMessageListener(DebugListener.getInstance());
-		client1.addMessageListener(new DynamicMessageAdapter() {
-			public void messageSent(LocalRegistrationMessage message) {
-				System.out.println("Sending: " + message.getId());
-			}
-		});
 		client1.addClientConnectionListener(new ClientConnectionListener() {
 			public void connected(JGNConnection connection) {
 				System.out.println("Client connected on client1: " + connection.getPlayerId());
@@ -85,7 +75,27 @@ public class BasicClientServer {
 		});
 		JGN.createThread(client1).start();
 		client1.connectAndWait(serverReliableAddress, serverFastAddress, 15000);
-		System.out.println("Connected!");
+		System.out.println("Client1 PlayerID: " + client1.getPlayerId());
+		
+		// Create Client2
+		JGNClient client2 = new JGNClient(new InetSocketAddress(InetAddress.getLocalHost(), 1200), new InetSocketAddress(InetAddress.getLocalHost(), 2200));
+		//client2.addMessageListener(DebugListener.getInstance());
+		client2.addClientConnectionListener(new ClientConnectionListener() {
+			public void connected(JGNConnection connection) {
+				System.out.println("Client connected on client2: " + connection.getPlayerId());
+			}
+
+			public void disconnected(JGNConnection connection) {
+				System.out.println("Client disconnected on client2: " + connection.getPlayerId());
+			}
+		});
+		JGN.createThread(client2).start();
+		client2.connectAndWait(serverReliableAddress, serverFastAddress, 15000);
+		System.out.println("Client2 PlayerID: " + client2.getPlayerId());
 		client1.disconnect();
+		Thread.sleep(1000);
+		client2.disconnect();
+		Thread.sleep(1000);
+		server.close();
 	}
 }

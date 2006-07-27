@@ -41,33 +41,24 @@ import com.captiveimagination.jgn.message.type.*;
  *
  */
 public class JGNRelayConnection implements JGNConnection {
-	private JGNDirectConnection serverConnection;
+	private JGNClient client;
 	private short playerId;
-	private short representativePlayerId;
 	
-	public JGNRelayConnection(JGNDirectConnection serverConnection, short representativePlayerId) {
-		this.serverConnection = serverConnection;
-		this.representativePlayerId = representativePlayerId;
-		playerId = -1;
+	public JGNRelayConnection(JGNClient client, short playerId) {
+		this.client = client;
+		this.playerId = playerId;
 	}
 	
 	public short getPlayerId() {
-		if (playerId == -1) {
-			if ((serverConnection.getReliableClient() != null) && (serverConnection.getReliableClient().isConnected())) {
-				playerId = (short)serverConnection.getReliableClient().getId();
-			} else if ((serverConnection.getFastClient() != null) && (serverConnection.getFastClient().isConnected())) {
-				playerId = (short)serverConnection.getFastClient().getId();
-			}
-		}
 		return playerId;
 	}
 	
 	public <T extends Message & PlayerMessage> void sendMessage(T message) {
-		message.setDestinationPlayerId(representativePlayerId);
-		serverConnection.sendMessage(message);
+		message.setDestinationPlayerId(playerId);
+		client.getServerConnection().sendMessage(message);
 	}
 	
 	public boolean isConnected() {
-		return serverConnection.isConnected();
+		return client.getServerConnection().isConnected();
 	}
 }

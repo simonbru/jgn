@@ -176,9 +176,9 @@ public class MessageClient {
 				m.setId(Message.nextUniqueId());
 			}
 			if (getStatus() == Status.DISCONNECTING) {
-				throw new RuntimeException("Connection is closing, no more messages being accepted.");
+				throw new ConnectionException("Connection is closing, no more messages being accepted.");
 			} else if (getStatus() == Status.DISCONNECTED) {
-				throw new RuntimeException("Connection is closed, no more messages being accepted.");
+				throw new ConnectionException("Connection is closed, no more messages being accepted.");
 			}
 			outgoingQueue.add(m);
 		} catch(CloneNotSupportedException exc) {

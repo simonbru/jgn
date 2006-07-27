@@ -69,28 +69,28 @@ public class ServerClientConnectionController extends DefaultConnectionControlle
 		JGN.populateRegistrationMessage(message);
 		client.sendMessage(message);
 		
-		// Send connection message to all connected clients
-		PlayerStatusMessage psm = new PlayerStatusMessage();
-		psm.setPlayerId(playerId);
-		psm.setPlayerStatus(PlayerStatusMessage.STATUS_CONNECTED);
-		server.sendToAllExcept(psm, playerId);
-		
-		// Send messages to the client for all established connections
-		JGNConnection[] connections = server.getConnections();
-		for (int i = 0; i < connections.length; i++) {
-			if (connections[i].getPlayerId() != playerId) {
-				psm.setPlayerId(connections[i].getPlayerId());
-				psm.setPlayerStatus(PlayerStatusMessage.STATUS_CONNECTED);
-				connection.sendMessage(psm);
-			}
-		}
-		
 		// Throw event to listeners of connection
 		if (((server.hasBoth()) && (connection.getReliableClient() != null) && (connection.getFastClient() != null)) || (!server.hasBoth())) {
 			ConcurrentLinkedQueue<ClientConnectionListener> listeners = server.getListeners();
 			Iterator<ClientConnectionListener> iterator = listeners.iterator();
 			while (iterator.hasNext()) {
 				iterator.next().connected(connection);
+			}
+
+			// Send connection message to all connected clients
+			PlayerStatusMessage psm = new PlayerStatusMessage();
+			psm.setPlayerId(playerId);
+			psm.setPlayerStatus(PlayerStatusMessage.STATUS_CONNECTED);
+			server.sendToAllExcept(psm, playerId);
+			
+			// Send messages to the client for all established connections
+			JGNConnection[] connections = server.getConnections();
+			for (int i = 0; i < connections.length; i++) {
+				if (connections[i].getPlayerId() != playerId) {
+					psm.setPlayerId(connections[i].getPlayerId());
+					psm.setPlayerStatus(PlayerStatusMessage.STATUS_CONNECTED);
+					connection.sendMessage(psm);
+				}
 			}
 		}
 	}
@@ -110,17 +110,6 @@ public class ServerClientConnectionController extends DefaultConnectionControlle
 
 	public void disconnected(MessageClient client) {
 		JGNDirectConnection connection = (JGNDirectConnection)server.unregister(client);
-		PlayerStatusMessage psm = new PlayerStatusMessage();
-		psm.setPlayerId(connection.getPlayerId());
-		psm.setPlayerStatus(PlayerStatusMessage.STATUS_DISCONNECTED);
-		server.sendToAllExcept(psm, connection.getPlayerId());
-		
-		// Throw event to listeners of connection
-		ConcurrentLinkedQueue<ClientConnectionListener> listeners = server.getListeners();
-		Iterator<ClientConnectionListener> iterator = listeners.iterator();
-		while (iterator.hasNext()) {
-			iterator.next().disconnected(connection);
-		}
 	}
 
 	public void negotiationComplete(MessageClient client) {

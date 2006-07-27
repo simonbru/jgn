@@ -39,6 +39,7 @@ import java.util.*;
 import java.util.concurrent.*;
 
 import com.captiveimagination.jgn.*;
+import com.captiveimagination.jgn.clientserver.message.*;
 import com.captiveimagination.jgn.event.*;
 import com.captiveimagination.jgn.message.*;
 import com.captiveimagination.jgn.message.type.*;
@@ -105,7 +106,9 @@ public class JGNServer {
 		Iterator<JGNDirectConnection> iterator = registry.iterator();
 		while (iterator.hasNext()) {
 			JGNDirectConnection connection = iterator.next();
-			if ((connection.getFastClient() == client) || (connection.getReliableClient() == client)) {
+			if ((connection.getFastClient() != null) && (connection.getFastClient().getId() == client.getId())) {
+				return connection;
+			} else if ((connection.getReliableClient() != null) && (connection.getReliableClient().getId() == client.getId())) {
 				return connection;
 			}
 		}
@@ -113,7 +116,6 @@ public class JGNServer {
 	}
 	
 	protected synchronized JGNConnection register(MessageClient client) {
-		System.err.println("Registering: " + client + ": " + client.getId());
 		JGNDirectConnection connection = (JGNDirectConnection)getConnection(client);	// NOOOO! Must use id
 		if (connection == null) {
 			connection = new JGNDirectConnection();
@@ -129,7 +131,6 @@ public class JGNServer {
 	}
 	
 	protected synchronized JGNConnection unregister(MessageClient client) {
-		System.out.println("Unregister: " + client);
 		JGNDirectConnection connection = (JGNDirectConnection)getConnection(client);
 		if (connection.getFastClient() == client) {
 			connection.setFastClient(null);
@@ -137,8 +138,19 @@ public class JGNServer {
 			connection.setReliableClient(null);
 		}
 		if ((connection.getFastClient() == null) && (connection.getReliableClient() == null)) {
-			System.err.println("Removing: " + client);
 			registry.remove(client.getId());
+			
+			// Send disconnection message to all other players
+			PlayerStatusMessage psm = new PlayerStatusMessage();
+			psm.setPlayerId(connection.getPlayerId());
+			psm.setPlayerStatus(PlayerStatusMessage.STATUS_DISCONNECTED);
+			sendToAllExcept(psm, connection.getPlayerId());
+			
+			// Throw event to listeners of connection
+			Iterator<ClientConnectionListener> iterator = listeners.iterator();
+			while (iterator.hasNext()) {
+				iterator.next().disconnected(connection);
+			}
 		}
 		return connection;
 	}
@@ -147,7 +159,9 @@ public class JGNServer {
 		JGNConnection[] connections = getConnections();
 		for (int i = 0; i < connections.length; i++) {
 			if (connections[i].getPlayerId() != exceptionPlayerId) {
-				connections[i].sendMessage(message);
+				if (connections[i].isConnected()) {
+					connections[i].sendMessage(message);
+				}
 			}
 		}
 	}

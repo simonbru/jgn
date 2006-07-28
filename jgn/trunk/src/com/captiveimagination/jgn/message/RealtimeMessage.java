@@ -33,20 +33,22 @@
  */
 package com.captiveimagination.jgn.message;
 
+import com.captiveimagination.jgn.*;
 import com.captiveimagination.jgn.message.type.*;
 
 /**
- * RealtimeMessage is very similar to OrderedMessage except that
- * it is not a CertifiedMessage and in many ways is quite the opposite.
- * This type of message is handled by a special RealtimeMessageQueue
- * internally that only keeps the most recently received message for its
- * associated group. RealtimeMessage also extends UniqueMessage and utilizes
- * this number to determine the most recent message as UniqueMessage's id
- * is a growing value. The groupId is utilized to determine "groupings" so
- * more than one RealtimeMessage can exist in the queue at a given time. If
- * the groupId is not specified it will rely on the class name for a grouping.
+ * RealtimeMessage utilizes the getRealtimeId() which returns a Object to
+ * determine the grouping of realtime messages (only one message can exist
+ * in the queue at any given time for that unique grouping). By default the
+ * method getRealtimeId() will return the class. RealtimeMessage also extends
+ * UniqueMessage and utilizes this number to determine the most recent message
+ * as UniqueMessage's id is a growing value.
  * 
  * @author Matthew D. Hicks
  */
-public abstract class RealtimeMessage extends Message implements GroupMessage, UniqueMessage {
+public abstract class RealtimeMessage extends Message implements UniqueMessage {
+	@Hide
+	public Object getRealtimeId() {
+		return getClass();
+	}
 }

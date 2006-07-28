@@ -33,9 +33,6 @@
  */
 package com.captiveimagination.jgn.test.unit;
 
-import java.io.*;
-
-import com.captiveimagination.jgn.*;
 import com.captiveimagination.jgn.event.*;
 
 /**
@@ -59,7 +56,7 @@ public class TestRealtimeMessage extends AbstractMessageServerTestCase {
 			}
 		});
 		MyRealtimeMessage message = new MyRealtimeMessage();
-		
+		System.out.println("Message: " + message.getRealtimeId());
 		for (int i = 0; i < 100; i++) {
 			client1.sendMessage(message);
 			client2.sendMessage(message);

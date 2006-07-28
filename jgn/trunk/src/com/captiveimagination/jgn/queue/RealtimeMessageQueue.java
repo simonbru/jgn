@@ -44,44 +44,30 @@ import com.captiveimagination.jgn.message.*;
  */
 public class RealtimeMessageQueue implements MessageQueue {
 	private LinkedList<Object> active;
-	private HashMap<Short,Message> groupToMessages;
-	private HashMap<Class,Message> classToMessages;
+	private HashMap<Object,Message> objectToMessages;
 	private volatile int size = 0;
 	private volatile long total = 0;
 	
 	public RealtimeMessageQueue() {
 		active = new LinkedList<Object>();
-		groupToMessages = new HashMap<Short,Message>();
-		classToMessages = new HashMap<Class,Message>();
+		objectToMessages = new HashMap<Object,Message>();
 	}
 	
 	public void add(Message message) {
 		if (message == null) throw new NullPointerException("Message must not be null");
 		
+		RealtimeMessage m = (RealtimeMessage)message;
 		synchronized(this) {
-			if (message.getGroupId() == -1) {		// Group ID not set, so we base it off the class
-				if (classToMessages.containsKey(message.getClass())) {
-					if (classToMessages.get(message.getClass()).getId() > message.getId()) {
-						// Message is older than currently in the queue
-						return;
-					}
+			if (objectToMessages.containsKey(m.getRealtimeId())) {
+				if (objectToMessages.get(m.getRealtimeId()).getId() > m.getId()) {
+					// Message is older than currently in the queue
+					return;
 				}
-				classToMessages.put(message.getClass(), message);
-				active.add(message.getClass());
-				size++;
-				total++;
-			} else {
-				if (groupToMessages.containsKey(message.getGroupId())) {		// 
-					if (groupToMessages.get(message.getGroupId()).getId() > message.getId()) {
-						// Message is older than currently in the queue
-						return;
-					}
-				}
-				groupToMessages.put(message.getGroupId(), message);
-				active.add(message.getGroupId());
-				size++;
-				total++;
 			}
+			objectToMessages.put(m.getRealtimeId(), m);
+			active.add(m.getRealtimeId());
+			size++;
+			total++;
 		}
 	}
 
@@ -90,14 +76,8 @@ public class RealtimeMessageQueue implements MessageQueue {
 		
 		synchronized(this) {
 			Object o = active.poll();
-			Message m;
-			if (o instanceof Class) {
-				m = classToMessages.get(o);
-				classToMessages.remove(o);
-			} else {
-				m = groupToMessages.get(o);
-				groupToMessages.remove(o);
-			}
+			Message m = objectToMessages.get(o);
+			objectToMessages.remove(o);
 			if (m != null) size--;
 			return m;
 		}

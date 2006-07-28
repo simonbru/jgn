@@ -37,5 +37,7 @@ package com.captiveimagination.jgn.sync;
  * @author Matthew D. Hicks
  */
 public class Synchronizer {
-
+	public void update() {
+		
+	}
 }

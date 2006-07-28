@@ -29,24 +29,45 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Created: Jun 23, 2006
+ * Created: Jul 27, 2006
  */
-package com.captiveimagination.jgn.message;
+package com.captiveimagination.jgn.sync;
 
-import com.captiveimagination.jgn.message.type.*;
+import com.captiveimagination.jgn.message.*;
 
 /**
- * RealtimeMessage is very similar to OrderedMessage except that
- * it is not a CertifiedMessage and in many ways is quite the opposite.
- * This type of message is handled by a special RealtimeMessageQueue
- * internally that only keeps the most recently received message for its
- * associated group. RealtimeMessage also extends UniqueMessage and utilizes
- * this number to determine the most recent message as UniqueMessage's id
- * is a growing value. The groupId is utilized to determine "groupings" so
- * more than one RealtimeMessage can exist in the queue at a given time. If
- * the groupId is not specified it will rely on the class name for a grouping.
+ * GraphicalController provides the link between JGN's synchronization and
+ * the graphical engine being utilized.
  * 
  * @author Matthew D. Hicks
  */
-public abstract class RealtimeMessage extends Message implements GroupMessage, UniqueMessage {
+public interface GraphicalController<E> {
+	/**
+	 * The implementation of this method should return a value between
+	 * 0.0f and 1.0f signifying the proximity. If proximity is 1.0f the
+	 * speed at which updates occur will be standard. As the proximity
+	 * declines towards 0.0f the updates are less frequent (further away
+	 * objects need to be updated less often). If the value returned is
+	 * 0.0f no updates will be sent as it is determined to be outside of
+	 * the proximity range of this player.
+	 * 
+	 * @param object
+	 * @param playerId
+	 * @return
+	 * 		float
+	 */
+	public float proximity(E object, short playerId);
+	
+	/**
+	 * This method is responsible for generating a synchronization message
+	 * based on the information contained in <code>object</code>.
+	 * 
+	 * @param object
+	 * @return
+	 * 		RealtimeMessage
+	 */
+	public RealtimeMessage createSynchronizationMessage(E object);
+	
+	// TODO Change RealtimeMessage to utilize getRealtimeId() that returns a String and does not serialize
+	public void applySynchronizationMessage(RealtimeMessage message);
 }

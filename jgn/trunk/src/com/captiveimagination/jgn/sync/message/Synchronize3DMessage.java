@@ -34,13 +34,15 @@
 package com.captiveimagination.jgn.sync.message;
 
 /**
- * An extension of Synchronize2DMessage simply providing the third dimension (z).
+ * An extension of Synchronize2DMessage simply providing the third dimension (z) for positioning
+ * synchronization and third and fourth for rotational synchronization (z and w).
  * 
  * @author Matthew D. Hicks
  */
 public class Synchronize3DMessage extends Synchronize2DMessage {
 	private float positionZ;
 	private float rotationZ;
+	private float rotationW;
 
 	public float getPositionZ() {
 		return positionZ;
@@ -56,5 +58,13 @@ public class Synchronize3DMessage extends Synchronize2DMessage {
 
 	public void setRotationZ(float rotationZ) {
 		this.rotationZ = rotationZ;
+	}
+
+	public float getRotationW() {
+		return rotationW;
+	}
+	
+	public void setRotationW(float rotationW) {
+		this.rotationW = rotationW;
 	}
 }

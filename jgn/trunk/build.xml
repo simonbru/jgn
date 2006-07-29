@@ -42,4 +42,12 @@
     	<jar destfile="${srcjar}" basedir="${src}"/>
     	<jar destfile="${docjar}" basedir="${doc}"/>
     </target>
+	
+	<target name="release" depends="jar">
+		<input message="Username:" addproperty="username"/>
+		<input message="Password:" addproperty="password"/>
+		<scp file="${jar}" todir="${username}:${password}@captiveimagination.com:/var/www/html/download/dependencies" trust="true"/>
+		<scp file="${srcjar}" todir="${username}:${password}@captiveimagination.com:/var/www/html/download/dependencies" trust="true"/>
+		<scp file="${docjar}" todir="${username}:${password}@captiveimagination.com:/var/www/html/download/dependencies" trust="true"/>
+	</target>
 </project>

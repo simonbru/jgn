@@ -29,62 +29,54 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Created: Jul 27, 2006
+ * Created: Jul 28, 2006
  */
 package com.captiveimagination.jgn.sync;
 
-import com.captiveimagination.jgn.sync.message.*;
+import java.util.concurrent.*;
 
 /**
- * GraphicalController provides the link between JGN's synchronization and
- * the graphical engine being utilized.
- * 
  * @author Matthew D. Hicks
  */
-public interface GraphicalController<E> {
-	/**
-	 * The implementation of this method should return a value between
-	 * 0.0f and 1.0f signifying the proximity. If proximity is 1.0f the
-	 * speed at which updates occur will be standard. As the proximity
-	 * declines towards 0.0f the updates are less frequent (further away
-	 * objects need to be updated less often). If the value returned is
-	 * 0.0f no updates will be sent as it is determined to be outside of
-	 * the proximity range of this player.
-	 * 
-	 * @param object
-	 * @param playerId
-	 * @return
-	 * 		float
-	 */
-	public float proximity(E object, short playerId);
+class SyncObject {
+	private short objectId;
+	private Object object;
+	private long rate;
+	private GraphicalController controller;
+	private ConcurrentHashMap<Short,Long> playerToSynchronized;
 	
-	/**
-	 * This method is responsible for generating a synchronization message
-	 * based on the information contained in <code>object</code>.
-	 * 
-	 * @param object
-	 * @return
-	 * 		RealtimeMessage
-	 */
-	public SynchronizeMessage createSynchronizationMessage(E object);
+	public SyncObject(short objectId, Object object, long rate, GraphicalController controller) {
+		this.objectId = objectId;
+		this.object = object;
+		this.rate = rate;
+		this.controller = controller;
+		playerToSynchronized = new ConcurrentHashMap<Short,Long>();
+	}
 	
-	/**
-	 * After a synchronization message has been properly received this method
-	 * is invoked to apply the synchronization information to the scene.
-	 * 
-	 * @param message
-	 * @param object
-	 */
-	public void applySynchronizationMessage(SynchronizeMessage message, E object);
-
-	/**
-	 * This method is called in order to validate messages that are received
-	 * before they are applied to the scene.
-	 * 
-	 * @param message
-	 * @param object
-	 * @return
-	 * 		boolean
-	 */
-	public boolean validateMessage(SynchronizeMessage message, E object);
+	public short getObjectId() {
+		return objectId;
+	}
+	
+	public Object getObject() {
+		return object;
+	}
+	
+	public boolean isReady(short playerId) {
+		float adjustment = controller.proximity(object, playerId);
+		long lastSynchronized = -1;
+		if (playerToSynchronized.containsKey(playerId)) {
+			lastSynchronized = playerToSynchronized.get(playerId);
+		}
+		long adjusted = Math.round(rate * 5.0f - ((rate * 5.0f) * adjustment));
+		if (adjustment == 0.0f) adjusted = 0;
+		if (System.nanoTime() > lastSynchronized + rate + adjusted) {
+			return true;
+		}
+		return false;
+	}
+	
+	public Object getForSynchronization(short playerId) {
+		playerToSynchronized.put(playerId, System.nanoTime());
+		return object;
+	}
 }

@@ -29,62 +29,39 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Created: Jul 27, 2006
+ * Created: Jul 29, 2006
  */
 package com.captiveimagination.jgn.sync;
 
+import com.captiveimagination.jgn.clientserver.*;
+import com.captiveimagination.jgn.message.*;
 import com.captiveimagination.jgn.sync.message.*;
 
 /**
- * GraphicalController provides the link between JGN's synchronization and
- * the graphical engine being utilized.
- * 
  * @author Matthew D. Hicks
  */
-public interface GraphicalController<E> {
-	/**
-	 * The implementation of this method should return a value between
-	 * 0.0f and 1.0f signifying the proximity. If proximity is 1.0f the
-	 * speed at which updates occur will be standard. As the proximity
-	 * declines towards 0.0f the updates are less frequent (further away
-	 * objects need to be updated less often). If the value returned is
-	 * 0.0f no updates will be sent as it is determined to be outside of
-	 * the proximity range of this player.
-	 * 
-	 * @param object
-	 * @param playerId
-	 * @return
-	 * 		float
-	 */
-	public float proximity(E object, short playerId);
+public class ServerSynchronizationListener extends SynchronizationListener {
+	private JGNServer server;
 	
-	/**
-	 * This method is responsible for generating a synchronization message
-	 * based on the information contained in <code>object</code>.
-	 * 
-	 * @param object
-	 * @return
-	 * 		RealtimeMessage
-	 */
-	public SynchronizeMessage createSynchronizationMessage(E object);
+	public ServerSynchronizationListener(Synchronizer synchronizer, boolean validate, JGNServer server) {
+		super(synchronizer, validate);
+		this.server = server;
+	}
 	
-	/**
-	 * After a synchronization message has been properly received this method
-	 * is invoked to apply the synchronization information to the scene.
-	 * 
-	 * @param message
-	 * @param object
-	 */
-	public void applySynchronizationMessage(SynchronizeMessage message, E object);
-
-	/**
-	 * This method is called in order to validate messages that are received
-	 * before they are applied to the scene.
-	 * 
-	 * @param message
-	 * @param object
-	 * @return
-	 * 		boolean
-	 */
-	public boolean validateMessage(SynchronizeMessage message, E object);
+	public void messageReceived(Message message) {
+		if (message instanceof SynchronizeMessage) {
+			SynchronizeMessage m = (SynchronizeMessage)message;
+			SyncObject syncObject = synchronizer.getObject(m.getSyncObjectId());
+			if ((validate) && (!synchronizer.getController().validateMessage(m, syncObject.getObject()))) {
+				// Validation failed - correct the sender
+				SynchronizeMessage correction = synchronizer.getController().createSynchronizationMessage(syncObject.getObject());
+				correction.setSyncObjectId(m.getSyncObjectId());
+				message.getMessageClient().sendMessage(correction);
+			} else {
+				// Validation successful - apply and send to other connections
+				synchronizer.getController().applySynchronizationMessage(m, syncObject.getObject());
+				server.sendToAllExcept(m, m.getPlayerId());
+			}
+		}
+	}
 }

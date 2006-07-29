@@ -29,83 +29,34 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Created: Jul 14, 2006
+ * Created: Jul 28, 2006
  */
-package com.captiveimagination.jgn.clientserver;
+package com.captiveimagination.jgn.sync.message;
 
-import java.io.*;
-
-import com.captiveimagination.jgn.*;
 import com.captiveimagination.jgn.message.*;
 import com.captiveimagination.jgn.message.type.*;
 
 /**
+ * All messages used for synchronization should extend this message.
+ * 
  * @author Matthew D. Hicks
  */
-public class JGNDirectConnection implements JGNConnection {
-	private short playerId;
-	private MessageClient reliableClient;
-	private MessageClient fastClient;
-	
-	public JGNDirectConnection() {
-		playerId = -1;
+public abstract class SynchronizeMessage extends RealtimeMessage implements PlayerMessage {
+	private short syncObjectId;
+
+	public SynchronizeMessage() {
+		syncObjectId = -1;
 	}
 	
-	public void setPlayerId(short playerId) {
-		this.playerId = playerId;
+	public short getSyncObjectId() {
+		return syncObjectId;
+	}
+
+	public void setSyncObjectId(short syncObjectId) {
+		this.syncObjectId = syncObjectId;
 	}
 	
-	public short getPlayerId() {
-		return playerId;
-	}
-
-	public MessageClient getFastClient() {
-		return fastClient;
-	}
-
-	public void setFastClient(MessageClient fastClient) {
-		this.fastClient = fastClient;
-	}
-
-	public MessageClient getReliableClient() {
-		return reliableClient;
-	}
-
-	public void setReliableClient(MessageClient reliableClient) {
-		this.reliableClient = reliableClient;
-	}
-	
-	public boolean isConnected() {
-		if ((reliableClient != null) && (!reliableClient.isConnected())) {
-			return false;
-		} else if ((fastClient != null) && (!fastClient.isConnected())) {
-			return false;
-		} else if ((reliableClient == null) && (fastClient == null)) {
-			return false;
-		}
-		return true;
-	}
-
-	public void disconnect() throws IOException {
-		if (reliableClient != null) {
-			reliableClient.disconnect();
-		}
-		if (fastClient != null) {
-			fastClient.disconnect();
-		}
-	}
-	
-	//public <T extends Message & PlayerMessage> void sendMessage(T message) {
-	public void sendMessage(Message message) {
-		if (message.getPlayerId() == -1) {
-			message.setPlayerId(getPlayerId());
-		}
-		if ((message instanceof CertifiedMessage) && (reliableClient != null)) {
-			reliableClient.sendMessage(message);
-		} else if (fastClient != null) {
-			fastClient.sendMessage(message);
-		} else {
-			reliableClient.sendMessage(message);
-		}
+	public Object getRealtimeId() {
+		return getPlayerId() + ":" + syncObjectId;
 	}
 }

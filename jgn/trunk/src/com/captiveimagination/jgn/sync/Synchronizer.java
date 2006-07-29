@@ -33,11 +33,77 @@
  */
 package com.captiveimagination.jgn.sync;
 
+import java.io.*;
+import java.util.*;
+import java.util.concurrent.*;
+
+import com.captiveimagination.jgn.*;
+import com.captiveimagination.jgn.clientserver.*;
+import com.captiveimagination.jgn.sync.message.*;
+
 /**
  * @author Matthew D. Hicks
  */
-public class Synchronizer {
-	public void update() {
-		
+public abstract class Synchronizer implements Updatable {
+	public static enum Type {
+		AUTHORITATIVE,
+		PASSIVE
+	}
+	private GraphicalController controller;
+	private ConcurrentLinkedQueue<SyncObject> syncList;
+	private ConcurrentHashMap<Short,SyncObject> passiveList;
+	private boolean keepAlive;
+	
+	public Synchronizer(GraphicalController controller) {
+		this.controller = controller;
+		syncList = new ConcurrentLinkedQueue<SyncObject>();
+		passiveList = new ConcurrentHashMap<Short,SyncObject>();
+		keepAlive = true;
+	}
+	
+	public void update(short playerId, MessageSender sender) {
+		Iterator<SyncObject> iterator = syncList.iterator();
+		SyncObject syncObject;
+		while (iterator.hasNext()) {
+			syncObject = iterator.next();
+			if (syncObject.isReady(playerId)) {
+				SynchronizeMessage message = controller.createSynchronizationMessage(syncObject.getForSynchronization(playerId));
+				message.setSyncObjectId(syncObject.getObjectId());
+				sender.sendMessage(message);
+			}
+		}
+	}
+	
+	public void register(short objectId, Object object) {
+		register(objectId, object, 0, 0, Type.PASSIVE);
+	}
+	
+	public void register(short objectId, Object object, long rateMillis, long rateNanos) {
+		register(objectId, object, rateMillis, rateNanos, Type.AUTHORITATIVE);
+	}
+	
+	private void register(short objectId, Object object, long rateMillis, long rateNanos, Type type) {
+		long rate = (rateMillis * 1000000) + rateNanos;
+		SyncObject syncObject = new SyncObject(objectId, object, rate, controller);
+		if (type == Type.AUTHORITATIVE) {
+			syncList.add(syncObject);
+		}
+		passiveList.put(objectId, syncObject);
+	}
+
+	protected GraphicalController getController() {
+		return controller;
+	}
+	
+	protected SyncObject getObject(short objectId) {
+		return passiveList.get(objectId);
+	}
+	
+	public void shutdown() {
+		keepAlive = false;
+	}
+	
+	public boolean isAlive() {
+		return keepAlive;
 	}
 }

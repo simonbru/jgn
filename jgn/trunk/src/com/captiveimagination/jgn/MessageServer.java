@@ -50,7 +50,7 @@ import com.captiveimagination.jgn.queue.*;
  * of Messages occur.
  * @author Matthew D. Hicks
  */
-public abstract class MessageServer {
+public abstract class MessageServer implements Updatable {
 	public static long DEFAULT_TIMEOUT = 60 * 1000;
 	public static ConnectionController DEFAULT_CONNECTION_CONTROLLER = new DefaultConnectionController();
 	

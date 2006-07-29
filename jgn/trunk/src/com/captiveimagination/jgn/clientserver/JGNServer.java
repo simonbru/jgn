@@ -47,7 +47,7 @@ import com.captiveimagination.jgn.message.type.*;
 /**
  * @author Matthew D. Hicks
  */
-public class JGNServer {
+public class JGNServer implements Updatable {
 	private MessageServer reliableServer;
 	private MessageServer fastServer;
 	private ConcurrentLinkedQueue<JGNDirectConnection> registry;

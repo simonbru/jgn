@@ -46,7 +46,7 @@ import com.captiveimagination.jgn.message.*;
 /**
  * @author Matthew D. Hicks
  */
-public class JGNClient {
+public class JGNClient implements Updatable {
 	private long id;
 	private short playerId;
 	private MessageServer reliableServer;
@@ -207,7 +207,7 @@ public class JGNClient {
 		return null;
 	}
 	
-	protected JGNDirectConnection getServerConnection() {
+	public JGNConnection getServerConnection() {
 		return serverConnection;
 	}
 	

@@ -29,62 +29,39 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Created: Jul 27, 2006
+ * Created: Jul 29, 2006
  */
-package com.captiveimagination.jgn.sync;
+package com.captiveimagination.jgn.sync.swing;
 
+import java.awt.*;
+
+import com.captiveimagination.jgn.sync.*;
 import com.captiveimagination.jgn.sync.message.*;
 
 /**
- * GraphicalController provides the link between JGN's synchronization and
- * the graphical engine being utilized.
+ * This is an example implementation of the GraphicalController for use
+ * with Swing. The objects specified are JPanels.
  * 
  * @author Matthew D. Hicks
  */
-public interface GraphicalController<E> {
-	/**
-	 * The implementation of this method should return a value between
-	 * 0.0f and 1.0f signifying the proximity. If proximity is 1.0f the
-	 * speed at which updates occur will be standard. As the proximity
-	 * declines towards 0.0f the updates are less frequent (further away
-	 * objects need to be updated less often). If the value returned is
-	 * 0.0f no updates will be sent as it is determined to be outside of
-	 * the proximity range of this player.
-	 * 
-	 * @param object
-	 * @param playerId
-	 * @return
-	 * 		float
-	 */
-	public float proximity(E object, short playerId);
-	
-	/**
-	 * This method is responsible for generating a synchronization message
-	 * based on the information contained in <code>object</code>.
-	 * 
-	 * @param object
-	 * @return
-	 * 		RealtimeMessage
-	 */
-	public SynchronizeMessage createSynchronizationMessage(E object);
-	
-	/**
-	 * After a synchronization message has been properly received this method
-	 * is invoked to apply the synchronization information to the scene.
-	 * 
-	 * @param message
-	 * @param object
-	 */
-	public void applySynchronizationMessage(SynchronizeMessage message, E object);
+public class SwingGraphicalController implements GraphicalController<Component> {
+	public void applySynchronizationMessage(SynchronizeMessage message, Component component) {
+		Synchronize2DMessage m = (Synchronize2DMessage)message;
+		component.setBounds((int)m.getPositionX(), (int)m.getPositionY(), 50, 50);
+	}
 
-	/**
-	 * This method is called in order to validate messages that are received
-	 * before they are applied to the scene.
-	 * 
-	 * @param message
-	 * @param object
-	 * @return
-	 * 		boolean
-	 */
-	public boolean validateMessage(SynchronizeMessage message, E object);
+	public SynchronizeMessage createSynchronizationMessage(Component component) {
+		Synchronize2DMessage message = new Synchronize2DMessage();
+		message.setPositionX(component.getX());
+		message.setPositionY(component.getY());
+		return message;
+	}
+
+	public float proximity(Component component, short playerId) {
+		return 1.0f;
+	}
+
+	public boolean validateMessage(SynchronizeMessage message, Component component) {
+		return true;
+	}
 }

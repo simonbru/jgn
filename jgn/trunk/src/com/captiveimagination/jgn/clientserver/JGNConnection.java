@@ -33,14 +33,15 @@
  */
 package com.captiveimagination.jgn.clientserver;
 
+import com.captiveimagination.jgn.*;
 import com.captiveimagination.jgn.message.*;
-import com.captiveimagination.jgn.message.type.*;
 
 /**
  * @author Matthew D. Hicks
  */
-public interface JGNConnection {
-	public <T extends Message & PlayerMessage> void sendMessage(T message);
+public interface JGNConnection extends MessageSender {
+	//public <T extends Message & PlayerMessage> void sendMessage(T message);
+	public void sendMessage(Message message);
 	
 	public short getPlayerId();
 	

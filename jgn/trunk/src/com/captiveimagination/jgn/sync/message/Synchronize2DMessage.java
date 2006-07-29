@@ -41,7 +41,7 @@ import com.captiveimagination.jgn.message.*;
  * 
  * @author Matthew D. Hicks
  */
-public class Synchronize2DMessage extends RealtimeMessage {
+public class Synchronize2DMessage extends SynchronizeMessage {
 	private float positionX;
 	private float positionY;
 	private float rotationX;

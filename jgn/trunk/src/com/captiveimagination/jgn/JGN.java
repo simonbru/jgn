@@ -142,13 +142,13 @@ public class JGN {
 		message.setMessageClasses(names);
 	}
 
-	public static final Runnable createRunnable(final MessageServer server) {
+	public static final Runnable createRunnable(final Updatable updatable) {
 		Runnable r = new Runnable() {
 			public void run() {
-				while (server.isAlive()) {
+				while (updatable.isAlive()) {
 					try {
-						server.update();
-					} catch(IOException exc) {
+						updatable.update();
+					} catch(Exception exc) {
 						throw new RuntimeException(exc);
 					}
 					try {
@@ -162,58 +162,10 @@ public class JGN {
 		return r;
 	}
 	
-	public static final Runnable createRunnable(final JGNServer server) {
-		Runnable r = new Runnable() {
-			public void run() {
-				while (server.isAlive()) {
-					try {
-						server.update();
-					} catch(IOException exc) {
-						throw new RuntimeException(exc);
-					}
-					try {
-						Thread.sleep(1);
-					} catch(InterruptedException exc) {
-						exc.printStackTrace();
-					}
-				}
-			}
-		};
-		return r;
+	public static final Thread createThread(Updatable updatable) {
+		return new Thread(createRunnable(updatable));
 	}
 	
-	public static final Runnable createRunnable(final JGNClient client) {
-		Runnable r = new Runnable() {
-			public void run() {
-				while (client.isAlive()) {
-					try {
-						client.update();
-					} catch(IOException exc) {
-						throw new RuntimeException(exc);
-					}
-					try {
-						Thread.sleep(1);
-					} catch(InterruptedException exc) {
-						exc.printStackTrace();
-					}
-				}
-			}
-		};
-		return r;
-	}
-	
-	public static final Thread createThread(MessageServer server) {
-		return new Thread(createRunnable(server));
-	}
-	
-	public static final Thread createThread(JGNServer server) {
-		return new Thread(createRunnable(server));
-	}
-	
-	public static final Thread createThread(JGNClient client) {
-		return new Thread(createRunnable(client));
-	}
-
 	public static final long generateUniqueId() {
 		long id = Math.round(Math.random() * Long.MAX_VALUE);
 		id += Math.round(Math.random() * Long.MIN_VALUE);

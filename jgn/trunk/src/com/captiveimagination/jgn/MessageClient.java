@@ -51,7 +51,7 @@ import com.captiveimagination.jgn.stream.*;
  * 
  * @author Matthew D. Hicks
  */
-public class MessageClient {
+public class MessageClient implements MessageSender {
 	public static enum Status {
 		NOT_CONNECTED,
 		NEGOTIATING,

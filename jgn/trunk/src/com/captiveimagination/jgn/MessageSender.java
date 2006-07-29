@@ -29,36 +29,15 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Created: Jul 22, 2006
+ * Created: Jul 29, 2006
  */
-package com.captiveimagination.jgn.clientserver;
+package com.captiveimagination.jgn;
 
 import com.captiveimagination.jgn.message.*;
 
 /**
  * @author Matthew D. Hicks
- *
  */
-public class JGNRelayConnection implements JGNConnection {
-	private JGNClient client;
-	private short playerId;
-	
-	public JGNRelayConnection(JGNClient client, short playerId) {
-		this.client = client;
-		this.playerId = playerId;
-	}
-	
-	public short getPlayerId() {
-		return playerId;
-	}
-	
-	//public <T extends Message & PlayerMessage> void sendMessage(T message) {
-	public void sendMessage(Message message) {
-		message.setDestinationPlayerId(playerId);
-		client.getServerConnection().sendMessage(message);
-	}
-	
-	public boolean isConnected() {
-		return client.getServerConnection().isConnected();
-	}
+public interface MessageSender {
+	public void sendMessage(Message message);
 }

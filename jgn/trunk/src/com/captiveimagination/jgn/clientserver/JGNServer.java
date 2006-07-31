@@ -51,7 +51,6 @@ public class JGNServer implements Updatable {
 	private MessageServer reliableServer;
 	private MessageServer fastServer;
 	private ConcurrentLinkedQueue<JGNDirectConnection> registry;
-	//private ConcurrentHashMap<Long,JGNConnection> registry;
 	private ServerClientConnectionController controller;
 	private ConcurrentLinkedQueue<ClientConnectionListener> listeners;
 	
@@ -66,10 +65,12 @@ public class JGNServer implements Updatable {
 		if (reliableServer != null) {
 			reliableServer.setConnectionController(controller);
 			reliableServer.addConnectionListener(controller);
+			reliableServer.addMessageListener(controller);
 		}
 		if (fastServer != null) {
 			fastServer.setConnectionController(controller);
 			fastServer.addConnectionListener(controller);
+			fastServer.addMessageListener(controller);
 		}
 	}
 	
@@ -109,6 +110,17 @@ public class JGNServer implements Updatable {
 			if ((connection.getFastClient() != null) && (connection.getFastClient().getId() == client.getId())) {
 				return connection;
 			} else if ((connection.getReliableClient() != null) && (connection.getReliableClient().getId() == client.getId())) {
+				return connection;
+			}
+		}
+		return null;
+	}
+	
+	public JGNConnection getConnection(short playerId) {
+		Iterator<JGNDirectConnection> iterator = registry.iterator();
+		while (iterator.hasNext()) {
+			JGNDirectConnection connection = iterator.next();
+			if (connection.getPlayerId() == playerId) {
 				return connection;
 			}
 		}
@@ -159,6 +171,17 @@ public class JGNServer implements Updatable {
 		JGNConnection[] connections = getConnections();
 		for (int i = 0; i < connections.length; i++) {
 			if (connections[i].getPlayerId() != exceptionPlayerId) {
+				if (connections[i].isConnected()) {
+					connections[i].sendMessage(message);
+				}
+			}
+		}
+	}
+	
+	public <T extends Message & PlayerMessage> void sendTo(T message, short playerId) {
+		JGNConnection[] connections = getConnections();
+		for (int i = 0; i < connections.length; i++) {
+			if (connections[i].getPlayerId() == playerId) {
 				if (connections[i].isConnected()) {
 					connections[i].sendMessage(message);
 				}

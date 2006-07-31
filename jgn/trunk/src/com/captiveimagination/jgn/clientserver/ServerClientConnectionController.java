@@ -40,11 +40,12 @@ import com.captiveimagination.jgn.*;
 import com.captiveimagination.jgn.clientserver.message.*;
 import com.captiveimagination.jgn.event.*;
 import com.captiveimagination.jgn.message.*;
+import com.captiveimagination.jgn.message.type.*;
 
 /**
  * @author Matthew D. Hicks
  */
-public class ServerClientConnectionController extends DefaultConnectionController implements ConnectionListener {
+public class ServerClientConnectionController extends DefaultConnectionController implements ConnectionListener, MessageListener {
 	private JGNServer server;
 	private boolean[] playerIds;
 	
@@ -112,5 +113,29 @@ public class ServerClientConnectionController extends DefaultConnectionControlle
 	}
 
 	public void negotiationComplete(MessageClient client) {
+	}
+
+	
+	public void messageCertified(Message message) {
+	}
+
+
+	public void messageFailed(Message message) {
+	}
+
+
+	public void messageReceived(Message message) {
+		if (message instanceof PlayerMessage) {
+			// Route messages to destination
+			JGNConnection connection = server.getConnection(message.getDestinationPlayerId());
+			// TODO add validation features
+			if (connection != null) {
+				connection.sendMessage(message);
+			}
+		}
+	}
+
+
+	public void messageSent(Message message) {
 	}
 }

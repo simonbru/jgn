@@ -325,7 +325,6 @@ public class MessageClient implements MessageSender {
 	}
 	
 	public void register(short typeId, Class<? extends Message> c) {
-		System.out.println("Registering: " + c);
 		registry.put(typeId, c);
 		registryReverse.put(c, typeId);
 	}

@@ -77,6 +77,10 @@ public class UDPMessageServer extends NIOMessageServer {
 		try {
 			InetSocketAddress address = (InetSocketAddress)channel.receive(readLookup);
 			readLookup.limit(readLookup.position());
+			if (address == null) {
+				// TODO a message was sent but never reached the host - figure out how to use this
+				return;
+			}
 			readLookup.position(0);
 			client = getMessageClient(address);
 			if (client == null) {

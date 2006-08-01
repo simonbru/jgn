@@ -17,8 +17,8 @@ public class AbstractMessageServerTestCase extends TestCase {
 	protected boolean client2Disconnected;
 	
 	protected void setUp() throws IOException, InterruptedException {
-		boolean tcp = true;
-		boolean debug = true;
+		boolean tcp = false;
+		boolean debug = false;
 		
 		JGN.register(MyCertifiedMessage.class);
 		JGN.register(MyRealtimeMessage.class);

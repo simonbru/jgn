@@ -44,6 +44,8 @@ import com.captiveimagination.jgn.convert.*;
 import com.captiveimagination.jgn.event.*;
 import com.captiveimagination.jgn.message.*;
 import com.captiveimagination.jgn.queue.*;
+import com.captiveimagination.jgn.ro.*;
+import com.captiveimagination.jgn.ro.ping.*;
 
 /**
  * MessageServer is the abstract foundation from which all sending and receiving
@@ -71,7 +73,7 @@ public abstract class MessageServer implements Updatable {
 	
 	private ConnectionController controller;
 	
-	public MessageServer(SocketAddress address, int maxQueueSize) {
+	public MessageServer(SocketAddress address, int maxQueueSize) throws IOException {
 		serverId = JGN.generateUniqueId();
 		
 		this.address = address;
@@ -92,6 +94,9 @@ public abstract class MessageServer implements Updatable {
 		
 		addConnectionListener(InternalListener.getInstance());
 		addMessageListener(InternalListener.getInstance());
+		
+		// Default registered RemoteObjects
+		RemoteObjectManager.registerRemoteObject(Ping.class, new ServerPing(), this);
 	}
 	
 	public void setMessageServerId(long serverId) {

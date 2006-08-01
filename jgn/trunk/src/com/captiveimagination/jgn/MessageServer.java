@@ -51,7 +51,7 @@ import com.captiveimagination.jgn.queue.*;
  * @author Matthew D. Hicks
  */
 public abstract class MessageServer implements Updatable {
-	public static long DEFAULT_TIMEOUT = 60 * 1000;
+	public static long DEFAULT_TIMEOUT = 30 * 1000;
 	public static ConnectionController DEFAULT_CONNECTION_CONTROLLER = new DefaultConnectionController();
 	
 	private static HashMap<Class,ArrayList<Class>> classHierarchyCache = new HashMap<Class,ArrayList<Class>>();
@@ -377,9 +377,22 @@ public abstract class MessageServer implements Updatable {
 	public synchronized void updateConnections() {
 		// Cycle through connections and see if any have timed out
 		for (MessageClient client : clients) {
-			if (client.lastReceived() + connectionTimeout < System.currentTimeMillis()) {
+			if ((client.isConnected()) && (client.lastReceived() + connectionTimeout < System.currentTimeMillis())) {
 				try {
 					client.disconnect();
+					client.received();
+				} catch(IOException exc) {
+					exc.printStackTrace();
+					// TODO handle more gracefully
+				}
+			}
+		}
+		
+		// Cycle through connections in a disconnecting state for too long
+		for (MessageClient client : clients) {
+			if ((client.getStatus() == MessageClient.Status.DISCONNECTING) && (client.lastReceived() + (connectionTimeout / 3) < System.currentTimeMillis())) {
+				try {
+					client.getMessageServer().disconnectInternal(client, false);
 					clients.remove(client);
 				} catch(IOException exc) {
 					exc.printStackTrace();
@@ -391,7 +404,7 @@ public abstract class MessageServer implements Updatable {
 		// Send Noops to connections that are still alive
 		NoopMessage message = null;
 		for (MessageClient client : clients) {
-			if (client.lastSent() + (connectionTimeout / 4) < System.currentTimeMillis()) {
+			if ((client.isConnected()) && (client.lastSent() + (connectionTimeout / 3) < System.currentTimeMillis())) {
 				if (message == null) {
 					message = new NoopMessage();
 				}

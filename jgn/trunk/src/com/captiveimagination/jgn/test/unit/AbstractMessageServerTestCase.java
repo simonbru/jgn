@@ -9,28 +9,30 @@ import com.captiveimagination.jgn.event.*;
 import junit.framework.*;
 
 public class AbstractMessageServerTestCase extends TestCase {
+	protected static boolean tcp = true;
+	protected static boolean debug = false;
+	
+	protected InetSocketAddress serverAddress1;
 	protected MessageServer server1;
-	protected MessageClient client1;
+	protected MessageClient client1to2;
 	protected boolean client1Disconnected;
+	protected InetSocketAddress serverAddress2;
 	protected MessageServer server2;
-	protected MessageClient client2;
+	protected MessageClient client2to1;
 	protected boolean client2Disconnected;
 	
 	protected void setUp() throws IOException, InterruptedException {
-		boolean tcp = false;
-		boolean debug = false;
-		
 		JGN.register(MyCertifiedMessage.class);
 		JGN.register(MyRealtimeMessage.class);
 		JGN.register(MyUniqueMessage.class);
 		JGN.register(MySerializableMessage.class);
 		
 		// Create first MessageServer
-		InetSocketAddress address1 = new InetSocketAddress(InetAddress.getLocalHost(), 1000);
+		serverAddress1 = new InetSocketAddress(InetAddress.getLocalHost(), 1000);
 		if (tcp) {
-			server1 = new TCPMessageServer(address1);
+			server1 = new TCPMessageServer(serverAddress1);
 		} else {
-			server1 = new UDPMessageServer(address1);
+			server1 = new UDPMessageServer(serverAddress1);
 		}
 		if (debug) {
 			server1.addMessageListener(DebugListener.getInstance());
@@ -42,7 +44,7 @@ public class AbstractMessageServerTestCase extends TestCase {
 			}
 
 			public void negotiationComplete(MessageClient client) {
-				client1 = client;
+				client1to2 = client;
 			}
 
 			public void disconnected(MessageClient client) {
@@ -54,11 +56,11 @@ public class AbstractMessageServerTestCase extends TestCase {
 		JGN.createThread(server1).start();
 		
 		// Create second MessageServer
-		InetSocketAddress address2 = new InetSocketAddress(InetAddress.getLocalHost(), 2000);
+		serverAddress2 = new InetSocketAddress(InetAddress.getLocalHost(), 2000);
 		if (tcp) {
-			server2 = new TCPMessageServer(address2);
+			server2 = new TCPMessageServer(serverAddress2);
 		} else {
-			server2 = new UDPMessageServer(address2);
+			server2 = new UDPMessageServer(serverAddress2);
 		}
 		if (debug) {
 			server2.addMessageListener(DebugListener.getInstance());
@@ -70,7 +72,7 @@ public class AbstractMessageServerTestCase extends TestCase {
 			}
 
 			public void negotiationComplete(MessageClient client) {
-				client2 = client;
+				client2to1 = client;
 			}
 
 			public void disconnected(MessageClient client) {
@@ -82,7 +84,7 @@ public class AbstractMessageServerTestCase extends TestCase {
 		JGN.createThread(server2).start();
 		
 		// Connect server2 to server1
-		MessageClient client = server2.connectAndWait(address1, 5000);
+		MessageClient client = server2.connectAndWait(serverAddress1, 5000);
 		if (client == null) {
 			System.err.println("Unable to establish connection!");
 		} else {
@@ -90,11 +92,11 @@ public class AbstractMessageServerTestCase extends TestCase {
 		}
 		long time = System.currentTimeMillis();
 		while (System.currentTimeMillis() < time + 5000) {
-			if ((client1 != null) && (client2 != null)) break;
+			if ((client1to2 != null) && (client2to1 != null)) break;
 			Thread.sleep(1);
 		}
-		assertTrue(client1 != null);
-		assertTrue(client2 != null);
+		assertTrue(client1to2 != null);
+		assertTrue(client2to1 != null);
 	}
 
 	protected void tearDown() throws IOException, InterruptedException {

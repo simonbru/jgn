@@ -57,8 +57,7 @@ public class MessageClient implements MessageSender {
 		NEGOTIATING,
 		CONNECTED,
 		DISCONNECTING,
-		DISCONNECTED,
-		TERMINATED
+		DISCONNECTED
 	}
 	
 	private long id;

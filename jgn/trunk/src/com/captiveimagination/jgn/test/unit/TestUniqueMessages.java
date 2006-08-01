@@ -29,8 +29,8 @@ public class TestUniqueMessages extends AbstractMessageServerTestCase {
 			public void messageSent(Message message) {
 			}
 		});
-		client1.sendMessage(message);
-		client1.sendMessage(message);
+		client1to2.sendMessage(message);
+		client1to2.sendMessage(message);
 		Thread.sleep(5000);
 	}
 }

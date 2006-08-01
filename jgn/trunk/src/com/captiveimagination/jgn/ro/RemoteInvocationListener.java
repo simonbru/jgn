@@ -74,7 +74,17 @@ public class RemoteInvocationListener extends MessageAdapter {
 					} else {
 						classes = new Class[0];
 					}
-					Method method = remoteClass.getMethod(m.getMethodName(), classes);
+					Method method = null;
+					try {
+						method = remoteClass.getMethod(m.getMethodName(), classes);
+					} catch(NoSuchMethodException exc) {
+						for (Method meth : remoteClass.getMethods()) {
+							if ((meth.getName().equals(m.getMethodName())) && (meth.getParameterTypes().length == classes.length)) {
+								method = meth;
+								break;
+							}
+						}
+					}
 					method.setAccessible(true);
 					Object obj = method.invoke(object, m.getParameters());
 					response.setResponse((Serializable)obj);

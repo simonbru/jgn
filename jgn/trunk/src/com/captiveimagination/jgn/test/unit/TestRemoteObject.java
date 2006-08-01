@@ -43,7 +43,7 @@ public class TestRemoteObject extends AbstractMessageServerTestCase {
 		MyRemoteObject ro = new MyRemoteObject();
 		RemoteObjectManager.registerRemoteObject(MyRemoteObjectInterface.class, ro, server1);
 		
-		MyRemoteObjectInterface remote = RemoteObjectManager.createRemoteObject(MyRemoteObjectInterface.class, client2, 15000);
+		MyRemoteObjectInterface remote = RemoteObjectManager.createRemoteObject(MyRemoteObjectInterface.class, client2to1, 15000);
 		long time = System.currentTimeMillis();
 		System.out.println("Received: " + remote.testRemote("Hello World!"));
 		System.out.println("Took: " + (System.currentTimeMillis() - time) + "ms to complete");

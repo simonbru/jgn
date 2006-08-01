@@ -86,7 +86,8 @@ public abstract class NIOMessageServer extends MessageServer {
 		if (graceful) {
 			client.setStatus(MessageClient.Status.DISCONNECTED);
 		} else {
-			client.setStatus(MessageClient.Status.TERMINATED);
+			client.setStatus(MessageClient.Status.DISCONNECTED);
+			// TODO implement a feature for knowing if it was gracefully closed
 		}
 		getDisconnectedConnectionQueue().add(client);
 	}

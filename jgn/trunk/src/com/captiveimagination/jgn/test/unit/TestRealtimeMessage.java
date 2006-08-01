@@ -58,8 +58,8 @@ public class TestRealtimeMessage extends AbstractMessageServerTestCase {
 		MyRealtimeMessage message = new MyRealtimeMessage();
 		System.out.println("Message: " + message.getRealtimeId());
 		for (int i = 0; i < 100; i++) {
-			client1.sendMessage(message);
-			client2.sendMessage(message);
+			client1to2.sendMessage(message);
+			client2to1.sendMessage(message);
 		}
 		Thread.sleep(1000);
 		assertEquals(server1MessageCount, 1);

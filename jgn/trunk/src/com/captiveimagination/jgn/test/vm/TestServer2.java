@@ -46,7 +46,7 @@ public class TestServer2 {
 	public static void main(String[] args) throws Exception {
 		JGN.register(BasicMessage.class);
 		
-		MessageServer server = new TCPMessageServer(new InetSocketAddress(InetAddress.getLocalHost(), 2000));
+		MessageServer server = new UDPMessageServer(new InetSocketAddress(InetAddress.getLocalHost(), 0));
 		TestMessageServer tms = new TestMessageServer(1);
 		server.addMessageListener(tms);
 		server.addConnectionListener(tms);

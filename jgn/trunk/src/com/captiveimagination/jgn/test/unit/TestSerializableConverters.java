@@ -18,7 +18,7 @@ public class TestSerializableConverters extends AbstractMessageServerTestCase {
 		MySerializableMessage message = new MySerializableMessage();
 		GregorianCalendar calendar = new GregorianCalendar();
 		message.setCalendar(calendar);
-		client1.sendMessage(message);
+		client1to2.sendMessage(message);
 		
 		Thread.sleep(5000);
 	}

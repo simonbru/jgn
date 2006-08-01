@@ -103,15 +103,15 @@ public class TestCertifiedMessage extends AbstractMessageServerTestCase {
 	}
 	
 	public void testCertification() throws Exception {
-		client1.sendMessage(new MyCertifiedMessage());
+		client1to2.sendMessage(new MyCertifiedMessage());
 		Thread.sleep(1000);
 		assertTrue(certified1);
 	}
 
 	public void testFailure() throws Exception {
-		client1.sendMessage(new DisconnectMessage());
+		client1to2.sendMessage(new DisconnectMessage());
 		Thread.sleep(1000);
-		client1.sendMessage(new MyCertifiedMessage());
+		client1to2.sendMessage(new MyCertifiedMessage());
 		Thread.sleep(1000);
 		assertTrue(failed1);
 	}

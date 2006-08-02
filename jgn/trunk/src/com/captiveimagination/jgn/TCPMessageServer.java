@@ -90,6 +90,7 @@ public class TCPMessageServer extends NIOMessageServer {
 		Message message;
 		try {
 			while ((message = readMessage(client)) != null) {
+//				System.out.println("Adding to incoming message queue: " + message);
 				client.getIncomingMessageQueue().add(message);
 			}
 		} catch (MessageHandlingException exc) {

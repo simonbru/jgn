@@ -88,7 +88,7 @@ public abstract class MessageServer implements Updatable {
 		disconnectedConnections = new ConnectionQueue();
 		connectionListeners = new ArrayList<ConnectionListener>();
 		messageListeners = new ArrayList<MessageListener>();
-		clients = new LinkedBlockingQueue<MessageClient>();
+		clients = new ConcurrentLinkedQueue<MessageClient>();
 		
 		controller = DEFAULT_CONNECTION_CONTROLLER;
 		
@@ -178,7 +178,9 @@ public abstract class MessageServer implements Updatable {
 	/**
 	 * Exactly the same as connect, but blocks for <code>timeout</code> in milliseconds
 	 * for the connection to be established and returned. If the connection is already
-	 * established it will be immediately returned.
+	 * established it will be immediately returned. If the connection is not established
+	 * in the time allotted via timeout the client will be disconnected and will no longer
+	 * attempt the connect.
 	 * 
 	 * <b>WARNING</b>: Do not execute this method in the same thread as is doing the
 	 * update calls or you will end up with a timeout every time.
@@ -201,6 +203,7 @@ public abstract class MessageServer implements Updatable {
 		}
 		// Last attempt before failing
 		if (client.isConnected()) return client;
+		client.disconnect();
 		return null;
 	}
 		
@@ -263,6 +266,7 @@ public abstract class MessageServer implements Updatable {
 			MessageQueue incomingMessages = client.getIncomingMessageQueue();
 			while (!incomingMessages.isEmpty()) {
 				Message message = incomingMessages.poll();
+//				System.out.println("Processing message: " + message);
 				synchronized (client.getMessageListeners()) {
 					for (MessageListener listener : client.getMessageListeners()) {
 						//listener.messageReceived(message);
@@ -339,7 +343,7 @@ public abstract class MessageServer implements Updatable {
 			List<Message> messages = client.getCertifiableMessageQueue().clonedList();
 			for (Message m : messages) {
 				if ((m.getTimestamp() != -1) && (m.getTimestamp() + m.getTimeout() < System.currentTimeMillis())) {
-					if (m.getTries() == m.getMaxTries()) {
+					if ((m.getTries() == m.getMaxTries()) || (!m.getMessageClient().isConnected())) {
 						// Message failed
 						client.getFailedMessageQueue().add(m);
 						client.getCertifiableMessageQueue().remove(m);

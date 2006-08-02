@@ -136,6 +136,7 @@ public abstract class NIOMessageServer extends MessageServer {
 		int position = client.getReadBuffer().position();
 		client.getReadBuffer().position(client.getReadPosition());
 		int messageLength = client.getReadBuffer().getInt();
+//		System.out.println("***** There is a message to read: " + messageLength + " received data: " + (position - 4 - client.getReadPosition()));
 		if (messageLength <= position - 4 - client.getReadPosition()) {
 			// Read message
 			short typeId = client.getReadBuffer().getShort();

@@ -61,6 +61,7 @@ class SyncObject {
 		return object;
 	}
 	
+	@SuppressWarnings("all")
 	public boolean isReady(short playerId) {
 		float adjustment = controller.proximity(object, playerId);
 		long lastSynchronized = -1;

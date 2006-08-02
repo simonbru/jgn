@@ -8,6 +8,7 @@ import com.captiveimagination.jgn.event.*;
  * @author Matthew D. Hicks
  */
 public class TestSerializableConverters extends AbstractMessageServerTestCase {
+	@SuppressWarnings("all")
 	public void testSerializable() throws Exception {
 		server2.addMessageListener(new DynamicMessageAdapter() {
 			public void messageReceived(MySerializableMessage message) {

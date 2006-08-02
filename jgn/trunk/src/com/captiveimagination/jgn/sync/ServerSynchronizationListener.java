@@ -48,6 +48,7 @@ public class ServerSynchronizationListener extends SynchronizationListener {
 		this.server = server;
 	}
 	
+	@SuppressWarnings("all")
 	public void messageReceived(Message message) {
 		if (message instanceof SynchronizeMessage) {
 			SynchronizeMessage m = (SynchronizeMessage)message;

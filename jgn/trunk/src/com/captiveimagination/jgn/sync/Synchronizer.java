@@ -33,12 +33,10 @@
  */
 package com.captiveimagination.jgn.sync;
 
-import java.io.*;
 import java.util.*;
 import java.util.concurrent.*;
 
 import com.captiveimagination.jgn.*;
-import com.captiveimagination.jgn.clientserver.*;
 import com.captiveimagination.jgn.sync.message.*;
 
 /**
@@ -61,6 +59,7 @@ public abstract class Synchronizer implements Updatable {
 		keepAlive = true;
 	}
 	
+	@SuppressWarnings("all")
 	public void update(short playerId, MessageSender sender) {
 		Iterator<SyncObject> iterator = syncList.iterator();
 		SyncObject syncObject;

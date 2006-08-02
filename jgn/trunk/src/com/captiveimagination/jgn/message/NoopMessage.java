@@ -33,8 +33,6 @@
  */
 package com.captiveimagination.jgn.message;
 
-import com.captiveimagination.jgn.message.type.*;
-
 /**
  * This message is sent internally to let the remote machine know that
  * the connection is still active and should not be terminated.

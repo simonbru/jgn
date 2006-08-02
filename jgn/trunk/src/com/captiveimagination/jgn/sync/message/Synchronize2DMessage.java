@@ -33,8 +33,6 @@
  */
 package com.captiveimagination.jgn.sync.message;
 
-import com.captiveimagination.jgn.message.*;
-
 /**
  * This message provides synchronization information for two-dimensional objects. The application
  * of this synchronization information is not assumed by JGN.

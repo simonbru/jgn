@@ -49,6 +49,7 @@ public class SynchronizationListener extends MessageAdapter {
 		this.validate = validate;
 	}
 	
+	@SuppressWarnings("all")
 	public void messageReceived(Message message) {
 		if (message instanceof SynchronizeMessage) {
 			SynchronizeMessage m = (SynchronizeMessage)message;

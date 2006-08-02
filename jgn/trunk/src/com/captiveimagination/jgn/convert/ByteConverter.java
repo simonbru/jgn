@@ -36,7 +36,6 @@ package com.captiveimagination.jgn.convert;
 import java.lang.reflect.*;
 import java.nio.*;
 
-import com.captiveimagination.jgn.*;
 import com.captiveimagination.jgn.message.*;
 
 /**

@@ -86,6 +86,7 @@ public class BasicMessageQueue implements MessageQueue {
 		return size;
 	}
 
+	@SuppressWarnings("all")
 	public List<Message> clonedList() {
 		return (List<Message>)list.clone();
 	}

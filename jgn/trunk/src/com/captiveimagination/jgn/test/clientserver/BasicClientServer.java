@@ -37,8 +37,6 @@ import java.net.*;
 
 import com.captiveimagination.jgn.*;
 import com.captiveimagination.jgn.clientserver.*;
-import com.captiveimagination.jgn.event.*;
-import com.captiveimagination.jgn.message.*;
 
 /**
  * @author Matthew D. Hicks

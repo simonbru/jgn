@@ -5,6 +5,7 @@ import com.captiveimagination.jgn.message.*;
 import com.captiveimagination.jgn.message.type.*;
 
 public class TestUniqueMessages extends AbstractMessageServerTestCase {
+	@SuppressWarnings("all")
 	public void testUniqueMessage1() throws Exception {
 		MyUniqueMessage message = new MyUniqueMessage();
 		server1.addMessageListener(new DynamicMessageAdapter() {

@@ -53,6 +53,7 @@ class InternalListener implements MessageListener, ConnectionListener {
 	private InternalListener() {
 	}
 	
+	@SuppressWarnings("all")
 	public void messageReceived(Message message) {
 		if (message instanceof LocalRegistrationMessage) {
 			// Handle incoming negotiation information

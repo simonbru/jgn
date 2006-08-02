@@ -41,7 +41,8 @@ import com.captiveimagination.jgn.event.*;
 public class TestRealtimeMessage extends AbstractMessageServerTestCase {
 	private int server1MessageCount = 0;
 	private int server2MessageCount = 0;
-		
+	
+	@SuppressWarnings("all")
 	public void testRealtimeMessage() throws Exception {
 		server1.addMessageListener(new DynamicMessageAdapter() {
 			public void messageReceived(MyRealtimeMessage message) {

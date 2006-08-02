@@ -34,7 +34,6 @@
 package com.captiveimagination.jgn.test.unit;
 
 import com.captiveimagination.jgn.message.*;
-import com.captiveimagination.jgn.message.type.*;
 
 /**
  * @author Matthew D. Hicks

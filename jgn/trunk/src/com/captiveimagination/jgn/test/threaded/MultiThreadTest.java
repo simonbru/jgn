@@ -26,7 +26,6 @@ public class MultiThreadTest
       final MessageServer server2 = new TCPMessageServer(new InetSocketAddress(InetAddress.getLocalHost(), 2000));
 
       final int tasks = 32;
-      final int threads = 8;
       final int messagesPerTask = 1000;
 
       server.addMessageListener(new MessageAdapter()

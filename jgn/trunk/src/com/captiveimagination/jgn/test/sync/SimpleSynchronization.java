@@ -41,7 +41,6 @@ import javax.swing.*;
 import com.captiveimagination.jgn.*;
 import com.captiveimagination.jgn.clientserver.*;
 import com.captiveimagination.jgn.sync.*;
-import com.captiveimagination.jgn.sync.message.*;
 import com.captiveimagination.jgn.sync.swing.*;
 
 /**

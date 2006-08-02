@@ -109,7 +109,7 @@ public class ServerClientConnectionController extends DefaultConnectionControlle
 	}
 
 	public void disconnected(MessageClient client) {
-		JGNDirectConnection connection = (JGNDirectConnection)server.unregister(client);
+		server.unregister(client);
 	}
 
 	public void negotiationComplete(MessageClient client) {

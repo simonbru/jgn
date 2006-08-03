@@ -82,8 +82,6 @@ public class RemoteObjectHandler extends MessageAdapter implements InvocationHan
 		return obj;
 	}
 	
-	// TODO add invokeAsynchronous that returns a FutureTask
-	
 	public void messageReceived(Message message) {
 		if (message instanceof RemoteObjectResponse) {
 			RemoteObjectResponse m = (RemoteObjectResponse)message;

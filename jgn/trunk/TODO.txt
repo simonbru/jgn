@@ -17,7 +17,7 @@ X ChatMessage implements CertifiedMessage
 X 2DSynchronizationMessage implements RealtimeMessage
 X 3DSynchronizationMessage extends 2DSynchronizationMessage
 X PhysicsSynchronizationMessage extends 3DSynchronizationMessage
-* Synchronizer (replacement for Updater)
+X Synchronizer (replacement for Updater)
 X Implement abilities for extensions
 * Time synchronization
 * ServerRegistry

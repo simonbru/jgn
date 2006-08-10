@@ -43,12 +43,23 @@ import com.captiveimagination.jgn.test.basic.*;
  */
 public class TestServer1 {
 	public static void main(String[] args) throws Exception {
+		// We need to register the message we want to use,
+		// This will let the message server know to tell other
+		// connections about the message when we connect.
 		JGN.register(BasicMessage.class);
 		
-		MessageServer server = new UDPMessageServer(new InetSocketAddress(InetAddress.getLocalHost(), 1000));
+		// We create our MessageServer. This can be a TCPMessageServer or UDPMessageServer
+		// The InetAddress can be specifically bound, set to localhost, or null to accept all
+		// ports. The port number if specified as 0 will be automatically assigned.
+		MessageServer server = new TCPMessageServer(new InetSocketAddress((InetAddress)null, 1000));
+		// We re-use TestMessageServer which implements MessageListener and ConnectionListener
 		TestMessageServer tms = new TestMessageServer(1);
+		// We add it to this server as a message listener
 		server.addMessageListener(tms);
+		// We add it to this server as a connection listener
 		server.addConnectionListener(tms);
+		// If you have an update thread of your own this is not necessary as you can simply
+		// call server.update(), but this is a convenience method for multithreading.
 		JGN.createThread(server).start();
 	}
 }

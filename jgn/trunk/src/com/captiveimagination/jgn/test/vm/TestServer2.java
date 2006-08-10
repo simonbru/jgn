@@ -44,15 +44,31 @@ import com.captiveimagination.jgn.test.basic.*;
  */
 public class TestServer2 {
 	public static void main(String[] args) throws Exception {
+		// We need to register the message we want to use,
+		// This will let the message server know to tell other
+		// connections about the message when we connect.
 		JGN.register(BasicMessage.class);
 		
-		MessageServer server = new UDPMessageServer(new InetSocketAddress(InetAddress.getLocalHost(), 0));
+		// We create our MessageServer. This can be a TCPMessageServer or UDPMessageServer
+		// The InetAddress can be specifically bound, set to localhost, or null to accept all
+		// ports. The port number if specified as 0 will be automatically assigned.
+		MessageServer server = new TCPMessageServer(new InetSocketAddress((InetAddress)null, 0));
+		// We re-use TestMessageServer which implements MessageListener and ConnectionListener
 		TestMessageServer tms = new TestMessageServer(1);
+		// We add it to this server as a message listener
 		server.addMessageListener(tms);
+		// We add it to this server as a connection listener
 		server.addConnectionListener(tms);
+		// If you have an update thread of your own this is not necessary as you can simply
+		// call server.update(), but this is a convenience method for multithreading.
 		JGN.createThread(server).start();
 		
+		// Since the purpose of this server is to connect to TestServer1, we need to establish a
+		// connection client. This method will attempt to connection and negotiate before returning.
+		// If there is a problem that causes it not to connect within the time alloted the attempt
+		// will disconnect and return null.
 		MessageClient client = server.connectAndWait(new InetSocketAddress(InetAddress.getLocalHost(), 1000), 5000);
+		// We need to let the user know that there was a problem connecting.
 		if (client == null) throw new IOException("Connection not established!");
 		
 		System.out.println("Connection established!");

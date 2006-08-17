@@ -58,8 +58,8 @@ public class JGN {
 		register(NoopMessage.class, (short)-3);
 		register(Receipt.class, (short)-4);
 		register(DisconnectMessage.class, (short)-5);
-		register(RemoteObjectRequest.class, (short)-6);
-		register(RemoteObjectResponse.class, (short)-7);
+		register(RemoteObjectRequestMessage.class, (short)-6);
+		register(RemoteObjectResponseMessage.class, (short)-7);
 		register(PlayerStatusMessage.class, (short)-8);
 		register(ChatMessage.class, (short)-9);
 		register(Synchronize2DMessage.class, (short)-10);

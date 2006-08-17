@@ -61,7 +61,7 @@ public class RemoteObjectHandler extends MessageAdapter implements InvocationHan
 	
 	public synchronized Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 		received = false;
-		RemoteObjectRequest request = new RemoteObjectRequest();
+		RemoteObjectRequestMessage request = new RemoteObjectRequestMessage();
 		request.setRemoteObjectName(remoteClass.getName());
 		request.setMethodName(method.getName());
 		request.setParameters(args);
@@ -83,8 +83,8 @@ public class RemoteObjectHandler extends MessageAdapter implements InvocationHan
 	}
 	
 	public void messageReceived(Message message) {
-		if (message instanceof RemoteObjectResponse) {
-			RemoteObjectResponse m = (RemoteObjectResponse)message;
+		if (message instanceof RemoteObjectResponseMessage) {
+			RemoteObjectResponseMessage m = (RemoteObjectResponseMessage)message;
 			if (m.getRemoteObjectName().equals(remoteClass.getName())) {
 				response = m.getResponse();
 				received = true;

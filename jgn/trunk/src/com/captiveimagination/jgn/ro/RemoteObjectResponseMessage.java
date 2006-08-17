@@ -33,16 +33,18 @@
  */
 package com.captiveimagination.jgn.ro;
 
+import java.io.*;
+
 import com.captiveimagination.jgn.message.*;
 import com.captiveimagination.jgn.message.type.*;
 
 /**
  * @author Matthew D. Hicks
  */
-public class RemoteObjectRequest extends PriorityMessage implements CertifiedMessage {
+public class RemoteObjectResponseMessage extends PriorityMessage implements CertifiedMessage {
 	private String remoteObjectName;
 	private String methodName;
-	private Object[] parameters;
+	private Serializable response;
 
 	public String getMethodName() {
 		return methodName;
@@ -52,19 +54,19 @@ public class RemoteObjectRequest extends PriorityMessage implements CertifiedMes
 		this.methodName = methodName;
 	}
 
-	public Object[] getParameters() {
-		return parameters;
-	}
-
-	public void setParameters(Object[] parameters) {
-		this.parameters = parameters;
-	}
-
 	public String getRemoteObjectName() {
 		return remoteObjectName;
 	}
 
 	public void setRemoteObjectName(String remoteObjectName) {
 		this.remoteObjectName = remoteObjectName;
+	}
+
+	public Serializable getResponse() {
+		return response;
+	}
+
+	public void setResponse(Serializable response) {
+		this.response = response;
 	}
 }

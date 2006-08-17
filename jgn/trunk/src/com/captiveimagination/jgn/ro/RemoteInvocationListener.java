@@ -56,10 +56,10 @@ public class RemoteInvocationListener extends MessageAdapter {
 	}
 	
 	public void messageReceived(Message message) {
-		if (message instanceof RemoteObjectRequest) {
-			RemoteObjectRequest m = (RemoteObjectRequest)message;
+		if (message instanceof RemoteObjectRequestMessage) {
+			RemoteObjectRequestMessage m = (RemoteObjectRequestMessage)message;
 			if (m.getRemoteObjectName().equals(remoteClass.getName())) {
-				RemoteObjectResponse response = new RemoteObjectResponse();
+				RemoteObjectResponseMessage response = new RemoteObjectResponseMessage();
 				response.setMethodName(m.getMethodName());
 				response.setRemoteObjectName(m.getRemoteObjectName());
 				try {

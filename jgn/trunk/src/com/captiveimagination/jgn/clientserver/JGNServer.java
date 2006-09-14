@@ -52,14 +52,14 @@ public class JGNServer implements Updatable {
 	private MessageServer fastServer;
 	private ConcurrentLinkedQueue<JGNDirectConnection> registry;
 	private ServerClientConnectionController controller;
-	private ConcurrentLinkedQueue<ClientConnectionListener> listeners;
+	private ConcurrentLinkedQueue<JGNConnectionListener> listeners;
 	
 	public JGNServer(MessageServer reliableServer, MessageServer fastServer) {
 		this.reliableServer = reliableServer;
 		this.fastServer = fastServer;
 		registry = new ConcurrentLinkedQueue<JGNDirectConnection>();
 		
-		listeners = new ConcurrentLinkedQueue<ClientConnectionListener>();
+		listeners = new ConcurrentLinkedQueue<JGNConnectionListener>();
 		
 		controller = new ServerClientConnectionController(this);
 		if (reliableServer != null) {
@@ -159,7 +159,7 @@ public class JGNServer implements Updatable {
 			sendToAllExcept(psm, connection.getPlayerId());
 			
 			// Throw event to listeners of connection
-			Iterator<ClientConnectionListener> iterator = listeners.iterator();
+			Iterator<JGNConnectionListener> iterator = listeners.iterator();
 			while (iterator.hasNext()) {
 				iterator.next().disconnected(connection);
 			}
@@ -193,15 +193,15 @@ public class JGNServer implements Updatable {
 		sendToAllExcept(message, (short)-1);
 	}
 	
-	public void addClientConnectionListener(ClientConnectionListener listener) {
+	public void addClientConnectionListener(JGNConnectionListener listener) {
 		listeners.add(listener);
 	}
 	
-	public boolean removeClientConnectionListener(ClientConnectionListener listener) {
+	public boolean removeClientConnectionListener(JGNConnectionListener listener) {
 		return listeners.remove(listener);
 	}
 	
-	protected ConcurrentLinkedQueue<ClientConnectionListener> getListeners() {
+	protected ConcurrentLinkedQueue<JGNConnectionListener> getListeners() {
 		return listeners;
 	}
 	

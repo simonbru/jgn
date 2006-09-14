@@ -36,7 +36,7 @@ package com.captiveimagination.jgn.clientserver;
 /**
  * @author Matthew D. Hicks
  */
-public interface ClientConnectionListener {
+public interface JGNConnectionListener {
 	/**
 	 * This method is invoked when a connection has
 	 * been successfully established with a JGNConnection

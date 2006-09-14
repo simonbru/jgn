@@ -41,14 +41,14 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
 import com.captiveimagination.jgn.JGN;
-import com.captiveimagination.jgn.clientserver.ClientConnectionListener;
+import com.captiveimagination.jgn.clientserver.JGNConnectionListener;
 import com.captiveimagination.jgn.clientserver.JGNConnection;
 import com.captiveimagination.jgn.clientserver.JGNServer;
 
-public class BasicServer implements ClientConnectionListener{
-	private static JGNServer server;
-	
-	public BasicServer(){
+public class BasicServer extends Thread implements JGNConnectionListener {
+	private JGNServer server;
+
+	public BasicServer() {
 		try {
 			server = new JGNServer(new InetSocketAddress(InetAddress.getByName("127.0.0.1"), 2000), new InetSocketAddress(InetAddress.getByName("127.0.0.1"), 2100));
 			server.addClientConnectionListener(this);
@@ -58,22 +58,25 @@ public class BasicServer implements ClientConnectionListener{
 		}
 	}
 
-	public void connected(JGNConnection connection) {
-		System.out.println(connection+" connected on server");
-	}
-
-	public void disconnected(JGNConnection connection) {
-		System.out.println(connection+" disconnected on server");	
-	}
-	
-	public static void main(String[] args){
-		new BasicServer();
-		while(server.isAlive()){ //Put in for debuggin
+	public void run() {
+		while (server.isAlive()) {
 			try {
 				Thread.sleep(2000);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
 		}
+	}
+
+	public void connected(JGNConnection connection) {
+		System.out.println(connection + " connected on server");
+	}
+
+	public void disconnected(JGNConnection connection) {
+		System.out.println(connection + " disconnected on server");
+	}
+
+	public static void main(String[] args) {
+		new BasicServer();
 	}
 }

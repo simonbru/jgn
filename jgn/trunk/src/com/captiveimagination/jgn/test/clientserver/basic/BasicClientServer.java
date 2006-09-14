@@ -48,7 +48,7 @@ public class BasicClientServer {
 		SocketAddress serverFastAddress = new InetSocketAddress(InetAddress.getLocalHost(), 2000);
 		JGNServer server = new JGNServer(serverReliableAddress, serverFastAddress);
 		//server.addMessageListener(DebugListener.getInstance());
-		server.addClientConnectionListener(new ClientConnectionListener() {
+		server.addClientConnectionListener(new JGNConnectionListener() {
 			public void connected(JGNConnection connection) {
 				System.out.println("Client connected on server: " + connection.getPlayerId());
 			}
@@ -62,7 +62,7 @@ public class BasicClientServer {
 		// Create Client1
 		JGNClient client1 = new JGNClient(new InetSocketAddress(InetAddress.getLocalHost(), 1100), new InetSocketAddress(InetAddress.getLocalHost(), 2100));
 		//client1.addMessageListener(DebugListener.getInstance());
-		client1.addClientConnectionListener(new ClientConnectionListener() {
+		client1.addClientConnectionListener(new JGNConnectionListener() {
 			public void connected(JGNConnection connection) {
 				System.out.println("Client connected on client1: " + connection.getPlayerId());
 			}
@@ -78,7 +78,7 @@ public class BasicClientServer {
 		// Create Client2
 		JGNClient client2 = new JGNClient(new InetSocketAddress(InetAddress.getLocalHost(), 1200), new InetSocketAddress(InetAddress.getLocalHost(), 2200));
 		//client2.addMessageListener(DebugListener.getInstance());
-		client2.addClientConnectionListener(new ClientConnectionListener() {
+		client2.addClientConnectionListener(new JGNConnectionListener() {
 			public void connected(JGNConnection connection) {
 				System.out.println("Client connected on client2: " + connection.getPlayerId());
 			}

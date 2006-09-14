@@ -195,7 +195,7 @@ public class JGNClient implements Updatable {
 	}
 
 	private boolean isServerConnected() {
-		if (serverConnection.isConnected()) {
+		if ((serverConnection != null) && (serverConnection.isConnected())) {
 			if ((reliableServer == null) == (serverConnection.getReliableClient() == null)) {
 				if ((fastServer == null) == (serverConnection.getFastClient() == null)) {
 					return true;

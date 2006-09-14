@@ -31,7 +31,7 @@
  *
  * Created: Jul 22, 2006
  */
-package com.captiveimagination.jgn.test.clientserver;
+package com.captiveimagination.jgn.test.clientserver.basic;
 
 import java.net.*;
 

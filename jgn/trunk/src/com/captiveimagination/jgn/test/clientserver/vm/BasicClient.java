@@ -33,7 +33,6 @@
  */
 package com.captiveimagination.jgn.test.clientserver.vm;
 
-import java.io.*;
 import java.net.*;
 
 import com.captiveimagination.jgn.*;
@@ -41,16 +40,14 @@ import com.captiveimagination.jgn.clientserver.*;
 
 /**
  * @author Matthew D. Hicks
- *
  */
-public class BasicClient implements ClientConnectionListener {
-	private static final long serialVersionUID = -1798827701811811701L;
+public class BasicClient implements JGNConnectionListener {
 	private JGNClient client;
 	
 	public void init(){
 		try {
 			client = new JGNClient(new InetSocketAddress(InetAddress.getLocalHost(), 1100), new InetSocketAddress(InetAddress.getLocalHost(), 1101));
-			client.addClientConnectionListener(this);
+			client.addServerConnectionListener(this);
 			JGN.createThread(client).start();
 			
 			client.connectAndWait(new InetSocketAddress(InetAddress.getByName("127.0.0.1"), 2000), new InetSocketAddress(InetAddress.getByName("127.0.0.1"), 2100), 5000);

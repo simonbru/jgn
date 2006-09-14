@@ -52,7 +52,10 @@ public class JGNClient implements Updatable {
 	private MessageServer reliableServer;
 	private MessageServer fastServer;
 	private ClientServerConnectionController controller;
-	private ConcurrentLinkedQueue<ClientConnectionListener> listeners;
+	private ConcurrentLinkedQueue<JGNConnectionListener> listeners;
+	private ConcurrentLinkedQueue<JGNConnectionListener> serverListeners;
+	
+	private boolean connectedFlag;
 	
 	private JGNDirectConnection serverConnection;
 	private ConcurrentLinkedQueue<JGNConnection> connections;
@@ -64,7 +67,8 @@ public class JGNClient implements Updatable {
 		
 		connections = new ConcurrentLinkedQueue<JGNConnection>();
 		
-		listeners = new ConcurrentLinkedQueue<ClientConnectionListener>();
+		listeners = new ConcurrentLinkedQueue<JGNConnectionListener>();
+		serverListeners = new ConcurrentLinkedQueue<JGNConnectionListener>();
 		MessageListener ml = new MessageAdapter() {
 			public void messageReceived(Message message) {
 				if (message instanceof PlayerStatusMessage) {
@@ -73,7 +77,7 @@ public class JGNClient implements Updatable {
 					if (connection == null) {
 						connection = register(psm.getPlayerId());
 					}
-					Iterator<ClientConnectionListener> iterator = listeners.iterator();
+					Iterator<JGNConnectionListener> iterator = listeners.iterator();
 					while (iterator.hasNext()) {
 						if (psm.getPlayerStatus() == PlayerStatusMessage.STATUS_CONNECTED) {
 							iterator.next().connected(connection);
@@ -135,6 +139,21 @@ public class JGNClient implements Updatable {
 	public void updateEvents() {
 		if (reliableServer != null) reliableServer.updateEvents();
 		if (fastServer != null) fastServer.updateEvents();
+		if ((!connectedFlag) && (serverListeners.size() > 0) && (isServerConnected())) {
+			// Connection event for establishing server connection
+			connectedFlag = true;
+			Iterator<JGNConnectionListener> iterator = serverListeners.iterator();
+			while (iterator.hasNext()) {
+				iterator.next().connected(serverConnection);
+			}
+		} else if ((connectedFlag) && (serverListeners.size() > 0) && (!isServerConnected())) {
+			// Disconnection event for broken server connection
+			connectedFlag = false;
+			Iterator<JGNConnectionListener> iterator = serverListeners.iterator();
+			while (iterator.hasNext()) {
+				iterator.next().disconnected(serverConnection);
+			}
+		}
 	}
 
 	public void connect(SocketAddress reliableRemoteAddress, SocketAddress fastRemoteAddress) throws IOException {
@@ -214,19 +233,26 @@ public class JGNClient implements Updatable {
 	public void broadcast(Message message) {
 		getServerConnection().sendMessage(message);
 		JGNConnection[] connections = getConnections();
-		System.out.println("Sending to " + connections.length + " clients");
 		for (JGNConnection connection : connections) {
 			System.out.println("Sending message: " + getPlayerId() + " to " + connection.getPlayerId());
 			connection.sendMessage(message);
 		}
 	}
 	
-	public void addClientConnectionListener(ClientConnectionListener listener) {
+	public void addClientConnectionListener(JGNConnectionListener listener) {
 		listeners.add(listener);
 	}
 	
-	public boolean removeClientConnectionListener(ClientConnectionListener listener) {
+	public boolean removeClientConnectionListener(JGNConnectionListener listener) {
 		return listeners.remove(listener);
+	}
+	
+	public void addServerConnectionListener(JGNConnectionListener listener) {
+		serverListeners.add(listener);
+	}
+	
+	public boolean removeServerConnectionListener(JGNConnectionListener listener) {
+		return serverListeners.remove(listener);
 	}
 	
 	public void addMessageListener(MessageListener listener) {

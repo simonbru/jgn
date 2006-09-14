@@ -71,8 +71,8 @@ public class ServerClientConnectionController extends DefaultConnectionControlle
 		
 		// Throw event to listeners of connection
 		if (((server.hasBoth()) && (connection.getReliableClient() != null) && (connection.getFastClient() != null)) || (!server.hasBoth())) {
-			ConcurrentLinkedQueue<ClientConnectionListener> listeners = server.getListeners();
-			Iterator<ClientConnectionListener> iterator = listeners.iterator();
+			ConcurrentLinkedQueue<JGNConnectionListener> listeners = server.getListeners();
+			Iterator<JGNConnectionListener> iterator = listeners.iterator();
 			while (iterator.hasNext()) {
 				iterator.next().connected(connection);
 			}

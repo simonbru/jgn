@@ -29,51 +29,54 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Created: Jul 24, 2006
+ * Created: Sep 17, 2006
  */
-package com.captiveimagination.jgn.event;
+package com.captiveimagination.jgn.test.reconnect;
+
+import java.net.*;
 
 import com.captiveimagination.jgn.*;
-import com.captiveimagination.jgn.message.*;
+import com.captiveimagination.jgn.event.*;
 
 /**
- * A simple debug listener for MessageListener and ConnectionListener that
- * prints out method invocations.
- * 
  * @author Matthew D. Hicks
+ *
  */
-public class DebugListener implements MessageListener, ConnectionListener {
-	private String id;
-	
-	public DebugListener(String id) {
-		this.id = id;
-	}
-	
-	public void messageCertified(Message message) {
-		System.out.println(id + ": messageCertified() - " + message.getMessageClient().getAddress() + " - " + message);
-	}
-
-	public void messageFailed(Message message) {
-		System.out.println(id + ": messageFailed() - " + message.getMessageClient().getAddress() + " - " + message);
-	}
-
-	public void messageReceived(Message message) {
-		System.out.println(id + ": messageReceived() - " + message.getMessageClient().getAddress() + " - " + message);
-	}
-
-	public void messageSent(Message message) {
-		System.out.println(id + ": messageSent() - " + message.getMessageClient().getAddress() + " - " + message);
-	}
-
-	public void connected(MessageClient client) {
-		System.out.println(id + ": connected() - " + client.getAddress() + " - " + client.getId());
-	}
-
-	public void disconnected(MessageClient client) {
-		System.out.println(id + ": disconnected() - " + client.getAddress() + " - " + client.getId());
-	}
-
-	public void negotiationComplete(MessageClient client) {
-		System.out.println(id + ": negotiationComplete() - " + client.getAddress() + " - " + client.getId());
+public class TestReconnect {
+	public static void main(String[] args) throws Exception {
+		InetSocketAddress serverAddress = new InetSocketAddress(InetAddress.getLocalHost(), 1000);
+		
+		// Create Server
+		MessageServer server = new UDPMessageServer(serverAddress);
+		DebugListener serverListener = new DebugListener("Server");
+		server.addConnectionListener(serverListener);
+		server.addMessageListener(serverListener);
+		JGN.createThread(server).start();
+		
+		// Create Client
+		MessageServer client = new UDPMessageServer(new InetSocketAddress(InetAddress.getLocalHost(), 2000));
+		DebugListener clientListener = new DebugListener("Client");
+		client.addConnectionListener(clientListener);
+		client.addMessageListener(clientListener);
+		JGN.createThread(client).start();
+		
+		// Connect client to server
+		MessageClient connection = client.connectAndWait(serverAddress, 5000);
+		if (connection != null) {
+			System.out.println("Successful connection #1");
+			connection.disconnect();
+			Thread.sleep(1000);
+			connection = client.connectAndWait(serverAddress, 5000);
+			if (connection != null) {
+				System.out.println("Successful connection #2");
+				connection.disconnect();
+			} else {
+				System.out.println("Connection #2 failed!");
+			}
+		} else {
+			System.out.println("Connection #1 failed!");
+		}
+		client.close();
+		server.close();
 	}
 }

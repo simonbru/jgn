@@ -94,6 +94,11 @@ public class BasicClientServer {
 		Thread.sleep(1000);
 		client2.disconnect();
 		Thread.sleep(1000);
-		server.close();
+		
+		// Lets have client1 reconnect to the server one more time
+		client1.connectAndWait(serverReliableAddress, serverFastAddress, 15000);
+        client1.disconnect();
+        
+        server.close();
 	}
 }

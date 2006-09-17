@@ -269,6 +269,7 @@ public class JGNClient implements Updatable {
 		serverConnection.disconnect();
 		if (reliableServer != null) reliableServer.close();
 		if (fastServer != null) fastServer.close();
+		serverConnection = null;
 	}
 	
 	public boolean isAlive() {

@@ -90,6 +90,9 @@ public abstract class NIOMessageServer extends MessageServer {
 			// TODO implement a feature for knowing if it was gracefully closed
 		}
 		getDisconnectedConnectionQueue().add(client);
+		
+		// Remove the connection from the MessageServer
+		getMessageClients().remove(client);
 	}
 	
 	public synchronized void updateTraffic() throws IOException {

@@ -35,8 +35,8 @@ public class AbstractMessageServerTestCase extends TestCase {
 			server1 = new UDPMessageServer(serverAddress1);
 		}
 		if (debug) {
-			server1.addMessageListener(DebugListener.getInstance());
-			server1.addConnectionListener(DebugListener.getInstance());
+			server1.addMessageListener(new DebugListener("Server1"));
+			server1.addConnectionListener(new DebugListener("Server1"));
 		}
 		server1.addConnectionListener(new ConnectionListener() {
 			public void connected(MessageClient client) {
@@ -63,8 +63,8 @@ public class AbstractMessageServerTestCase extends TestCase {
 			server2 = new UDPMessageServer(serverAddress2);
 		}
 		if (debug) {
-			server2.addMessageListener(DebugListener.getInstance());
-			server2.addConnectionListener(DebugListener.getInstance());
+			server2.addMessageListener(new DebugListener("Server2"));
+			server2.addConnectionListener(new DebugListener("Server1"));
 		}
 		server2.addConnectionListener(new ConnectionListener() {
 			public void connected(MessageClient client) {

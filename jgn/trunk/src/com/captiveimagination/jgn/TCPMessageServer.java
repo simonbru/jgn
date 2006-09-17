@@ -151,7 +151,7 @@ public class TCPMessageServer extends NIOMessageServer {
 	
 	public MessageClient connect(SocketAddress address) throws IOException {
 		MessageClient client = getMessageClient(address);
-		if (client != null) {
+		if ((client != null) && (client.getStatus() != MessageClient.Status.DISCONNECTING) && (client.getStatus() != MessageClient.Status.DISCONNECTED)) {
 			return client;	// Client already connected, simply return it
 		}
 		

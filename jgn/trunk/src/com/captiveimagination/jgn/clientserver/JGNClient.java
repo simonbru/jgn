@@ -120,6 +120,14 @@ public class JGNClient implements Updatable {
 		this.playerId = playerId;
 	}
 	
+	public MessageServer getReliableServer() {
+		return reliableServer;
+	}
+	
+	public MessageServer getFastServer() {
+		return fastServer;
+	}
+	
 	public void update() throws IOException {
 		updateTraffic();
 		updateEvents();
@@ -266,10 +274,16 @@ public class JGNClient implements Updatable {
 	}
 	
 	public void disconnect() throws IOException {
-		serverConnection.disconnect();
+		if (serverConnection != null) {
+			serverConnection.disconnect();
+			serverConnection = null;
+		}
+	}
+	
+	public void close() throws IOException {
+		disconnect();
 		if (reliableServer != null) reliableServer.close();
 		if (fastServer != null) fastServer.close();
-		serverConnection = null;
 	}
 	
 	public boolean isAlive() {

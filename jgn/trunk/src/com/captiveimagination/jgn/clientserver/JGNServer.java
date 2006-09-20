@@ -78,6 +78,14 @@ public class JGNServer implements Updatable {
 		this(reliableAddress != null ? new TCPMessageServer(reliableAddress) : null, fastAddress != null ? new UDPMessageServer(fastAddress) : null);
 	}
 	
+	public MessageServer getReliableServer() {
+		return reliableServer;
+	}
+	
+	public MessageServer getFastServer() {
+		return fastServer;
+	}
+	
 	public void update() throws IOException {
 		updateTraffic();
 		updateEvents();

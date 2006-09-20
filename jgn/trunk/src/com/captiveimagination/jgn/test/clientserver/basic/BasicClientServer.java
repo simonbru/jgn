@@ -37,6 +37,7 @@ import java.net.*;
 
 import com.captiveimagination.jgn.*;
 import com.captiveimagination.jgn.clientserver.*;
+import com.captiveimagination.jgn.event.*;
 
 /**
  * @author Matthew D. Hicks
@@ -47,6 +48,7 @@ public class BasicClientServer {
 		SocketAddress serverReliableAddress = new InetSocketAddress(InetAddress.getLocalHost(), 1000);
 		SocketAddress serverFastAddress = new InetSocketAddress(InetAddress.getLocalHost(), 2000);
 		JGNServer server = new JGNServer(serverReliableAddress, serverFastAddress);
+		//server.getFastServer().addMessageListener(new DebugListener("FastServer"));
 		//server.addMessageListener(DebugListener.getInstance());
 		server.addClientConnectionListener(new JGNConnectionListener() {
 			public void connected(JGNConnection connection) {
@@ -61,6 +63,8 @@ public class BasicClientServer {
 		
 		// Create Client1
 		JGNClient client1 = new JGNClient(new InetSocketAddress(InetAddress.getLocalHost(), 1100), new InetSocketAddress(InetAddress.getLocalHost(), 2100));
+		//client1.getFastServer().addMessageListener(new DebugListener("FastClient1"));
+		//client1.getReliableServer().addMessageListener(new DebugListener("ReliableClient1"));
 		//client1.addMessageListener(DebugListener.getInstance());
 		client1.addClientConnectionListener(new JGNConnectionListener() {
 			public void connected(JGNConnection connection) {
@@ -92,12 +96,15 @@ public class BasicClientServer {
 		System.out.println("Client2 PlayerID: " + client2.getPlayerId());
 		client1.disconnect();
 		Thread.sleep(1000);
-		client2.disconnect();
+		client2.close();
 		Thread.sleep(1000);
 		
 		// Lets have client1 reconnect to the server one more time
+		System.out.println("Reconnecting!");
 		client1.connectAndWait(serverReliableAddress, serverFastAddress, 15000);
-        client1.disconnect();
+        client1.close();
+        
+        Thread.sleep(1000);
         
         server.close();
 	}

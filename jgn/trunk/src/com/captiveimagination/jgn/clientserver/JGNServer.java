@@ -135,6 +135,15 @@ public class JGNServer implements Updatable {
 		return null;
 	}
 	
+	public boolean disconnect(short playerId) throws IOException {
+		JGNDirectConnection connection = (JGNDirectConnection)getConnection(playerId);
+		if (connection != null) {
+			connection.disconnect();
+			return true;
+		}
+		return false;
+	}
+	
 	protected synchronized JGNConnection register(MessageClient client) {
 		JGNDirectConnection connection = (JGNDirectConnection)getConnection(client);	// NOOOO! Must use id
 		if (connection == null) {

@@ -52,6 +52,17 @@ public interface ConnectionListener {
 	public void connected(MessageClient client);
 	
 	/**
+	 * This method is invoked in circumstances when your
+	 * connection has either been rejected at initial
+	 * connection or was forcibly removed after communication
+	 * was successfully established.
+	 * 
+	 * @param client
+	 * @param reason
+	 */
+	public void kicked(MessageClient client, String reason);
+	
+	/**
 	 * This method is invoked when a connection has
 	 * been successfully established and the negotiation
 	 * process has completed successfully.

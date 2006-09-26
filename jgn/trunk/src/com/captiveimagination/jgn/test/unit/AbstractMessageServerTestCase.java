@@ -51,7 +51,10 @@ public class AbstractMessageServerTestCase extends TestCase {
 				System.out.println("Disconnected1");
 				client1Disconnected = true;
 			}
+
 			
+			public void kicked(MessageClient client, String reason) {
+			}
 		});
 		JGN.createThread(server1).start();
 		
@@ -79,7 +82,10 @@ public class AbstractMessageServerTestCase extends TestCase {
 				System.out.println("Disconnected2");
 				client2Disconnected = true;
 			}
+
 			
+			public void kicked(MessageClient client, String reason) {
+			}
 		});
 		JGN.createThread(server2).start();
 		

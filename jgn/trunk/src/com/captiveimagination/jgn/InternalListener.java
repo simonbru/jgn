@@ -121,4 +121,8 @@ class InternalListener implements MessageListener, ConnectionListener {
 
 	public void disconnected(MessageClient client) {
 	}
+
+	
+	public void kicked(MessageClient client, String reason) {
+	}
 }

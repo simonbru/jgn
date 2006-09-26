@@ -97,7 +97,10 @@ public class TestDisconnect extends AbstractMessageServerTestCase {
 			public void disconnected(MessageClient client) {
 				System.out.println("Server 3 Disconnected: " + ((InetSocketAddress)client.getAddress()).getPort());
 			}
+
 			
+			public void kicked(MessageClient client, String reason) {
+			}
 		});
 		JGN.createThread(server3).start();
 		

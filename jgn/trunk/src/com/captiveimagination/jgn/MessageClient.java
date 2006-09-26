@@ -374,12 +374,12 @@ public class MessageClient implements MessageSender {
 		}
 	}
 	
-	public void disconnect() throws IOException {
+	public void disconnect() {
 		getMessageServer().getConnectionController().disconnect(this);
 		setStatus(Status.DISCONNECTING);
 	}
 	
-	public void kick(String reason) throws IOException {
+	public void kick(String reason) {
 		getMessageServer().getConnectionController().kick(this, reason);
 		setStatus(Status.DISCONNECTING);
 	}

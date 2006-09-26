@@ -43,19 +43,32 @@ import com.captiveimagination.jgn.event.*;
  *
  */
 public class BasicKickTest {
+	private static String filterMessage;
+	
 	public static void main(String[] args) throws Exception {
 		InetSocketAddress serverAddress = new InetSocketAddress(InetAddress.getLocalHost(), 1000);
 		
 		MessageServer server1 = new TCPMessageServer(serverAddress);
 		server1.addConnectionListener(new DebugListener("Server1"));
+		server1.addConnectionFilter(new ConnectionFilter() {
+			public String filter(MessageClient client) {
+				return filterMessage;
+			}
+		});
 		JGN.createThread(server1).start();
 		
 		MessageServer server2 = new TCPMessageServer(new InetSocketAddress(InetAddress.getLocalHost(), 2000));
+		server2.addConnectionListener(new DebugListener("Server2"));
 		JGN.createThread(server2).start();
 		
 		MessageClient client = server2.connectAndWait(serverAddress, 5000);
 		if (client != null) {
 			client.kick("I don't like you!");
 		}
+		Thread.sleep(1000);
+		System.out.println("---------------- Lets try again ----------------");
+		
+		filterMessage = "I don't like anybody!";
+		server2.connectAndWait(serverAddress, 5000);
 	}
 }

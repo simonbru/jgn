@@ -67,6 +67,7 @@ public abstract class MessageServer implements Updatable {
 	private ConnectionQueue disconnectedConnections;	// Waiting for ConnectionListener handling
 	private ArrayList<ConnectionListener> connectionListeners;
 	private ArrayList<MessageListener> messageListeners;
+	private ArrayList<ConnectionFilter> filters;
 	private AbstractQueue<MessageClient> clients;
 	protected boolean keepAlive;
 	protected boolean alive;
@@ -88,6 +89,7 @@ public abstract class MessageServer implements Updatable {
 		disconnectedConnections = new ConnectionQueue();
 		connectionListeners = new ArrayList<ConnectionListener>();
 		messageListeners = new ArrayList<MessageListener>();
+		filters = new ArrayList<ConnectionFilter>();
 		clients = new ConcurrentLinkedQueue<MessageClient>();
 		
 		controller = DEFAULT_CONNECTION_CONTROLLER;
@@ -390,13 +392,8 @@ public abstract class MessageServer implements Updatable {
 		// Cycle through connections and see if any have timed out
 		for (MessageClient client : clients) {
 			if ((client.isConnected()) && (client.lastReceived() + connectionTimeout < System.currentTimeMillis())) {
-				try {
-					client.disconnect();
-					client.received();
-				} catch(IOException exc) {
-					exc.printStackTrace();
-					// TODO handle more gracefully
-				}
+				client.disconnect();
+				client.received();
 			}
 		}
 		
@@ -499,6 +496,40 @@ public abstract class MessageServer implements Updatable {
 		}
 	}
 
+	/**
+	 * Adds a ConnectionFilter to this MessageServer
+	 * 
+	 * @param filter
+	 */
+	public void addConnectionFilter(ConnectionFilter filter) {
+		synchronized (filters) {
+			filters.add(filter);
+		}
+	}
+	
+	/**
+	 * Removes a ConnectionFilter from this MessageServer
+	 * 
+	 * @param filter
+	 * @return
+	 * 		true if the filter was contained in the list
+	 */
+	public boolean removeConnectionFilter(ConnectionFilter filter) {
+		synchronized (filters) {
+			return filters.remove(filter);
+		}
+	}
+	
+	protected String shouldFilterConnection(MessageClient client) {
+		for (ConnectionFilter filter : filters) {
+			String reason = filter.filter(client);
+			if (reason != null) {
+				return reason;
+			}
+		}
+		return null;
+	}
+	
 	protected ByteBuffer convertMessage(Message message, ByteBuffer buffer) throws MessageHandlingException {
 		ConversionHandler handler = JGN.getConverter(message.getClass());
 		handler.sendMessage(message, buffer);

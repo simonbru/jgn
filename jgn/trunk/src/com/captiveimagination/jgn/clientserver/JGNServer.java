@@ -167,7 +167,7 @@ public class JGNServer implements Updatable {
 			connection.setReliableClient(null);
 		}
 		if ((connection.getFastClient() == null) && (connection.getReliableClient() == null)) {
-			registry.remove(client.getId());
+			registry.remove(connection);
 			
 			// Send disconnection message to all other players
 			PlayerStatusMessage psm = new PlayerStatusMessage();

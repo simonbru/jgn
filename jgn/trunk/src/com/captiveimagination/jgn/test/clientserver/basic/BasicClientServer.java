@@ -37,7 +37,6 @@ import java.net.*;
 
 import com.captiveimagination.jgn.*;
 import com.captiveimagination.jgn.clientserver.*;
-import com.captiveimagination.jgn.event.*;
 
 /**
  * @author Matthew D. Hicks
@@ -106,6 +105,7 @@ public class BasicClientServer {
         
         Thread.sleep(1000);
         
+        System.out.println("Connections: " + server.getConnections().length);
         server.close();
 	}
 }

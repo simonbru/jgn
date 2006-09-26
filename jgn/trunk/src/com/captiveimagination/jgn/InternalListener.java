@@ -49,13 +49,21 @@ import com.captiveimagination.jgn.message.type.*;
  */
 class InternalListener implements MessageListener, ConnectionListener {
 	private static InternalListener instance;
-	
+
 	private InternalListener() {
 	}
-	
+
 	@SuppressWarnings("all")
 	public void messageReceived(Message message) {
 		if (message instanceof LocalRegistrationMessage) {
+			// Verify if connection is valid
+			String filterMessage = message.getMessageClient().getMessageServer().shouldFilterConnection(message.getMessageClient());
+			if (filterMessage != null) {
+				// They have been filtered, so we kick them
+				message.getMessageClient().kick(filterMessage);
+				return;
+			}
+
 			// Handle incoming negotiation information
 			LocalRegistrationMessage m = (LocalRegistrationMessage)message;
 			message.getMessageClient().setId(m.getId());
@@ -67,18 +75,23 @@ class InternalListener implements MessageListener, ConnectionListener {
 					message.getMessageClient().register(ids[i], (Class<? extends Message>)Class.forName(messages[i]));
 				}
 				message.getMessageClient().setStatus(MessageClient.Status.CONNECTED);
-				message.getMessageClient().getMessageServer().getNegotiatedConnectionQueue().add(message.getMessageClient());
-			} catch(ClassNotFoundException exc) {
-				System.err.println("Unable to find the message: " + messages[i] + " in the ClassLoader. Trace follows:");
+				message.getMessageClient().getMessageServer().getNegotiatedConnectionQueue().add(
+								message.getMessageClient());
+			} catch (ClassNotFoundException exc) {
+				System.err
+								.println("Unable to find the message: " + messages[i]
+												+ " in the ClassLoader. Trace follows:");
 				// TODO handle more gracefully
 				throw new RuntimeException(exc);
 			}
-			
+
 			if (!message.getMessageClient().hasSentRegistration()) {
-				message.getMessageClient().getMessageServer().getConnectionController().negotiate(message.getMessageClient());
+				message.getMessageClient().getMessageServer().getConnectionController().negotiate(
+								message.getMessageClient());
 			}
 		} else if (message instanceof DisconnectMessage) {
 			// Disconnect from the remote client
+			message.getMessageClient().setKickReason(((DisconnectMessage)message).getReason());
 			message.getMessageClient().setStatus(MessageClient.Status.DISCONNECTING);
 		}
 		if (message instanceof CertifiedMessage) {
@@ -97,13 +110,13 @@ class InternalListener implements MessageListener, ConnectionListener {
 			message.getMessageClient().getCertifiableMessageQueue().add(message);
 		}
 	}
-	
+
 	public void messageCertified(Message message) {
 	}
-	
+
 	public void messageFailed(Message message) {
 	}
-	
+
 	public static final InternalListener getInstance() {
 		if (instance == null) {
 			instance = new InternalListener();
@@ -116,13 +129,12 @@ class InternalListener implements MessageListener, ConnectionListener {
 		//client.getMessageServer().getConnectionController().negotiate(client);
 	}
 
-	public void negotiationComplete(MessageClient client) {	
+	public void negotiationComplete(MessageClient client) {
 	}
 
 	public void disconnected(MessageClient client) {
 	}
 
-	
 	public void kicked(MessageClient client, String reason) {
 	}
 }

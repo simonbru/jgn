@@ -73,6 +73,7 @@ public abstract class Message implements Cloneable {
 	 * UniqueMessage.
 	 * 
 	 * @return
+	 * 		long
 	 */
 	@Hide
 	public long getId() {

@@ -44,7 +44,7 @@ public interface MessageQueue {
 	/**
 	 * Adds a Message object to this queue.
 	 * 
-	 * @param m
+	 * @param message
 	 */
 	public void add(Message message);
 

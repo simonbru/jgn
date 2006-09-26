@@ -41,7 +41,7 @@
     		version="true"
     		use="true"
     		windowTitle="javagamenetworking api"
-    		classpath="${cp}"/>
+    		classpathref="cp"/>
 	</target>
 	
     <target name="jar" depends="javadoc" description="JARs the Task">

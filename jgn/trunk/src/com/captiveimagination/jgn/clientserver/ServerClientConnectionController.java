@@ -48,27 +48,27 @@ import com.captiveimagination.jgn.message.type.*;
 public class ServerClientConnectionController extends DefaultConnectionController implements ConnectionListener, MessageListener {
 	private JGNServer server;
 	private boolean[] playerIds;
-	
+
 	public ServerClientConnectionController(JGNServer server) {
 		this.server = server;
 		playerIds = new boolean[Short.MAX_VALUE];
 	}
-	
+
 	public void negotiate(MessageClient client) {
 		JGNDirectConnection connection = (JGNDirectConnection)server.register(client);
-		
+
 		LocalRegistrationMessage message = new LocalRegistrationMessage();
 		short playerId = connection.getPlayerId();
 		if (playerId == -1) {
 			playerId = nextPlayerId();
 			connection.setPlayerId(playerId);
 		}
-		
+
 		// Send negotiation message back
 		message.setId(playerId);
 		JGN.populateRegistrationMessage(message);
 		client.sendMessage(message);
-		
+
 		// Throw event to listeners of connection
 		if (((server.hasBoth()) && (connection.getReliableClient() != null) && (connection.getFastClient() != null)) || (!server.hasBoth())) {
 			ConcurrentLinkedQueue<JGNConnectionListener> listeners = server.getListeners();
@@ -82,7 +82,7 @@ public class ServerClientConnectionController extends DefaultConnectionControlle
 			psm.setPlayerId(playerId);
 			psm.setPlayerStatus(PlayerStatusMessage.STATUS_CONNECTED);
 			server.sendToAllExcept(psm, playerId);
-			
+
 			// Send messages to the client for all established connections
 			JGNConnection[] connections = server.getConnections();
 			for (int i = 0; i < connections.length; i++) {
@@ -94,7 +94,7 @@ public class ServerClientConnectionController extends DefaultConnectionControlle
 			}
 		}
 	}
-		
+
 	private synchronized short nextPlayerId() {
 		for (int i = 0; i < playerIds.length; i++) {
 			if (!playerIds[i]) {
@@ -115,14 +115,11 @@ public class ServerClientConnectionController extends DefaultConnectionControlle
 	public void negotiationComplete(MessageClient client) {
 	}
 
-	
 	public void messageCertified(Message message) {
 	}
 
-
 	public void messageFailed(Message message) {
 	}
-
 
 	public void messageReceived(Message message) {
 		if (message instanceof PlayerMessage) {
@@ -134,7 +131,6 @@ public class ServerClientConnectionController extends DefaultConnectionControlle
 			}
 		}
 	}
-
 
 	public void messageSent(Message message) {
 	}

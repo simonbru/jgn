@@ -41,6 +41,10 @@ public class TestStream {
 
 			public void disconnected(MessageClient client) {
 			}
+
+			
+			public void kicked(MessageClient client, String reason) {
+			}
 		});
 		Thread t1 = JGN.createThread(server1);
 		t1.start();

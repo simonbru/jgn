@@ -98,4 +98,9 @@ public class TestMessageServer implements MessageListener, ConnectionListener {
 	public void negotiationComplete(MessageClient client) {
 		System.out.println("Negotiated(" + id + "): " + ((InetSocketAddress)client.getAddress()).getPort());
 	}
+
+	
+	public void kicked(MessageClient client, String reason) {
+		System.out.println("Kicked(" + id + "):" + ((InetSocketAddress)client.getAddress()).getPort());
+	}
 }

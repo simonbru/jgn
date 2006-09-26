@@ -81,6 +81,7 @@ public class MessageClient implements MessageSender {
 	private int readPosition;
 	private ByteBuffer readBuffer;
 	private Message failedMessage;
+	private String kickReason;
 	
 	private HashMap<Short,Class<? extends Message>> registry;
 	private HashMap<Class<? extends Message>,Short> registryReverse;
@@ -174,10 +175,15 @@ public class MessageClient implements MessageSender {
 			} else if (m instanceof UniqueMessage) {
 				m.setId(Message.nextUniqueId());
 			}
-			if (getStatus() == Status.DISCONNECTING) {
-				throw new ConnectionException("Connection is closing, no more messages being accepted.");
-			} else if (getStatus() == Status.DISCONNECTED) {
+			
+			if (getStatus() == Status.DISCONNECTED) {
 				throw new ConnectionException("Connection is closed, no more messages being accepted.");
+			} else if (message instanceof DisconnectMessage) {
+				// This is a possible occurrence under valid circumstances
+			} else if (message instanceof Receipt) {
+				// If it hasn't finished disconnecting we can try to send a receipt
+			} else if (getStatus() == Status.DISCONNECTING) {
+				throw new ConnectionException("Connection is closing, no more messages being accepted.");
 			}
 			outgoingQueue.add(m);
 		} catch(CloneNotSupportedException exc) {
@@ -372,6 +378,11 @@ public class MessageClient implements MessageSender {
 		getMessageServer().getConnectionController().disconnect(this);
 		setStatus(Status.DISCONNECTING);
 	}
+	
+	public void kick(String reason) throws IOException {
+		getMessageServer().getConnectionController().kick(this, reason);
+		setStatus(Status.DISCONNECTING);
+	}
 
 	protected ByteBuffer getReadBuffer() {
 		return readBuffer;
@@ -408,5 +419,13 @@ public class MessageClient implements MessageSender {
 
 	protected boolean hasSentRegistration() {
 		return sentRegistration;
+	}
+
+	protected void setKickReason(String reason) {
+		this.kickReason = reason;
+	}
+	
+	protected String getKickReason() {
+		return kickReason;
 	}
 }

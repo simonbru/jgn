@@ -44,11 +44,11 @@ import com.captiveimagination.jgn.message.*;
  */
 public class DebugListener implements MessageListener, ConnectionListener {
 	private String id;
-	
+
 	public DebugListener(String id) {
 		this.id = id;
 	}
-	
+
 	public void messageCertified(Message message) {
 		System.out.println(id + ": messageCertified() - " + message.getMessageClient().getAddress() + " - " + message);
 	}
@@ -75,5 +75,9 @@ public class DebugListener implements MessageListener, ConnectionListener {
 
 	public void negotiationComplete(MessageClient client) {
 		System.out.println(id + ": negotiationComplete() - " + client.getAddress() + " - " + client.getId());
+	}
+
+	public void kicked(MessageClient client, String reason) {
+		System.out.println(id + ": kicked() - " + client.getAddress() + " - " + client.getId() + ", Reason: " + reason);
 	}
 }

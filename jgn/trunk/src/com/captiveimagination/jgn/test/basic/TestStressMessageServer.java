@@ -66,6 +66,10 @@ public class TestStressMessageServer {
 			public void disconnected(MessageClient client) {
 				System.out.println("S1> Disconnected: " + client);
 			}
+
+
+			public void kicked(MessageClient client, String reason) {
+			}
 		});
 		server.addMessageListener(new MessageAdapter() {
 			private long time;
@@ -144,6 +148,10 @@ public class TestStressMessageServer {
 			
 			public void disconnected(MessageClient client) {
 				System.out.println("S2> Disconnected: " + client);
+			}
+
+			
+			public void kicked(MessageClient client, String reason) {
 			}
 		});
 		//t2.setDaemon(true);

@@ -29,29 +29,33 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Created: Jul 14, 2006
+ * Created: Sep 26, 2006
  */
-package com.captiveimagination.jgn;
+package com.captiveimagination.jgn.test.kick;
 
-import com.captiveimagination.jgn.message.*;
+import java.net.*;
+
+import com.captiveimagination.jgn.*;
+import com.captiveimagination.jgn.event.*;
 
 /**
  * @author Matthew D. Hicks
+ *
  */
-public class DefaultConnectionController implements ConnectionController {
-	public void negotiate(MessageClient client) {
-		LocalRegistrationMessage message = new LocalRegistrationMessage();
-		message.setId(client.getMessageServer().getMessageServerId());
-		JGN.populateRegistrationMessage(message);
-		client.sendMessage(message);
-	}
-	
-	public void disconnect(MessageClient client) {
-		client.sendMessage(new DisconnectMessage());
-	}
-
-	
-	public void kick(MessageClient client, String reason) {
-		client.sendMessage(new DisconnectMessage(reason));
+public class BasicKickTest {
+	public static void main(String[] args) throws Exception {
+		InetSocketAddress serverAddress = new InetSocketAddress(InetAddress.getLocalHost(), 1000);
+		
+		MessageServer server1 = new TCPMessageServer(serverAddress);
+		server1.addConnectionListener(new DebugListener("Server1"));
+		JGN.createThread(server1).start();
+		
+		MessageServer server2 = new TCPMessageServer(new InetSocketAddress(InetAddress.getLocalHost(), 2000));
+		JGN.createThread(server2).start();
+		
+		MessageClient client = server2.connectAndWait(serverAddress, 5000);
+		if (client != null) {
+			client.kick("I don't like you!");
+		}
 	}
 }

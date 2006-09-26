@@ -372,6 +372,9 @@ public abstract class MessageServer implements Updatable {
 			MessageClient client = disconnectedConnections.poll();
 			synchronized (connectionListeners) {
 				for (ConnectionListener listener : connectionListeners) {
+					if (client.getKickReason() != null) {
+						listener.kicked(client, client.getKickReason());
+					}
 					listener.disconnected(client);
 				}
 			}

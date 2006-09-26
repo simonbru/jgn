@@ -42,6 +42,9 @@ public class ConnectionAdapter implements ConnectionListener {
 	public void connected(MessageClient client) {
 	}
 
+	public void kicked(MessageClient client, String reason) {
+	}
+	
 	public void disconnected(MessageClient client) {
 	}
 

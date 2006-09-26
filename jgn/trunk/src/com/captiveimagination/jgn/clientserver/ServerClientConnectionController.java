@@ -134,4 +134,9 @@ public class ServerClientConnectionController extends DefaultConnectionControlle
 
 	public void messageSent(Message message) {
 	}
+
+	
+	public void kicked(MessageClient client, String reason) {
+		// TODO this should be managed internally
+	}
 }

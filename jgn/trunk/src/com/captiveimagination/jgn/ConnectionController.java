@@ -57,4 +57,13 @@ public interface ConnectionController {
 	 * @param client
 	 */
 	public void disconnect(MessageClient client);
+	
+	/**
+	 * This method is invoked when a MessageClient is manually kicked. This method is responsible
+	 * for notifying the remote server of the kick and disconnection.
+	 * 
+	 * @param client
+	 * @param reason
+	 */
+	public void kick(MessageClient client, String reason);
 }

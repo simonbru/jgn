@@ -53,6 +53,7 @@ public class ConversionHandler {
 	private static final HashMap<Class<? extends Message>, ConversionHandler> messageToHandler = new HashMap<Class<? extends Message>, ConversionHandler>();
 	static {
 		ignore.add("getClass");
+		initConverters();
 	}
 
 	private Converter[] converters;
@@ -112,8 +113,6 @@ public class ConversionHandler {
 		ConversionHandler handler = messageToHandler.get(messageClass);
 
 		if (handler != null) return handler;
-
-		initConverters();
 
 		// Introspect Class
 		ArrayList<Converter> converters = new ArrayList<Converter>();
@@ -220,10 +219,7 @@ public class ConversionHandler {
 				continue;
 			}
 
-			Converter converter = Converter.CONVERTERS.get(getter.getReturnType());
-            if ((converter == null) && (Serializable.class.isAssignableFrom(getter.getReturnType()))) {
-                converter = Converter.CONVERTERS.get(Serializable.class);
-            }
+			Converter converter = getConverter(getter.getReturnType());
 			if (converter != null) {
 				converters.add(converter);
 				getter.setAccessible(true);
@@ -237,6 +233,14 @@ public class ConversionHandler {
 						.toArray(new Method[getters.size()]), setters.toArray(new Method[setters.size()]), messageClass);
 		messageToHandler.put(messageClass, handler);
 		return handler;
+	}
+
+	public static final Converter getConverter(Class c) {
+		Converter converter = Converter.CONVERTERS.get(c);
+        if ((converter == null) && (Serializable.class.isAssignableFrom(c))) {
+            converter = Converter.CONVERTERS.get(Serializable.class);
+        }
+        return converter;
 	}
 	
 	public static final void initConverters() {

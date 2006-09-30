@@ -33,21 +33,124 @@
  */
 package com.captiveimagination.jgn.so;
 
+import java.lang.reflect.*;
+import java.nio.*;
+import java.util.*;
+import java.util.concurrent.*;
+
 import com.captiveimagination.jgn.*;
+import com.captiveimagination.jgn.convert.*;
 import com.captiveimagination.magicbeans.*;
 
 /**
  * @author Matthew D. Hicks
  *
  */
-public class SharedObjectManager {
-	public <T> T createSharedBean(String name, Class<? extends T> beanInterface, MessageServer server) {
+public class SharedObjectManager implements BeanChangeListener, Updatable {
+	private static SharedObjectManager instance;
+	
+	private boolean alive;
+	private ConcurrentHashMap<Object, ConcurrentHashMap<String, Object>> queue;
+	private ConcurrentHashMap<Class, HashMap<String, Converter>> converters;
+	private ByteBuffer buffer;
+	
+	private SharedObjectManager() {
+		alive = true;
+		queue = new ConcurrentHashMap<Object, ConcurrentHashMap<String, Object>>();
+		converters = new ConcurrentHashMap<Class, HashMap<String, Converter>>();
+		buffer = ByteBuffer.allocateDirect(512 * 1000);
+	}
+	
+	public <T> T createSharedBean(String name, Class<? extends T> beanInterface) {
 		// Create Magic Bean
 		MagicBeanManager manager = MagicBeanManager.getInstance();
 		T bean = manager.createMagicBean(beanInterface);
 		
+		// Create class conversion if it doesn't already exist
+		if (!converters.containsKey(beanInterface)) {
+			HashMap<String, Converter> map = new HashMap<String, Converter>();
+			Method[] methods = beanInterface.getMethods();
+			for (Method m : methods) {
+				if ((m.getName().startsWith("get")) && (m.getParameterTypes().length == 0)) {
+					String field = m.getName().substring(3);
+					map.put(field, ConversionHandler.getConverter(m.getReturnType()));
+				}
+			}
+			converters.put(beanInterface, map);
+		}
+		
 		// Create Listener and register with server
+		manager.addBeanChangeListener(bean, this);
+		
+		// Create queue entry for this bean
+		queue.put(bean, new ConcurrentHashMap<String, Object>());
 		
 		return bean;
 	}
+	
+	public synchronized void update() {
+		Iterator<Object> objIterator = queue.keySet().iterator();
+		Object object;
+		ConcurrentHashMap<String, Object> updates;
+		Iterator<String> changesIterator;
+		String field;
+		Object value;
+		HashMap<String, Converter> map;
+		Converter converter;
+		buffer.clear();
+		while (objIterator.hasNext()) {		// TODO make it only iterate over beans with changes
+			object = objIterator.next();
+			updates = queue.get(object);
+			changesIterator = updates.keySet().iterator();
+			map = converters.get(object.getClass().getInterfaces()[0]);		// TODO see if there's a better way to do this
+			while (changesIterator.hasNext()) {
+				field = changesIterator.next();
+				value = updates.get(field);
+				changesIterator.remove();
+				
+				// Get converter
+				converter = map.get(field);
+				
+				// Construct a message from changes
+				//converter.get
+				
+				// Cycle through MessageServers/MessageClients associated with this object and send
+				
+				System.out.println("Changes: " + object + ", " + field + ", " + value + ", " + converter);
+			}
+		}
+	}
+	
+	public boolean isAlive() {
+		return alive;
+	}
+	
+	public void shutdown() {
+		alive = false;
+	}
+
+	public void beanChanged(Object object, String name, Object oldValue, Object newValue) {
+		queue.get(object).put(name, newValue);
+	}
+	
+	public static final SharedObjectManager getInstance() {
+		if (instance == null) {
+			instance = new SharedObjectManager();
+		}
+		return instance;
+	}
+	
+	public static void main(String[] args) throws Exception {
+		SharedObjectManager manager = SharedObjectManager.getInstance();
+		JGN.createThread(manager).start();
+		MyBean bean = manager.createSharedBean("TestBean", MyBean.class);
+		bean.setTest("One");
+		bean.setTest("Two");
+	}
+}
+
+interface MyBean {
+	public String getTest();
+	
+	public void setTest(String test);
 }

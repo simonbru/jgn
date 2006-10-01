@@ -39,6 +39,7 @@ import com.captiveimagination.jgn.clientserver.message.*;
 import com.captiveimagination.jgn.convert.*;
 import com.captiveimagination.jgn.message.*;
 import com.captiveimagination.jgn.ro.*;
+import com.captiveimagination.jgn.so.*;
 import com.captiveimagination.jgn.sync.message.*;
 
 /**
@@ -53,18 +54,23 @@ public class JGN {
 	private static final HashMap<Class<? extends Message>,ConversionHandler> converters = new HashMap<Class<? extends Message>,ConversionHandler>();
 	static {
 		// Certain messages must be known before negotiation so this is explicitly done here
-		register(LocalRegistrationMessage.class, (short)-1);
-		register(StreamMessage.class, (short)-2);
-		register(NoopMessage.class, (short)-3);
-		register(Receipt.class, (short)-4);
-		register(DisconnectMessage.class, (short)-5);
-		register(RemoteObjectRequestMessage.class, (short)-6);
-		register(RemoteObjectResponseMessage.class, (short)-7);
-		register(PlayerStatusMessage.class, (short)-8);
-		register(ChatMessage.class, (short)-9);
-		register(Synchronize2DMessage.class, (short)-10);
-		register(Synchronize3DMessage.class, (short)-11);
-		register(SynchronizePhysicsMessage.class, (short)-12);
+		short n = 0;
+		register(LocalRegistrationMessage.class, --n);
+		register(StreamMessage.class, --n);
+		register(NoopMessage.class, --n);
+		register(Receipt.class, --n);
+		register(DisconnectMessage.class, --n);
+		register(RemoteObjectRequestMessage.class, --n);
+		register(RemoteObjectResponseMessage.class, --n);
+		register(PlayerStatusMessage.class, --n);
+		register(ChatMessage.class, --n);
+		register(Synchronize2DMessage.class, --n);
+		register(Synchronize3DMessage.class, --n);
+		register(SynchronizePhysicsMessage.class, --n);
+		// SharedObject Messages
+		register(ObjectCreateMessage.class, --n);
+		register(ObjectUpdateMessage.class, --n);
+		register(ObjectDeleteMessage.class, --n);
 	}
 	
 	/**
@@ -140,33 +146,46 @@ public class JGN {
 		message.setMessageClasses(names);
 	}
 
-	public static final Runnable createRunnable(final Updatable updatable) {
-		Runnable r = new Runnable() {
-			public void run() {
-				while (updatable.isAlive()) {
-					try {
-						updatable.update();
-					} catch(Exception exc) {
-						throw new RuntimeException(exc);
-					}
-					try {
-						Thread.sleep(1);
-					} catch(InterruptedException exc) {
-						exc.printStackTrace();
-					}
-				}
-			}
-		};
-		return r;
+	public static final Runnable createRunnable(Updatable... updatables) {
+		return new UpdatableRunnable(updatables);
 	}
 	
-	public static final Thread createThread(Updatable updatable) {
-		return new Thread(createRunnable(updatable));
+	public static final Thread createThread(Updatable... updatables) {
+		return new Thread(createRunnable(updatables));
 	}
 	
 	public static final long generateUniqueId() {
 		long id = Math.round(Math.random() * Long.MAX_VALUE);
 		id += Math.round(Math.random() * Long.MIN_VALUE);
 		return id;
+	}
+}
+
+class UpdatableRunnable implements Runnable {
+	private Updatable[] updatables;
+	
+	public UpdatableRunnable(Updatable... updatables) {
+		this.updatables = updatables;
+	}
+	
+	public void run() {
+		boolean alive = false;
+		do {
+			try {
+				for (int i = 0; i < updatables.length; i++) {
+					if (updatables[i].isAlive()) {
+						alive = true;
+						updatables[i].update();
+					}
+				}
+			} catch(Throwable t) {
+				throw new RuntimeException(t);
+			}
+			try {
+				Thread.sleep(1);
+			} catch(InterruptedException exc) {
+				exc.printStackTrace();
+			}
+		} while (alive);
 	}
 }

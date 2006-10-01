@@ -36,17 +36,17 @@ package com.captiveimagination.jgn.convert;
 import java.lang.reflect.*;
 import java.nio.*;
 
-import com.captiveimagination.jgn.message.*;
-
 /**
  * @author Matthew D. Hicks
  */
 public class ByteConverter implements Converter {
-	public void set(Message message, Method setter, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
-		setter.invoke(message, new Object[] {new Byte(buffer.get())});
+	public Object set(Object object, Method setter, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
+		Byte b = new Byte(buffer.get());
+		if (setter != null) setter.invoke(object, new Object[] {b});
+		return b;
 	}
 
-	public void get(Message message, Method getter, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
-		buffer.put(((Byte)getter.invoke(message, EMPTY_ARRAY)).byteValue());
+	public void get(Object object, Method getter, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
+		buffer.put(((Byte)getter.invoke(object, EMPTY_ARRAY)).byteValue());
 	}
 }

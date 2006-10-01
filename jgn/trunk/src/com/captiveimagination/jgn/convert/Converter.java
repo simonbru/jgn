@@ -37,8 +37,6 @@ import java.lang.reflect.*;
 import java.nio.*;
 import java.util.*;
 
-import com.captiveimagination.jgn.message.*;
-
 /**
  * Converter defines the methods necessary to convert from a ByteBuffer
  * and apply the data to a Message as well as from a Message and apply
@@ -59,23 +57,23 @@ public interface Converter {
 
 	/**
 	 * Reads content from <code>buffer</code> and applies it via
-	 * <code>setter</code> to <code>message</code>.
+	 * <code>setter</code> to <code>object</code>.
 	 * 
-	 * @param message
+	 * @param object
 	 * @param setter
 	 * @param buffer
 	 */
-	public void set(Message message, Method setter, ByteBuffer buffer) throws IllegalArgumentException,
+	public Object set(Object object, Method setter, ByteBuffer buffer) throws IllegalArgumentException,
 					IllegalAccessException, InvocationTargetException;
 
 	/**
-	 * Reads content from <code>message</code> via <code>getter</code>
+	 * Reads content from <code>ojbect</code> via <code>getter</code>
 	 * and applies it to <code>buffer</code>.
 	 * 
-	 * @param message
+	 * @param object
 	 * @param getter
 	 * @param buffer
 	 */
-	public void get(Message message, Method getter, ByteBuffer buffer) throws IllegalArgumentException,
+	public void get(Object object, Method getter, ByteBuffer buffer) throws IllegalArgumentException,
 					IllegalAccessException, InvocationTargetException;
 }

@@ -29,24 +29,25 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Created: Jun 3, 2006
+ * Created: Oct 1, 2006
  */
-package com.captiveimagination.jgn.convert;
+package com.captiveimagination.jgn.so;
 
-import java.lang.reflect.*;
-import java.nio.*;
+import com.captiveimagination.jgn.message.*;
+import com.captiveimagination.jgn.message.type.*;
 
 /**
  * @author Matthew D. Hicks
+ *
  */
-public class CharacterConverter implements Converter {
-	public Object set(Object object, Method setter, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
-		Character c = new Character(buffer.getChar());
-		if (setter != null) setter.invoke(object, new Object[] {c});
-		return c;
+public class ObjectDeleteMessage extends Message implements CertifiedMessage {
+	private String name;
+
+	public String getName() {
+		return name;
 	}
 
-	public void get(Object object, Method getter, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
-		buffer.putChar(((Character)getter.invoke(object, EMPTY_ARRAY)).charValue());
+	public void setName(String name) {
+		this.name = name;
 	}
 }

@@ -40,25 +40,41 @@ import java.util.concurrent.*;
 
 import com.captiveimagination.jgn.*;
 import com.captiveimagination.jgn.convert.*;
+import com.captiveimagination.jgn.event.*;
+import com.captiveimagination.jgn.message.*;
 import com.captiveimagination.magicbeans.*;
 
 /**
  * @author Matthew D. Hicks
  *
  */
-public class SharedObjectManager implements BeanChangeListener, Updatable {
+public class SharedObjectManager extends MessageAdapter implements BeanChangeListener, Updatable, ConnectionListener {
 	private static SharedObjectManager instance;
 	
 	private boolean alive;
-	private ConcurrentHashMap<Object, ConcurrentHashMap<String, Object>> queue;
+	private ConcurrentHashMap<Object, SharedObject> registry;
+	private HashMap<String, Object> mapping;
 	private ConcurrentHashMap<Class, HashMap<String, Converter>> converters;
-	private ByteBuffer buffer;
+	private ConcurrentLinkedQueue<Object> queue;
+	private HashMap<String, Method> methodMap;
+	private ByteBuffer outgoingBuffer;
+	private ByteBuffer incomingBuffer;
+	private ObjectCreateMessage createMessage;
+	private ObjectUpdateMessage updateMessage;
+	private ObjectDeleteMessage deleteMessage;
 	
 	private SharedObjectManager() {
 		alive = true;
-		queue = new ConcurrentHashMap<Object, ConcurrentHashMap<String, Object>>();
+		registry = new ConcurrentHashMap<Object, SharedObject>();
+		mapping = new HashMap<String, Object>();
 		converters = new ConcurrentHashMap<Class, HashMap<String, Converter>>();
-		buffer = ByteBuffer.allocateDirect(512 * 1000);
+		queue = new ConcurrentLinkedQueue<Object>();
+		methodMap = new HashMap<String,Method>();
+		outgoingBuffer = ByteBuffer.allocateDirect(512 * 1000);
+		incomingBuffer = ByteBuffer.allocateDirect(512 * 1000);
+		createMessage = new ObjectCreateMessage();
+		updateMessage = new ObjectUpdateMessage();
+		deleteMessage = new ObjectDeleteMessage();
 	}
 	
 	public <T> T createSharedBean(String name, Class<? extends T> beanInterface) {
@@ -72,8 +88,19 @@ public class SharedObjectManager implements BeanChangeListener, Updatable {
 			Method[] methods = beanInterface.getMethods();
 			for (Method m : methods) {
 				if ((m.getName().startsWith("get")) && (m.getParameterTypes().length == 0)) {
-					String field = m.getName().substring(3);
-					map.put(field, ConversionHandler.getConverter(m.getReturnType()));
+					try {
+						Method setter = beanInterface.getMethod("s" + m.getName().substring(1), new Class[] {m.getReturnType()});
+						if (setter != null) {
+							String field = m.getName().substring(3).toLowerCase();
+							map.put(field, ConversionHandler.getConverter(m.getReturnType()));
+							m.setAccessible(true);
+							setter.setAccessible(true);
+							methodMap.put(beanInterface.getName() + ".get." + field, m);
+							methodMap.put(beanInterface.getName() + ".set." + field, setter);
+						}
+					} catch(NoSuchMethodException exc) {
+						// We don't put it in if we can't find a setter with the same signature
+					}
 				}
 			}
 			converters.put(beanInterface, map);
@@ -82,42 +109,18 @@ public class SharedObjectManager implements BeanChangeListener, Updatable {
 		// Create Listener and register with server
 		manager.addBeanChangeListener(bean, this);
 		
-		// Create queue entry for this bean
-		queue.put(bean, new ConcurrentHashMap<String, Object>());
+		// Create entry for this bean
+		registry.put(bean, new SharedObject(name, bean, beanInterface, converters.get(beanInterface)));
+		mapping.put(name, bean);
 		
 		return bean;
 	}
 	
-	public synchronized void update() {
-		Iterator<Object> objIterator = queue.keySet().iterator();
+	public synchronized void update() throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
 		Object object;
-		ConcurrentHashMap<String, Object> updates;
-		Iterator<String> changesIterator;
-		String field;
-		Object value;
-		HashMap<String, Converter> map;
-		Converter converter;
-		buffer.clear();
-		while (objIterator.hasNext()) {		// TODO make it only iterate over beans with changes
-			object = objIterator.next();
-			updates = queue.get(object);
-			changesIterator = updates.keySet().iterator();
-			map = converters.get(object.getClass().getInterfaces()[0]);		// TODO see if there's a better way to do this
-			while (changesIterator.hasNext()) {
-				field = changesIterator.next();
-				value = updates.get(field);
-				changesIterator.remove();
-				
-				// Get converter
-				converter = map.get(field);
-				
-				// Construct a message from changes
-				//converter.get
-				
-				// Cycle through MessageServers/MessageClients associated with this object and send
-				
-				System.out.println("Changes: " + object + ", " + field + ", " + value + ", " + converter);
-			}
+		while ((object = queue.poll()) != null) {
+			outgoingBuffer.clear();
+			registry.get(object).update(outgoingBuffer, updateMessage);
 		}
 	}
 	
@@ -130,7 +133,100 @@ public class SharedObjectManager implements BeanChangeListener, Updatable {
 	}
 
 	public void beanChanged(Object object, String name, Object oldValue, Object newValue) {
-		queue.get(object).put(name, newValue);
+		registry.get(object).updated(name);
+		if (!queue.contains(object)) queue.add(object);
+	}
+	
+	protected Method getMethod(String key) {
+		return methodMap.get(key);
+	}
+	
+	public Object getObject(String name) {
+		return mapping.get(name);
+	}
+	
+	public void removeObject(Object object) {
+		// TODO send messages to let everyone know this object should be deleted
+		removeObjectInternal(object);
+	}
+	
+	private void removeObjectInternal(Object object) {
+		// TODO remove object from all servers, clients, and from the manager
+	}
+	
+	public void addShare(Object object, MessageServer server) {
+		registry.get(object).add(server, createMessage);
+	}
+	
+	public boolean removeShare(Object object, MessageServer server) {
+		return registry.get(object).remove(server, deleteMessage);
+	}
+	
+	public void addShare(Object object, MessageClient client) {
+		registry.get(object).add(client, createMessage);
+	}
+	
+	public boolean removeShare(Object object, MessageClient client) {
+		return registry.get(object).remove(client, deleteMessage);
+	}
+	
+	public void enable(MessageServer server) {
+		server.addMessageListener(this);
+		server.addConnectionListener(this);
+	}
+	
+	public void disable(MessageServer server) {
+		server.removeMessageListener(this);
+		server.removeConnectionListener(this);
+	}
+	
+	public void enable(MessageClient client) {
+		client.addMessageListener(this);
+	}
+	
+	public void disable(MessageClient client) {
+		client.removeMessageListener(this);
+	}
+	
+	public void messageReceived(Message message) {
+		if (message instanceof ObjectCreateMessage) {
+			ObjectCreateMessage m = (ObjectCreateMessage)message;
+			try {
+				createSharedBean(m.getName(), Class.forName(m.getInterfaceClass()));
+			} catch(ClassNotFoundException exc) {
+				throw new MessageException("Unable to create shared bean from: " + m.getInterfaceClass(), exc);
+			}
+		} else if (message instanceof ObjectUpdateMessage) {
+			ObjectUpdateMessage m = (ObjectUpdateMessage)message;
+			Object object = getObject(m.getName());
+			if (object != null) {
+				incomingBuffer.clear();
+				registry.get(object).apply(m, incomingBuffer);
+			}
+		} else if (message instanceof ObjectDeleteMessage) {
+			ObjectDeleteMessage m = (ObjectDeleteMessage)message;
+			removeObjectInternal(getObject(m.getName()));
+		}
+	}
+	
+	public void connected(MessageClient client) {
+	}
+
+	public void disconnected(MessageClient client) {
+	}
+
+	public void kicked(MessageClient client, String reason) {
+	}
+
+	public void negotiationComplete(MessageClient client) {
+		Iterator<SharedObject> iterator = registry.values().iterator();
+		SharedObject so;
+		while (iterator.hasNext()) {
+			so = iterator.next();
+			if (so.contains(client.getMessageServer())) {
+				so.broadcast(client);
+			}
+		}
 	}
 	
 	public static final SharedObjectManager getInstance() {
@@ -139,18 +235,5 @@ public class SharedObjectManager implements BeanChangeListener, Updatable {
 		}
 		return instance;
 	}
-	
-	public static void main(String[] args) throws Exception {
-		SharedObjectManager manager = SharedObjectManager.getInstance();
-		JGN.createThread(manager).start();
-		MyBean bean = manager.createSharedBean("TestBean", MyBean.class);
-		bean.setTest("One");
-		bean.setTest("Two");
-	}
-}
 
-interface MyBean {
-	public String getTest();
-	
-	public void setTest(String test);
 }

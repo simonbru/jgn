@@ -37,18 +37,11 @@ import java.io.*;
 import java.lang.reflect.*;
 import java.nio.*;
 
-import com.captiveimagination.jgn.message.*;
-
 /**
  * @author Matthew D. Hicks
  */
 public class StringArrayConverter implements Converter {
-	public StringArrayConverter() {
-		ConversionHandler.initConverters();
-	}
-
-	public void set(Message message, Method setter, ByteBuffer buffer) throws IllegalArgumentException,
-					IllegalAccessException, InvocationTargetException {
+	public Object set(Object object, Method setter, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
 		int length = buffer.getInt();
 		String[] array = null;
 		if (length != -1) {
@@ -67,12 +60,13 @@ public class StringArrayConverter implements Converter {
 				}
 			}
 		}
-		setter.invoke(message, new Object[] {array});
+		if (setter != null) setter.invoke(object, new Object[] {array});
+		return array;
 	}
 
-	public void get(Message message, Method getter, ByteBuffer buffer) throws IllegalArgumentException,
+	public void get(Object object, Method getter, ByteBuffer buffer) throws IllegalArgumentException,
 					IllegalAccessException, InvocationTargetException {
-		String[] array = (String[]) getter.invoke(message, EMPTY_ARRAY);
+		String[] array = (String[])getter.invoke(object, EMPTY_ARRAY);
 		if (array == null) {
 			buffer.putInt(-1);
 		} else {

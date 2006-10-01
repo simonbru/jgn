@@ -4,9 +4,18 @@ import com.captiveimagination.jgn.message.*;
 import com.captiveimagination.jgn.message.type.*;
 
 public class ObjectUpdateMessage extends Message implements CertifiedMessage {
+	private String name;
 	private String[] fields;
 	private byte[] data;
 
+	public String getName() {
+		return name;
+	}
+	
+	public void setName(String name) {
+		this.name = name;
+	}
+	
 	public byte[] getData() {
 		return data;
 	}

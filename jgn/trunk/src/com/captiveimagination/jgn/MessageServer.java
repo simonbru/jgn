@@ -136,6 +136,27 @@ public abstract class MessageServer implements Updatable {
 	protected ConnectionController getConnectionController() {
 		return controller;
 	}
+
+	/**
+	 * Sends <code>message</code> to all connected clients.
+	 * 
+	 * @param message
+	 * @return
+	 * 		total number of clients messages sent to
+	 */
+	public int broadcast(Message message) {
+		Iterator<MessageClient> iterator = getMessageClients().iterator();
+		int sent = 0;
+		while (iterator.hasNext()) {
+			try {
+				iterator.next().sendMessage(message);
+				sent++;
+			} catch(ConnectionException exc) {
+				// Ignore when broadcasting
+			}
+		}
+		return sent;
+	}
 	
 	/**
 	 * Replace the current implementation of ConnectionController with another

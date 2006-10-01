@@ -36,17 +36,17 @@ package com.captiveimagination.jgn.convert;
 import java.lang.reflect.*;
 import java.nio.*;
 
-import com.captiveimagination.jgn.message.*;
-
 /**
  * @author Matthew D. Hicks
  */
 public class FloatConverter implements Converter {
-	public void set(Message message, Method setter, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
-		setter.invoke(message, new Object[] {new Float(buffer.getFloat())});
+	public Object set(Object object, Method setter, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
+		Float f = new Float(buffer.getFloat());
+		if (setter != null) setter.invoke(object, new Object[] {f});
+		return f;
 	}
 
-	public void get(Message message, Method getter, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
-		buffer.putFloat(((Float)getter.invoke(message, EMPTY_ARRAY)).floatValue());
+	public void get(Object object, Method getter, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
+		buffer.putFloat(((Float)getter.invoke(object, EMPTY_ARRAY)).floatValue());
 	}
 }

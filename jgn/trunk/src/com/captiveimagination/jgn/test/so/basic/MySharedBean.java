@@ -29,24 +29,20 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Created: Jun 3, 2006
+ * Created: Oct 1, 2006
  */
-package com.captiveimagination.jgn.convert;
-
-import java.lang.reflect.*;
-import java.nio.*;
+package com.captiveimagination.jgn.test.so.basic;
 
 /**
  * @author Matthew D. Hicks
+ *
  */
-public class CharacterConverter implements Converter {
-	public Object set(Object object, Method setter, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
-		Character c = new Character(buffer.getChar());
-		if (setter != null) setter.invoke(object, new Object[] {c});
-		return c;
-	}
-
-	public void get(Object object, Method getter, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
-		buffer.putChar(((Character)getter.invoke(object, EMPTY_ARRAY)).charValue());
-	}
+public interface MySharedBean {
+	public String getOne();
+	
+	public void setOne(String one);
+	
+	public int getTwo();
+	
+	public void setTwo(int two);
 }

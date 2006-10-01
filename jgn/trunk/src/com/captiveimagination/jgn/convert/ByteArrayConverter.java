@@ -36,13 +36,11 @@ package com.captiveimagination.jgn.convert;
 import java.lang.reflect.*;
 import java.nio.*;
 
-import com.captiveimagination.jgn.message.*;
-
 /**
  * @author Matthew D. Hicks
  */
 public class ByteArrayConverter implements Converter {
-	public void set(Message message, Method setter, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
+	public Object set(Object object, Method setter, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
 		int length = buffer.getInt();
 		byte[] array = null;
 		if (length != -1) {
@@ -51,11 +49,12 @@ public class ByteArrayConverter implements Converter {
 				array[i] = buffer.get();
 			}
 		}
-		setter.invoke(message, new Object[] {array});
+		if (setter != null) setter.invoke(object, new Object[] {array});
+		return array;
 	}
 
-	public void get(Message message, Method getter, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
-		byte[] array = (byte[])getter.invoke(message, EMPTY_ARRAY);
+	public void get(Object object, Method getter, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
+		byte[] array = (byte[])getter.invoke(object, EMPTY_ARRAY);
 		if (array == null) {
 			buffer.putInt(-1);
 		} else {

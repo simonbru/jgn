@@ -36,17 +36,17 @@ package com.captiveimagination.jgn.convert;
 import java.lang.reflect.*;
 import java.nio.*;
 
-import com.captiveimagination.jgn.message.*;
-
 /**
  * @author Matthew D. Hicks
  */
 public class DoubleConverter implements Converter {
-	public void set(Message message, Method setter, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
-		setter.invoke(message, new Object[] {new Double(buffer.getDouble())});
+	public Object set(Object object, Method setter, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
+		Double d = new Double(buffer.getDouble());
+		if (setter != null) setter.invoke(object, new Object[] {d});
+		return d;
 	}
 
-	public void get(Message message, Method getter, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
-		buffer.putDouble(((Double)getter.invoke(message, EMPTY_ARRAY)).doubleValue());
+	public void get(Object object, Method getter, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
+		buffer.putDouble(((Double)getter.invoke(object, EMPTY_ARRAY)).doubleValue());
 	}
 }

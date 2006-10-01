@@ -29,24 +29,32 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Created: Jun 3, 2006
+ * Created: Oct 1, 2006
  */
-package com.captiveimagination.jgn.convert;
+package com.captiveimagination.jgn.test.so.basic;
 
-import java.lang.reflect.*;
-import java.nio.*;
+import java.net.*;
+
+import com.captiveimagination.jgn.*;
+import com.captiveimagination.jgn.so.*;
 
 /**
  * @author Matthew D. Hicks
+ *
  */
-public class CharacterConverter implements Converter {
-	public Object set(Object object, Method setter, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
-		Character c = new Character(buffer.getChar());
-		if (setter != null) setter.invoke(object, new Object[] {c});
-		return c;
-	}
-
-	public void get(Object object, Method getter, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
-		buffer.putChar(((Character)getter.invoke(object, EMPTY_ARRAY)).charValue());
+public class BasicSharedObjectServer {
+	public static void main(String[] args) throws Exception {
+		InetSocketAddress server1Address = new InetSocketAddress(InetAddress.getLocalHost(), 1000);
+		// Create the server
+		MessageServer server = new TCPMessageServer(server1Address);
+		// Create a single thread managing updates for the server and the SharedObjectManager
+		JGN.createThread(server, SharedObjectManager.getInstance()).start();
+		
+		// Create our shared bean
+		MySharedBean bean = SharedObjectManager.getInstance().createSharedBean("MyBean", MySharedBean.class);
+		// Enable sharing on the server so it can comprehend events
+		SharedObjectManager.getInstance().enable(server);
+		// Register it in the server so changes get broadcast to all connections when changes are made
+		SharedObjectManager.getInstance().addShare(bean, server);
 	}
 }

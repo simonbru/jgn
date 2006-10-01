@@ -160,7 +160,7 @@ public class MessageClient implements MessageSender {
 	 * 
 	 * @param message
 	 */
-	public void sendMessage(Message message) {
+	public void sendMessage(Message message) throws ConnectionException {
 		try {
 			Message m = message.clone();
 			m.setMessageClient(this);

@@ -36,6 +36,7 @@ package com.captiveimagination.jgn.test.so.basic;
 import java.net.*;
 
 import com.captiveimagination.jgn.*;
+import com.captiveimagination.jgn.event.*;
 import com.captiveimagination.jgn.so.*;
 
 /**
@@ -46,9 +47,38 @@ public class BasicSharedObjectClient {
 	public static void main(String[] args) throws Exception {
 		// Create the server
 		MessageServer server = new TCPMessageServer(new InetSocketAddress(InetAddress.getLocalHost(), 2000));
+		//server.addMessageListener(new DebugListener("Client"));
 		// Create a single thread managing updates for the server and the SharedObjectManager
 		JGN.createThread(server, SharedObjectManager.getInstance()).start();
+		
+		// Add a listener to see changes
+		SharedObjectManager.getInstance().addListener(new SharedObjectListener() {
+			public void changed(String name, Object object, String field, MessageClient client) {
+				System.out.println("Changed: " + name + ", " + object + ", " + field + ", " + client);
+			}
+
+			public void created(String name, Object object, MessageClient client) {
+				System.out.println("Created: " + name + ", " + object + ", " + client);
+			}
+
+			public void removed(String name, Object object, MessageClient client) {
+				System.out.println("Removed: " + name + ", " + object + ", " + client);
+			}
+		});
+		
 		// Enable sharing on the server so it can comprehend events
 		SharedObjectManager.getInstance().enable(server);
+		
+		// Connect to the server
+		MessageClient client = server.connectAndWait(new InetSocketAddress(InetAddress.getLocalHost(), 1000), 5000);
+		if (client != null) {
+			System.out.println("Connected!");
+			Thread.sleep(5000);
+			MySharedBean bean = (MySharedBean)SharedObjectManager.getInstance().getObject("MyBean");
+			System.out.println("Remote Bean Value: " + bean.getOne());
+			bean.setTwo(53);
+		} else {
+			System.out.println("Unable to connect!");
+		}
 	}
 }

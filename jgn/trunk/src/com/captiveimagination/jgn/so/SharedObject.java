@@ -88,23 +88,32 @@ public class SharedObject {
 	}
 
 	protected void add(MessageClient client, ObjectCreateMessage message) {
-		if (!clients.contains(client)) {
-			clients.add(client);
-		}
+		addInternal(client);
 		message.setName(name);
 		message.setInterfaceClass(interfaceClass.getName());
 		client.sendMessage(message);
 	}
 	
-	protected void broadcast(MessageClient client) {
+	protected void addInternal(MessageClient client) {
+		if (!clients.contains(client)) {
+			clients.add(client);
+		}
+	}
+	
+	protected void broadcast(MessageClient client, ByteBuffer buffer) {
 		// Create the object
 		ObjectCreateMessage message = new ObjectCreateMessage();
 		message.setName(name);
 		message.setInterfaceClass(interfaceClass.getName());
 		client.sendMessage(message);
 		// Send all values for object
+		updateClient(client, buffer);
+	}
+	
+	protected void updateClient(MessageClient client, ByteBuffer buffer) {
 		ObjectUpdateMessage update = new ObjectUpdateMessage();
-		// TODO need to broadcast all the current values of the object
+		String[] fields = converters.keySet().toArray(new String[converters.size()]);
+		update(buffer, update, fields, client);
 	}
 
 	protected boolean remove(MessageClient client, ObjectDeleteMessage message) {
@@ -125,17 +134,25 @@ public class SharedObject {
 		if (!updates.contains(field)) updates.add(field);
 	}
 
-	protected void update(ByteBuffer buffer, ObjectUpdateMessage message) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
+	protected void update(ByteBuffer buffer, ObjectUpdateMessage message) {
 		if (updates.size() == 0) return;
-
 		String[] fields = updates.toArray(new String[updates.size()]);
+		update(buffer, message, fields, null);
+	}
+	
+	protected void update(ByteBuffer buffer, ObjectUpdateMessage message, String[] fields, MessageClient client) {
+		message.setName(name);
 		Converter converter;
 		Method getter;
 		for (int i = 0; i < fields.length; i++) {
 			updates.remove(fields[i]);
 			converter = converters.get(fields[i]);
 			getter = SharedObjectManager.getInstance().getMethod(interfaceClass.getName() + ".get." + fields[i]);
-			converter.get(object, getter, buffer);
+			try {
+				converter.get(object, getter, buffer);
+			} catch(Exception exc) {
+				exc.printStackTrace();	// TODO remove this
+			}
 		}
 		message.setFields(fields);
 		byte[] buf = new byte[buffer.position()];
@@ -143,30 +160,33 @@ public class SharedObject {
 		buffer.get(buf);
 		message.setData(buf);
 
-		System.out.println("Updates: " + message.getFields().length + ", " + message.getData().length);
-
-		// Send to MessageServer clients
-		Iterator<MessageServer> serverIterator = servers.iterator();
-		while (serverIterator.hasNext()) {
-			serverIterator.next().broadcast(message);
-		}
-
-		// Send to MessageClients
-		Iterator<MessageClient> clientIterator = clients.iterator();
-		while (clientIterator.hasNext()) {
-			clientIterator.next().sendMessage(message);
+		if (client != null) {
+			client.sendMessage(message);
+		} else {
+			// Send to MessageServer clients
+			Iterator<MessageServer> serverIterator = servers.iterator();
+			while (serverIterator.hasNext()) {
+				serverIterator.next().broadcast(message);
+			}
+	
+			// Send to MessageClients
+			Iterator<MessageClient> clientIterator = clients.iterator();
+			while (clientIterator.hasNext()) {
+				clientIterator.next().sendMessage(message);
+			}
 		}
 	}
 
 	protected void apply(ObjectUpdateMessage message, ByteBuffer buffer) {
 		buffer.put(message.getData());
+		buffer.rewind();
 		try {
 			for (String field : message.getFields()) {
 				Converter converter = converters.get(field);
 				MagicBeanHandler handler = MagicBeanManager.getInstance().getMagicBeanHandler(object);
 				Method setter = handler.getClass().getMethod("setValue", new Class[] {String.class, Object.class});
 				Object value = converter.set(object, null, buffer);
-				setter.invoke(object, new Object[] {field, value});
+				setter.invoke(handler, new Object[] {field, value});
 			}
 		} catch (IllegalAccessException exc) {
 			exc.printStackTrace();

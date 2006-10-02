@@ -36,6 +36,7 @@ package com.captiveimagination.jgn.test.so.basic;
 import java.net.*;
 
 import com.captiveimagination.jgn.*;
+import com.captiveimagination.jgn.event.*;
 import com.captiveimagination.jgn.so.*;
 
 /**
@@ -47,11 +48,29 @@ public class BasicSharedObjectServer {
 		InetSocketAddress server1Address = new InetSocketAddress(InetAddress.getLocalHost(), 1000);
 		// Create the server
 		MessageServer server = new TCPMessageServer(server1Address);
+		//server.addMessageListener(new DebugListener("Server"));
 		// Create a single thread managing updates for the server and the SharedObjectManager
 		JGN.createThread(server, SharedObjectManager.getInstance()).start();
 		
+		// Add a listener to see changes
+		SharedObjectManager.getInstance().addListener(new SharedObjectListener() {
+			public void changed(String name, Object object, String field, MessageClient client) {
+				System.out.println("Changed: " + name + ", " + object + ", " + field + ", " + client);
+			}
+
+			public void created(String name, Object object, MessageClient client) {
+				System.out.println("Created: " + name + ", " + object + ", " + client);
+			}
+
+			public void removed(String name, Object object, MessageClient client) {
+				System.out.println("Removed: " + name + ", " + object + ", " + client);
+			}
+		});
+		
 		// Create our shared bean
 		MySharedBean bean = SharedObjectManager.getInstance().createSharedBean("MyBean", MySharedBean.class);
+		// Set a value that should be sent
+		bean.setOne("This is set right after the bean was created");
 		// Enable sharing on the server so it can comprehend events
 		SharedObjectManager.getInstance().enable(server);
 		// Register it in the server so changes get broadcast to all connections when changes are made

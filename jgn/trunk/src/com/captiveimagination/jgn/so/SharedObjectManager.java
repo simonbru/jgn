@@ -59,9 +59,11 @@ public class SharedObjectManager extends MessageAdapter implements BeanChangeLis
 	private HashMap<String, Method> methodMap;
 	private ByteBuffer outgoingBuffer;
 	private ByteBuffer incomingBuffer;
+	private ByteBuffer updateBuffer;
 	private ObjectCreateMessage createMessage;
 	private ObjectUpdateMessage updateMessage;
 	private ObjectDeleteMessage deleteMessage;
+	private ArrayList<SharedObjectListener> listeners;
 	
 	private SharedObjectManager() {
 		alive = true;
@@ -72,12 +74,20 @@ public class SharedObjectManager extends MessageAdapter implements BeanChangeLis
 		methodMap = new HashMap<String,Method>();
 		outgoingBuffer = ByteBuffer.allocateDirect(512 * 1000);
 		incomingBuffer = ByteBuffer.allocateDirect(512 * 1000);
+		updateBuffer = ByteBuffer.allocateDirect(512 * 1000);
 		createMessage = new ObjectCreateMessage();
 		updateMessage = new ObjectUpdateMessage();
 		deleteMessage = new ObjectDeleteMessage();
+		listeners = new ArrayList<SharedObjectListener>();
 	}
 	
 	public <T> T createSharedBean(String name, Class<? extends T> beanInterface) {
+		T t = createSharedBeanInternal(name, beanInterface);
+		applyCreated(name, t, null);
+		return t;
+	}
+	
+	public <T> T createSharedBeanInternal(String name, Class<? extends T> beanInterface) {
 		// Create Magic Bean
 		MagicBeanManager manager = MagicBeanManager.getInstance();
 		T bean = manager.createMagicBean(beanInterface);
@@ -132,9 +142,11 @@ public class SharedObjectManager extends MessageAdapter implements BeanChangeLis
 		alive = false;
 	}
 
-	public void beanChanged(Object object, String name, Object oldValue, Object newValue) {
-		registry.get(object).updated(name);
+	public void beanChanged(Object object, String field, Object oldValue, Object newValue) {
+		SharedObject so = registry.get(object);
+		so.updated(field);
 		if (!queue.contains(object)) queue.add(object);
+		applyChanged(so.getName(), object, field, null);
 	}
 	
 	protected Method getMethod(String key) {
@@ -147,10 +159,12 @@ public class SharedObjectManager extends MessageAdapter implements BeanChangeLis
 	
 	public void removeObject(Object object) {
 		// TODO send messages to let everyone know this object should be deleted
-		removeObjectInternal(object);
+		SharedObject so = registry.get(object);
+		removeObjectInternal(so);
+		applyRemoved(so.getName(), object, null);
 	}
 	
-	private void removeObjectInternal(Object object) {
+	private void removeObjectInternal(SharedObject object) {
 		// TODO remove object from all servers, clients, and from the manager
 	}
 	
@@ -192,7 +206,11 @@ public class SharedObjectManager extends MessageAdapter implements BeanChangeLis
 		if (message instanceof ObjectCreateMessage) {
 			ObjectCreateMessage m = (ObjectCreateMessage)message;
 			try {
-				createSharedBean(m.getName(), Class.forName(m.getInterfaceClass()));
+				Object object = createSharedBeanInternal(m.getName(), Class.forName(m.getInterfaceClass()));
+				SharedObject so = registry.get(object);
+				so.addInternal(message.getMessageClient());		// TODO verify this is the best route to go
+																// It will only send changes back to the source
+				applyCreated(m.getName(), object, m.getMessageClient());
 			} catch(ClassNotFoundException exc) {
 				throw new MessageException("Unable to create shared bean from: " + m.getInterfaceClass(), exc);
 			}
@@ -203,9 +221,17 @@ public class SharedObjectManager extends MessageAdapter implements BeanChangeLis
 				incomingBuffer.clear();
 				registry.get(object).apply(m, incomingBuffer);
 			}
+			for (String field : m.getFields()) {
+				applyChanged(m.getName(), object, field, m.getMessageClient());
+			}
 		} else if (message instanceof ObjectDeleteMessage) {
 			ObjectDeleteMessage m = (ObjectDeleteMessage)message;
-			removeObjectInternal(getObject(m.getName()));
+			Object object = getObject(m.getName());
+			SharedObject so = registry.get(object);
+			if (object != null) {
+				removeObjectInternal(so);
+				applyRemoved(m.getName(), object, m.getMessageClient());
+			}
 		}
 	}
 	
@@ -224,8 +250,39 @@ public class SharedObjectManager extends MessageAdapter implements BeanChangeLis
 		while (iterator.hasNext()) {
 			so = iterator.next();
 			if (so.contains(client.getMessageServer())) {
-				so.broadcast(client);
+				updateBuffer.clear();
+				so.broadcast(client, updateBuffer);
 			}
+		}
+	}
+	
+	public void addListener(SharedObjectListener listener) {
+		synchronized(listeners) {
+			listeners.add(listener);
+		}
+	}
+	
+	public boolean removeListener(SharedObjectListener listener) {
+		synchronized(listeners) {
+			return listeners.remove(listener);
+		}
+	}
+	
+	protected void applyCreated(String name, Object object, MessageClient client) {
+		for (SharedObjectListener listener : listeners) {
+			listener.created(name, object, client);
+		}
+	}
+	
+	protected void applyChanged(String name, Object object, String field, MessageClient client) {
+		for (SharedObjectListener listener : listeners) {
+			listener.changed(name, object, field, client);
+		}
+	}
+	
+	protected void applyRemoved(String name, Object object, MessageClient client) {
+		for (SharedObjectListener listener : listeners) {
+			listener.removed(name, object, client);
 		}
 	}
 	
@@ -235,5 +292,4 @@ public class SharedObjectManager extends MessageAdapter implements BeanChangeLis
 		}
 		return instance;
 	}
-
 }

@@ -62,11 +62,9 @@ public interface SharedObjectListener {
 	 * @param name
 	 * @param object
 	 * @param field
-	 * @param oldValue
-	 * @param newValue
 	 * @param client
 	 */
-	public void changed(String name, Object object, String field, Object oldValue, Object newValue, MessageClient client);
+	public void changed(String name, Object object, String field, MessageClient client);
 	
 	/**
 	 * An object has been removed either remotely or locally. If the removal was

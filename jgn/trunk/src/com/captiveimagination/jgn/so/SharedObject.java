@@ -50,15 +50,17 @@ public class SharedObject {
 	private Object object;
 	private Class interfaceClass;
 	private HashMap<String, Converter> converters;
+	private boolean localObject;
 	private ConcurrentLinkedQueue<String> updates;
 	private ConcurrentLinkedQueue<MessageServer> servers;
 	private ConcurrentLinkedQueue<MessageClient> clients;
 
-	protected SharedObject(String name, Object object, Class interfaceClass, HashMap<String, Converter> converters) {
+	protected SharedObject(String name, Object object, Class interfaceClass, HashMap<String, Converter> converters, boolean localObject) {
 		this.name = name;
 		this.object = object;
 		this.interfaceClass = interfaceClass;
 		this.converters = converters;
+		this.localObject = localObject;
 		updates = new ConcurrentLinkedQueue<String>();
 		servers = new ConcurrentLinkedQueue<MessageServer>();
 		clients = new ConcurrentLinkedQueue<MessageClient>();
@@ -72,6 +74,10 @@ public class SharedObject {
 		return object;
 	}
 
+	protected boolean isLocal() {
+		return localObject;
+	}
+	
 	protected void add(MessageServer server, ObjectCreateMessage message) {
 		if (!servers.contains(server)) {
 			servers.add(server);
@@ -172,7 +178,12 @@ public class SharedObject {
 			// Send to MessageClients
 			Iterator<MessageClient> clientIterator = clients.iterator();
 			while (clientIterator.hasNext()) {
-				clientIterator.next().sendMessage(message);
+				client = clientIterator.next();
+				if (client.isConnected()) {
+					if (!servers.contains(client.getMessageServer())) {
+						client.sendMessage(message);
+					}
+				}
 			}
 		}
 	}

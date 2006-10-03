@@ -82,12 +82,12 @@ public class SharedObjectManager extends MessageAdapter implements BeanChangeLis
 	}
 	
 	public <T> T createSharedBean(String name, Class<? extends T> beanInterface) {
-		T t = createSharedBeanInternal(name, beanInterface);
+		T t = createSharedBeanInternal(name, beanInterface, true);
 		applyCreated(name, t, null);
 		return t;
 	}
 	
-	public <T> T createSharedBeanInternal(String name, Class<? extends T> beanInterface) {
+	public <T> T createSharedBeanInternal(String name, Class<? extends T> beanInterface, boolean localObject) {
 		// Create Magic Bean
 		MagicBeanManager manager = MagicBeanManager.getInstance();
 		T bean = manager.createMagicBean(beanInterface);
@@ -120,7 +120,7 @@ public class SharedObjectManager extends MessageAdapter implements BeanChangeLis
 		manager.addBeanChangeListener(bean, this);
 		
 		// Create entry for this bean
-		registry.put(bean, new SharedObject(name, bean, beanInterface, converters.get(beanInterface)));
+		registry.put(bean, new SharedObject(name, bean, beanInterface, converters.get(beanInterface), localObject));
 		mapping.put(name, bean);
 		
 		return bean;
@@ -206,7 +206,7 @@ public class SharedObjectManager extends MessageAdapter implements BeanChangeLis
 		if (message instanceof ObjectCreateMessage) {
 			ObjectCreateMessage m = (ObjectCreateMessage)message;
 			try {
-				Object object = createSharedBeanInternal(m.getName(), Class.forName(m.getInterfaceClass()));
+				Object object = createSharedBeanInternal(m.getName(), Class.forName(m.getInterfaceClass()), false);
 				SharedObject so = registry.get(object);
 				so.addInternal(message.getMessageClient());		// TODO verify this is the best route to go
 																// It will only send changes back to the source
@@ -217,12 +217,17 @@ public class SharedObjectManager extends MessageAdapter implements BeanChangeLis
 		} else if (message instanceof ObjectUpdateMessage) {
 			ObjectUpdateMessage m = (ObjectUpdateMessage)message;
 			Object object = getObject(m.getName());
+			SharedObject so = registry.get(object);
 			if (object != null) {
 				incomingBuffer.clear();
 				registry.get(object).apply(m, incomingBuffer);
 			}
 			for (String field : m.getFields()) {
 				applyChanged(m.getName(), object, field, m.getMessageClient());
+				if (so.isLocal()) {
+					beanChanged(object, field, null, null);		// Apply changes so they get sent to all registered
+					// TODO make it so changes don't get sent to the originator of this change (m.getMessageClient())
+				}
 			}
 		} else if (message instanceof ObjectDeleteMessage) {
 			ObjectDeleteMessage m = (ObjectDeleteMessage)message;

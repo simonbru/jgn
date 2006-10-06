@@ -39,7 +39,6 @@ import com.captiveimagination.jgn.*;
 import com.captiveimagination.jgn.event.*;
 import com.captiveimagination.jgn.message.*;
 import com.captiveimagination.jgn.queue.*;
-import com.captiveimagination.jgn.translation.compression.*;
 
 /**
  * @author Matthew D. Hicks
@@ -126,8 +125,8 @@ public class TestStressMessageServer {
 		
 		final MessageServer server2 = new TCPMessageServer(new InetSocketAddress(InetAddress.getLocalHost(), 2000));
 		
-		server1.addDataTranslator(new GZipDataTranslator());
-		server2.addDataTranslator(new GZipDataTranslator());
+//		server1.addDataTranslator(new ReverseDataTranslator());
+//		server2.addDataTranslator(new ReverseDataTranslator());
 		
 		Thread t2 = new Thread() {
 			public void run() {

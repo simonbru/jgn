@@ -80,16 +80,17 @@ public class UDPMessageServer extends NIOMessageServer {
 				// TODO a message was sent but never reached the host - figure out how to use this
 				return;
 			}
+			
 			readLookup.limit(readLookup.position());
 			readLookup.position(0);
 			client = getMessageClient(address);
+			
 			if (client == null) {
 				client = new MessageClient(address, this);
 				client.setStatus(MessageClient.Status.NEGOTIATING);
 				getIncomingConnectionQueue().add(client);
 				getMessageClients().add(client);
 			}
-			
 			client.getReadBuffer().put(readLookup);
 			readLookup.clear();
 			

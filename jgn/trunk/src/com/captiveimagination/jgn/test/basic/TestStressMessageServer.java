@@ -39,6 +39,7 @@ import com.captiveimagination.jgn.*;
 import com.captiveimagination.jgn.event.*;
 import com.captiveimagination.jgn.message.*;
 import com.captiveimagination.jgn.queue.*;
+import com.captiveimagination.jgn.translation.compression.*;
 
 /**
  * @author Matthew D. Hicks
@@ -52,8 +53,8 @@ public class TestStressMessageServer {
 	
 	public static void main(String[] args) throws Exception {
 		JGN.register(BasicMessage.class);
-		final MessageServer server = new TCPMessageServer(new InetSocketAddress(InetAddress.getLocalHost(), 1000));
-		server.addConnectionListener(new ConnectionListener() {
+		final MessageServer server1 = new TCPMessageServer(new InetSocketAddress(InetAddress.getLocalHost(), 1000));
+		server1.addConnectionListener(new ConnectionListener() {
 			public void connected(MessageClient client) {
 				System.out.println("S1> Connected: " + client);
 				client1 = client;
@@ -71,7 +72,7 @@ public class TestStressMessageServer {
 			public void kicked(MessageClient client, String reason) {
 			}
 		});
-		server.addMessageListener(new MessageAdapter() {
+		server1.addMessageListener(new MessageAdapter() {
 			private long time;
 			
 			public void messageReceived(Message message) {
@@ -98,7 +99,7 @@ public class TestStressMessageServer {
 			public void run() {
 				try {
 					while (true) {
-						server.update();
+						server1.update();
 						if (System.currentTimeMillis() - cycle > 1000) {
 							if (client1 != null) {
 								System.out.println("Received: " + receiveCount + 
@@ -124,6 +125,10 @@ public class TestStressMessageServer {
 		t.start();
 		
 		final MessageServer server2 = new TCPMessageServer(new InetSocketAddress(InetAddress.getLocalHost(), 2000));
+		
+		server1.addDataTranslator(new GZipDataTranslator());
+		server2.addDataTranslator(new GZipDataTranslator());
+		
 		Thread t2 = new Thread() {
 			public void run() {
 				try {

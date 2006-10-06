@@ -39,6 +39,7 @@ import java.nio.channels.*;
 import java.util.*;
 
 import com.captiveimagination.jgn.message.*;
+import com.captiveimagination.jgn.translation.*;
 
 /**
  * @author Matthew D. Hicks
@@ -153,6 +154,9 @@ public abstract class NIOMessageServer extends MessageServer {
 				return null;
 			}
 			Message message = JGN.getConverter(c).receiveMessage(client.getReadBuffer());
+			if (message instanceof TranslatedMessage) {
+				message = revertTranslated((TranslatedMessage)message);
+			}
 			if (messageLength < position - 4 - client.getReadPosition()) {
 				// Still has content
 				client.setReadPosition(messageLength + 4 + client.getReadPosition());

@@ -6,7 +6,6 @@ package com.captiveimagination.jgn;
 
 import java.nio.*;
 
-import com.captiveimagination.jgn.convert.*;
 import com.captiveimagination.jgn.message.*;
 import com.captiveimagination.jgn.queue.*;
 
@@ -59,16 +58,15 @@ public class PacketCombiner {
 			}
 			message.setTimestamp(System.currentTimeMillis());
 			
-			ConversionHandler handler = ConversionHandler.getConversionHandler(message.getClass());
-			
 			int messageStart = buffer.position();
 			try {
 				// Write the length int to -1 initially until we know how large it is
 				buffer.putInt(-1);
 				
 				// Attempt to put this message into the buffer
-				handler.sendMessage(message, buffer);
+				message.getMessageClient().getMessageServer().convertMessage(message, buffer);
 				int messageEnd = buffer.position();
+				//System.out.println("MESSAGE: " + message + ", " + (messageEnd - messageStart - 4));
 				buffer.position(messageStart);
 				buffer.putInt(messageEnd - messageStart - 4);
 				buffer.position(messageEnd);

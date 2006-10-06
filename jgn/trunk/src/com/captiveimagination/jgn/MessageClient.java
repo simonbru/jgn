@@ -163,6 +163,7 @@ public class MessageClient implements MessageSender {
 	public void sendMessage(Message message) throws ConnectionException {
 		try {
 			Message m = message.clone();
+			
 			m.setMessageClient(this);
 			
 			// Make sure we know if we've already sent a registration message

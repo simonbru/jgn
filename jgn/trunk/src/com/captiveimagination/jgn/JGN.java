@@ -41,6 +41,7 @@ import com.captiveimagination.jgn.message.*;
 import com.captiveimagination.jgn.ro.*;
 import com.captiveimagination.jgn.so.*;
 import com.captiveimagination.jgn.sync.message.*;
+import com.captiveimagination.jgn.translation.*;
 
 /**
  * Foundational static class for various functionality that is abstract from any other
@@ -54,7 +55,7 @@ public class JGN {
 	private static final HashMap<Class<? extends Message>,ConversionHandler> converters = new HashMap<Class<? extends Message>,ConversionHandler>();
 	static {
 		// Certain messages must be known before negotiation so this is explicitly done here
-		short n = 0;
+		short n = -1;
 		register(LocalRegistrationMessage.class, --n);
 		register(StreamMessage.class, --n);
 		register(NoopMessage.class, --n);
@@ -71,6 +72,8 @@ public class JGN {
 		register(ObjectCreateMessage.class, --n);
 		register(ObjectUpdateMessage.class, --n);
 		register(ObjectDeleteMessage.class, --n);
+		// Translation
+		register(TranslatedMessage.class, --n);
 	}
 	
 	/**

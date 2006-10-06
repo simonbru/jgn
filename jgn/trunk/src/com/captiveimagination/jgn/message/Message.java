@@ -34,6 +34,7 @@
 package com.captiveimagination.jgn.message;
 
 import com.captiveimagination.jgn.*;
+import com.captiveimagination.jgn.translation.*;
 
 /**
  * Message is the foundation for all communication in JGN.
@@ -56,6 +57,7 @@ public abstract class Message implements Cloneable {
 	private int maxTries;
 	private long timeout;
 	private MessageClient client;
+	private TranslatedMessage translated;
 	
 	public Message() {
 		groupId = -1;	// Default to -1 meaning there is no group assignment
@@ -122,7 +124,7 @@ public abstract class Message implements Cloneable {
 		this.groupId = groupId;
 	}
 	
-	/*
+	/**
 	 * Ignored unless the extending Message implements
 	 * PlayerMessage. This is useful for distinguishing
 	 * between players on a game server.
@@ -240,6 +242,16 @@ public abstract class Message implements Cloneable {
 	@Hide
 	public void setTimeout(long timeout) {
 		this.timeout = timeout;
+	}
+	
+	@Hide
+	public TranslatedMessage getTranslatedMessage() {
+		return translated;
+	}
+	
+	@Hide
+	public void setTranslatedMessage(TranslatedMessage translated) {
+		this.translated = translated;
 	}
 	
 	@Hide

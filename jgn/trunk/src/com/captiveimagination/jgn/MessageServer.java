@@ -46,6 +46,7 @@ import com.captiveimagination.jgn.message.*;
 import com.captiveimagination.jgn.queue.*;
 import com.captiveimagination.jgn.ro.*;
 import com.captiveimagination.jgn.ro.ping.*;
+import com.captiveimagination.jgn.translation.*;
 
 /**
  * MessageServer is the abstract foundation from which all sending and receiving
@@ -68,6 +69,7 @@ public abstract class MessageServer implements Updatable {
 	private ArrayList<ConnectionListener> connectionListeners;
 	private ArrayList<MessageListener> messageListeners;
 	private ArrayList<ConnectionFilter> filters;
+	private ArrayList<DataTranslator> translators;
 	private AbstractQueue<MessageClient> clients;
 	protected boolean keepAlive;
 	protected boolean alive;
@@ -90,6 +92,7 @@ public abstract class MessageServer implements Updatable {
 		connectionListeners = new ArrayList<ConnectionListener>();
 		messageListeners = new ArrayList<MessageListener>();
 		filters = new ArrayList<ConnectionFilter>();
+		translators = new ArrayList<DataTranslator>();
 		clients = new ConcurrentLinkedQueue<MessageClient>();
 		
 		controller = DEFAULT_CONNECTION_CONTROLLER;
@@ -438,8 +441,11 @@ public abstract class MessageServer implements Updatable {
 				if (message == null) {
 					message = new NoopMessage();
 				}
-				client.sendMessage(message);
-				client.sent();
+				try {
+					client.sendMessage(message);
+					client.sent();
+				} catch(QueueFullException exc) {
+				}
 			}
 		}
 		
@@ -533,7 +539,7 @@ public abstract class MessageServer implements Updatable {
 	 * 
 	 * @param filter
 	 * @return
-	 * 		true if the filter was contained in the list
+	 * 	true if the filter was contained in the list
 	 */
 	public boolean removeConnectionFilter(ConnectionFilter filter) {
 		synchronized (filters) {
@@ -551,11 +557,62 @@ public abstract class MessageServer implements Updatable {
 		return null;
 	}
 	
-	protected ByteBuffer convertMessage(Message message, ByteBuffer buffer) throws MessageHandlingException {
-		ConversionHandler handler = JGN.getConverter(message.getClass());
-		handler.sendMessage(message, buffer);
-		// TODO pass the byte buffer through any MessageProcessors associated with this message
-		return buffer;
+	/**
+	 * Adds a DataTranslator to this MessageServer
+	 * 
+	 * @param translator
+	 */
+	public void addDataTranslator(DataTranslator translator) {
+		translators.add(translator);
+	}
+	
+	/**
+	 * Removes a DataTranslator from this MessageServer
+	 * 
+	 * @param translator
+	 * @return
+	 * 	true if the translator was contained in the list
+	 */
+	public boolean removeDataTranslator(DataTranslator translator) {
+		return translators.remove(translator);
+	}
+	
+	private void translateMessage(Message message) throws MessageHandlingException {
+		if (translators.size() == 0) {
+			return;
+		}
+		if (message instanceof LocalRegistrationMessage) {
+			return;
+		}
+		TranslatedMessage tm = TranslationManager.createTranslatedMessage(message);
+		byte[] b = tm.getTranslated();
+		for (DataTranslator translator : translators) {
+			b = translator.outbound(b);
+		}
+		tm.setTranslated(b);
+		tm.setMessageClient(message.getMessageClient());
+		message.setTranslatedMessage(tm);
+	}
+	
+	protected Message revertTranslated(TranslatedMessage tm) throws MessageHandlingException {
+		byte[] b = tm.getTranslated();
+		for (DataTranslator translator : translators) {
+			b = translator.inbound(b);
+		}
+		Message message = TranslationManager.createMessage(b);
+		return message;
+	}
+	
+	protected void convertMessage(Message message, ByteBuffer buffer) throws MessageHandlingException {
+		translateMessage(message);
+		
+		Message m = message;
+		if (message.getTranslatedMessage() != null) {
+			m = message.getTranslatedMessage();
+		}
+		
+		ConversionHandler handler = JGN.getConverter(m.getClass());
+		handler.sendMessage(m, buffer);
 	}
 	
 	private static final void sendToListener(Message message, MessageListener listener, int type) {

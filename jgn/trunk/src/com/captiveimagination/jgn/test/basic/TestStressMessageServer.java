@@ -35,10 +35,13 @@ package com.captiveimagination.jgn.test.basic;
 
 import java.net.*;
 
+import javax.crypto.*;
+
 import com.captiveimagination.jgn.*;
 import com.captiveimagination.jgn.event.*;
 import com.captiveimagination.jgn.message.*;
 import com.captiveimagination.jgn.queue.*;
+import com.captiveimagination.jgn.translation.encryption.*;
 
 /**
  * @author Matthew D. Hicks
@@ -125,8 +128,12 @@ public class TestStressMessageServer {
 		
 		final MessageServer server2 = new TCPMessageServer(new InetSocketAddress(InetAddress.getLocalHost(), 2000));
 		
-//		server1.addDataTranslator(new ReverseDataTranslator());
-//		server2.addDataTranslator(new ReverseDataTranslator());
+//		KeyGenerator kgen = KeyGenerator.getInstance("Blowfish");
+//		SecretKey skey = kgen.generateKey();
+//		byte[] raw = skey.getEncoded();
+//		BlowfishDataTranslator trans = new BlowfishDataTranslator(raw);
+//		server1.addDataTranslator(trans);
+//		server2.addDataTranslator(trans);
 		
 		Thread t2 = new Thread() {
 			public void run() {

@@ -584,23 +584,31 @@ public abstract class MessageServer implements Updatable {
 		if (message instanceof LocalRegistrationMessage) {
 			return;
 		}
-		TranslatedMessage tm = TranslationManager.createTranslatedMessage(message);
-		byte[] b = tm.getTranslated();
-		for (DataTranslator translator : translators) {
-			b = translator.outbound(b);
+		try {
+			TranslatedMessage tm = TranslationManager.createTranslatedMessage(message);
+			byte[] b = tm.getTranslated();
+			for (DataTranslator translator : translators) {
+				b = translator.outbound(b);
+			}
+			tm.setTranslated(b);
+			tm.setMessageClient(message.getMessageClient());
+			message.setTranslatedMessage(tm);
+		} catch(Exception exc) {
+			throw new MessageException("Exception during translation", exc);
 		}
-		tm.setTranslated(b);
-		tm.setMessageClient(message.getMessageClient());
-		message.setTranslatedMessage(tm);
 	}
 	
 	protected Message revertTranslated(TranslatedMessage tm) throws MessageHandlingException {
-		byte[] b = tm.getTranslated();
-		for (DataTranslator translator : translators) {
-			b = translator.inbound(b);
+		try {
+			byte[] b = tm.getTranslated();
+			for (DataTranslator translator : translators) {
+				b = translator.inbound(b);
+			}
+			Message message = TranslationManager.createMessage(b);
+			return message;
+		} catch(Exception exc) {
+			throw new MessageException("Exception during translation", exc);
 		}
-		Message message = TranslationManager.createMessage(b);
-		return message;
 	}
 	
 	protected void convertMessage(Message message, ByteBuffer buffer) throws MessageHandlingException {

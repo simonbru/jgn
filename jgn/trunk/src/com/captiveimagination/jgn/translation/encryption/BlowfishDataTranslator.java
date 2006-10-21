@@ -29,40 +29,39 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Created: Oct 3, 2006
+ * Created: Oct 7, 2006
  */
-package com.captiveimagination.jgn.test.translation;
+package com.captiveimagination.jgn.translation.encryption;
 
-import java.net.*;
+import java.security.*;
 
 import javax.crypto.*;
+import javax.crypto.spec.*;
 
-import com.captiveimagination.jgn.*;
-import com.captiveimagination.jgn.translation.encryption.*;
+import com.captiveimagination.jgn.translation.*;
 
 /**
  * @author Matthew D. Hicks
  *
  */
-public class TestDataTranslation {
-	public static void main(String[] args) throws Exception {
-		MessageServer server1 = new TCPMessageServer(new InetSocketAddress(InetAddress.getLocalHost(), 1000));
-		MessageServer server2 = new TCPMessageServer(new InetSocketAddress(InetAddress.getLocalHost(), 2000));
-		
-		JGN.createThread(server1, server2).start();
-		
-		KeyGenerator kgen = KeyGenerator.getInstance("Blowfish");
-		SecretKey skey = kgen.generateKey();
-		byte[] raw = skey.getEncoded();
-		BlowfishDataTranslator trans = new BlowfishDataTranslator(raw);
-		server1.addDataTranslator(trans);
-		server2.addDataTranslator(trans);
-		
-		MessageClient client = server2.connectAndWait(server1.getSocketAddress(), 5000);
-		if (client != null) {
-			System.out.println("Connected successfully!");
-		} else {
-			System.out.println("Connect failure!");
-		}
+public class BlowfishDataTranslator implements DataTranslator {
+	private Cipher encrypt;
+	private Cipher decrypt;
+	
+	public BlowfishDataTranslator(byte[] key) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException {
+		SecretKeySpec skeySpec = new SecretKeySpec(key, "Blowfish");
+		encrypt = Cipher.getInstance("Blowfish");
+		encrypt.init(Cipher.ENCRYPT_MODE, skeySpec);
+		decrypt = Cipher.getInstance("Blowfish");
+		decrypt.init(Cipher.DECRYPT_MODE, skeySpec);
 	}
+	
+	public byte[] inbound(byte[] bytes) throws IllegalBlockSizeException, BadPaddingException {
+		return decrypt.doFinal(bytes);
+	}
+
+	public byte[] outbound(byte[] bytes) throws IllegalBlockSizeException, BadPaddingException {
+		return encrypt.doFinal(bytes);
+	}
+
 }

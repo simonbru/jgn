@@ -48,7 +48,7 @@ public interface DataTranslator {
 	 * @return
 	 * 		modified byte[]
 	 */
-	public byte[] outbound(byte[] bytes);
+	public byte[] outbound(byte[] bytes) throws Exception;
 	
 	/**
 	 * Translate data for receiving.
@@ -57,5 +57,5 @@ public interface DataTranslator {
 	 * @return
 	 * 		modified byte[]
 	 */
-	public byte[] inbound(byte[] bytes);
+	public byte[] inbound(byte[] bytes) throws Exception;
 }

@@ -138,8 +138,8 @@ public class SimpleSynchronization extends JFrame implements KeyListener {
 		JGNServer server = new JGNServer(serverReliable, serverFast);
 		JGN.createThread(server).start();
 		ServerSynchronizer sSynchronizer = new ServerSynchronizer(controller, server);
-		sSynchronizer.register((short)0, ssServer.getServerPanel(), 500, 0);
-		sSynchronizer.register((short)1, ssServer.getClientPanel());
+		sSynchronizer.register((short)0, ssServer.getServerPanel(), 50, 0);		// Register the server panel to send updates to the client every 50ms
+		sSynchronizer.register((short)1, ssServer.getClientPanel());			// Register the client panel to be able to receive updates
 		JGN.createThread(sSynchronizer).start();
 		ServerSynchronizationListener serverListener = new ServerSynchronizationListener(sSynchronizer, false, server);
 		server.addMessageListener(serverListener);
@@ -155,8 +155,8 @@ public class SimpleSynchronization extends JFrame implements KeyListener {
 		client.connectAndWait(serverReliable, serverFast, 5000);
 		System.out.println("**** Connected! ****");
 		ClientSynchronizer cSynchronizer = new ClientSynchronizer(controller, client);
-		cSynchronizer.register((short)0, ssClient.getServerPanel());
-		cSynchronizer.register((short)1, ssClient.getClientPanel(), 500, 0);
+		cSynchronizer.register((short)0, ssClient.getServerPanel());			// Register the server panel to be able to receive updates
+		cSynchronizer.register((short)1, ssClient.getClientPanel(), 50, 0);		// Register the client panel to send send updates to the server every 50ms
 		JGN.createThread(cSynchronizer).start();
 		SynchronizationListener clientListener = new SynchronizationListener(cSynchronizer, false);
 		client.addMessageListener(clientListener);

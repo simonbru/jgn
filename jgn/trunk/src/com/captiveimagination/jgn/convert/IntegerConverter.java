@@ -40,13 +40,11 @@ import java.nio.*;
  * @author Matthew D. Hicks
  */
 public class IntegerConverter implements Converter {
-	public Object set(Object object, Method setter, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
-		Integer i = new Integer(buffer.getInt());
-		if (setter != null) setter.invoke(object, new Object[] {i});
-		return i;
+	public Object set(ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
+		return buffer.getInt();
 	}
 
-	public void get(Object object, Method getter, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
-		buffer.putInt(((Integer)getter.invoke(object, EMPTY_ARRAY)).intValue());
+	public void get(Object obj, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
+		buffer.putInt(((Integer)obj).intValue());
 	}
 }

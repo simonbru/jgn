@@ -47,7 +47,6 @@ import com.captiveimagination.jgn.message.type.*;
  * @author Matthew D. Hicks
  */
 public abstract class RealtimeMessage extends Message implements UniqueMessage {
-	@Hide
 	public Object getRealtimeId() {
 		return getClass();
 	}

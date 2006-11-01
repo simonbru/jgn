@@ -40,13 +40,11 @@ import java.nio.*;
  * @author Matthew D. Hicks
  */
 public class BooleanConverter implements Converter {
-	public Object set(Object object, Method setter, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
-		Boolean b = new Boolean(buffer.get() == 1);
-		if (setter != null) setter.invoke(object, new Object[] {b});
-		return b;
+	public Object set(ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
+		return buffer.get() == 1;
 	}
 
-	public void get(Object object, Method getter, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
-		buffer.put(((Boolean)getter.invoke(object, EMPTY_ARRAY)).booleanValue() ? (byte)1 : (byte)0);
+	public void get(Object obj, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
+		buffer.put(((Boolean)obj).booleanValue() ? (byte)1 : (byte)0);
 	}
 }

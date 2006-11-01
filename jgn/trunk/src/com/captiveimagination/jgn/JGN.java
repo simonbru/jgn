@@ -150,7 +150,11 @@ public class JGN {
 	}
 
 	public static final Runnable createRunnable(Updatable... updatables) {
-		return new UpdatableRunnable(updatables);
+		return createRunnable(1, updatables);
+	}
+	
+	public static final Runnable createRunnable(long sleep, Updatable... updatables) {
+		return new UpdatableRunnable(sleep, updatables);
 	}
 	
 	public static final Thread createThread(Updatable... updatables) {
@@ -165,9 +169,11 @@ public class JGN {
 }
 
 class UpdatableRunnable implements Runnable {
+	private long sleep;
 	private Updatable[] updatables;
 	
-	public UpdatableRunnable(Updatable... updatables) {
+	public UpdatableRunnable(long sleep, Updatable... updatables) {
+		this.sleep = sleep;
 		this.updatables = updatables;
 	}
 	
@@ -184,10 +190,14 @@ class UpdatableRunnable implements Runnable {
 			} catch(Throwable t) {
 				throw new RuntimeException(t);
 			}
-			try {
-				Thread.sleep(1);
-			} catch(InterruptedException exc) {
-				exc.printStackTrace();
+			if (sleep > 0) {
+				try {
+					Thread.sleep(1);
+				} catch(InterruptedException exc) {
+					exc.printStackTrace();
+				}
+			} else {
+				Thread.yield();
 			}
 		} while (alive);
 	}

@@ -40,7 +40,7 @@ import java.nio.*;
  * @author Matthew D. Hicks
  */
 public class FloatArrayConverter implements Converter {
-	public Object set(Object object, Method setter, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
+	public Object set(ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
 		int length = buffer.getInt();
 		float[] array = null;
 		if (length != -1) {
@@ -49,12 +49,11 @@ public class FloatArrayConverter implements Converter {
 				array[i] = buffer.getFloat();
 			}
 		}
-		if (setter != null) setter.invoke(object, new Object[] {array});
 		return array;
 	}
 
-	public void get(Object object, Method getter, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
-		float[] array = (float[])getter.invoke(object, EMPTY_ARRAY);
+	public void get(Object obj, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
+		float[] array = (float[])obj;
 		if (array == null) {
 			buffer.putInt(-1);
 		} else {

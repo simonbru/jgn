@@ -41,7 +41,7 @@ import java.nio.*;
  * @author Matthew D. Hicks
  */
 public class SerializableConverter implements Converter {
-    public Object set(Object object, Method setter, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
+    public Object set(ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
         int length = buffer.getInt();
         byte[] array = null;
         Object obj = null;
@@ -55,7 +55,6 @@ public class SerializableConverter implements Converter {
                 ByteArrayInputStream bais = new ByteArrayInputStream(array);
                 ObjectInputStream ois = new ObjectInputStream(bais);
                 obj = ois.readObject();
-                if (setter != null) setter.invoke(object, new Object[] {obj});
             } catch(IOException exc) {
                 exc.printStackTrace();
             } catch(ClassNotFoundException exc) {
@@ -65,8 +64,7 @@ public class SerializableConverter implements Converter {
         return obj;
     }
 
-    public void get(Object object, Method getter, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
-        Object obj = getter.invoke(object, EMPTY_ARRAY);
+    public void get(Object obj, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
         if (obj == null) {
             buffer.putInt(-1);
         } else {

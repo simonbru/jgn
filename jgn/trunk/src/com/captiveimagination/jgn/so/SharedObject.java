@@ -46,6 +46,8 @@ import com.captiveimagination.magicbeans.*;
  * @author Matthew D. Hicks
  */
 public class SharedObject {
+	private static final Object[] EMPTY_ARGS = new Object[0];
+	
 	private String name;
 	private Object object;
 	private Class interfaceClass;
@@ -155,7 +157,7 @@ public class SharedObject {
 			converter = converters.get(fields[i]);
 			getter = SharedObjectManager.getInstance().getMethod(interfaceClass.getName() + ".get." + fields[i]);
 			try {
-				converter.get(object, getter, buffer);
+				converter.get(getter.invoke(object, EMPTY_ARGS), buffer);
 			} catch(Exception exc) {
 				exc.printStackTrace();	// TODO remove this
 			}
@@ -196,7 +198,7 @@ public class SharedObject {
 				Converter converter = converters.get(field);
 				MagicBeanHandler handler = MagicBeanManager.getInstance().getMagicBeanHandler(object);
 				Method setter = handler.getClass().getMethod("setValue", new Class[] {String.class, Object.class});
-				Object value = converter.set(object, null, buffer);
+				Object value = converter.set(buffer);
 				setter.invoke(handler, new Object[] {field, value});
 			}
 		} catch (IllegalAccessException exc) {

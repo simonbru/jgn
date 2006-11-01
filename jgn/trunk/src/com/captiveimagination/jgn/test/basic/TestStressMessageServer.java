@@ -47,7 +47,7 @@ import com.captiveimagination.jgn.translation.encryption.*;
  * @author Matthew D. Hicks
  */
 public class TestStressMessageServer {
-	private static final int MAX = 1000000; //2000000000;
+	private static final int MAX = 10000000; //2000000000;
 	
 	public static int receiveCount = 0;
 	public static MessageClient client1;
@@ -101,7 +101,6 @@ public class TestStressMessageServer {
 			public void run() {
 				try {
 					while (true) {
-						server1.update();
 						if (System.currentTimeMillis() - cycle > 1000) {
 							if (client1 != null) {
 								System.out.println("Received: " + receiveCount + 
@@ -128,6 +127,8 @@ public class TestStressMessageServer {
 		
 		final MessageServer server2 = new TCPMessageServer(new InetSocketAddress(InetAddress.getLocalHost(), 2000));
 		
+		JGN.createThread(server1, server2).start();
+		
 //		KeyGenerator kgen = KeyGenerator.getInstance("Blowfish");
 //		SecretKey skey = kgen.generateKey();
 //		byte[] raw = skey.getEncoded();
@@ -135,18 +136,6 @@ public class TestStressMessageServer {
 //		server1.addDataTranslator(trans);
 //		server2.addDataTranslator(trans);
 		
-		Thread t2 = new Thread() {
-			public void run() {
-				try {
-					while (true) {
-						server2.update();
-						Thread.sleep(1);
-					}
-				} catch(Exception exc) {
-					exc.printStackTrace();
-				}
-			}
-		};
 		server2.addConnectionListener(new ConnectionListener() {
 			public void connected(MessageClient client) {
 				System.out.println("S2> Connected: " + client);
@@ -165,9 +154,6 @@ public class TestStressMessageServer {
 			public void kicked(MessageClient client, String reason) {
 			}
 		});
-		//t2.setDaemon(true);
-		//t2.setPriority(Thread.MIN_PRIORITY);
-		t2.start();
 		MessageClient client = server2.connectAndWait(new InetSocketAddress(InetAddress.getLocalHost(), 1000), 5000);
 		if (client != null) {
 			System.out.println("Connection established!");

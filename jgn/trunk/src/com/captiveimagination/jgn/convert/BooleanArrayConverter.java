@@ -40,7 +40,7 @@ import java.nio.*;
  * @author Matthew D. Hicks
  */
 public class BooleanArrayConverter implements Converter {
-	public Object set(Object object, Method setter, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
+	public Object set(ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
 		int length = buffer.getInt();
 		boolean[] array = null;
 		if (length != -1) {
@@ -49,12 +49,11 @@ public class BooleanArrayConverter implements Converter {
 				array[i] = buffer.get() == 1;
 			}
 		}
-		if (setter != null) setter.invoke(object, new Object[] {array});
 		return array;
 	}
 
-	public void get(Object object, Method getter, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
-		boolean[] array = (boolean[])getter.invoke(object, EMPTY_ARRAY);
+	public void get(Object obj, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
+		boolean[] array = (boolean[])obj;
 		if (array == null) {
 			buffer.putInt(-1);
 		} else {

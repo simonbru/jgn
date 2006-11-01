@@ -40,7 +40,7 @@ import java.nio.*;
  * @author Matthew D. Hicks
  */
 public class CharacterArrayConverter implements Converter {
-	public Object set(Object object, Method setter, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
+	public Object set(ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
 		int length = buffer.getInt();
 		char[] array = null;
 		if (length != -1) {
@@ -49,12 +49,11 @@ public class CharacterArrayConverter implements Converter {
 				array[i] = buffer.getChar();
 			}
 		}
-		if (setter != null) setter.invoke(object, new Object[] {array});
 		return array;
 	}
 
-	public void get(Object object, Method getter, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
-		char[] array = (char[])getter.invoke(object, EMPTY_ARRAY);
+	public void get(Object obj, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
+		char[] array = (char[])obj;
 		if (array == null) {
 			buffer.putInt(-1);
 		} else {

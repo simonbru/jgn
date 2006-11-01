@@ -29,16 +29,19 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Created: Jul 13, 2006
+ * Created: Jun 3, 2006
  */
-package com.captiveimagination.jgn;
+package com.captiveimagination.jgn.convert;
 
-import java.lang.annotation.*;
+import java.lang.reflect.*;
+import java.util.*;
 
 /**
  * @author Matthew D. Hicks
- *
  */
-@Retention(RetentionPolicy.RUNTIME)
-public @interface Hide {
+public class FieldComparator implements Comparator<Field> {
+	public int compare(Field field1, Field field2) {
+		return field1.getName().compareTo(field2.getName());
+	}
+
 }

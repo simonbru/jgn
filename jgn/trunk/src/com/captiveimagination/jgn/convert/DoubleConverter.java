@@ -40,13 +40,11 @@ import java.nio.*;
  * @author Matthew D. Hicks
  */
 public class DoubleConverter implements Converter {
-	public Object set(Object object, Method setter, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
-		Double d = new Double(buffer.getDouble());
-		if (setter != null) setter.invoke(object, new Object[] {d});
-		return d;
+	public Object set(ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
+		return buffer.getDouble();
 	}
 
-	public void get(Object object, Method getter, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
-		buffer.putDouble(((Double)getter.invoke(object, EMPTY_ARRAY)).doubleValue());
+	public void get(Object obj, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
+		buffer.putDouble(((Double)obj).doubleValue());
 	}
 }

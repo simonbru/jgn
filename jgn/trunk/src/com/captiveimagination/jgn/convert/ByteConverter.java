@@ -40,13 +40,11 @@ import java.nio.*;
  * @author Matthew D. Hicks
  */
 public class ByteConverter implements Converter {
-	public Object set(Object object, Method setter, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
-		Byte b = new Byte(buffer.get());
-		if (setter != null) setter.invoke(object, new Object[] {b});
-		return b;
+	public Object set(ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
+		return buffer.get();
 	}
 
-	public void get(Object object, Method getter, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
-		buffer.put(((Byte)getter.invoke(object, EMPTY_ARRAY)).byteValue());
+	public void get(Object obj, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
+		buffer.put(((Byte)obj).byteValue());
 	}
 }

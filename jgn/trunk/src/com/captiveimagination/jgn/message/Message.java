@@ -49,15 +49,15 @@ public abstract class Message implements Cloneable {
 	private static int UNIQUE_ID = 0;
 	
 	private long id;
-	private short groupId;
-	private short playerId;
-	private short destinationPlayerId;
-	private long timestamp;
-	private int tries;
-	private int maxTries;
-	private long timeout;
-	private MessageClient client;
-	private TranslatedMessage translated;
+	private transient short groupId;
+	private transient short playerId;
+	private transient short destinationPlayerId;
+	private transient long timestamp;
+	private transient int tries;
+	private transient int maxTries;
+	private transient long timeout;
+	private transient MessageClient client;
+	private transient TranslatedMessage translated;
 	
 	public Message() {
 		groupId = -1;	// Default to -1 meaning there is no group assignment
@@ -77,7 +77,6 @@ public abstract class Message implements Cloneable {
 	 * @return
 	 * 		long
 	 */
-	@Hide
 	public long getId() {
 		return id;
 	}
@@ -106,7 +105,6 @@ public abstract class Message implements Cloneable {
 	 * @return
 	 * 		groupId reference for this Message as a short
 	 */
-	@Hide
 	public short getGroupId() {
 		return groupId;
 	}
@@ -119,7 +117,6 @@ public abstract class Message implements Cloneable {
 	 * 
 	 * @param groupId
 	 */
-	@Hide
 	public void setGroupId(short groupId) {
 		this.groupId = groupId;
 	}
@@ -129,7 +126,6 @@ public abstract class Message implements Cloneable {
 	 * PlayerMessage. This is useful for distinguishing
 	 * between players on a game server.
 	 */
-	@Hide
 	public short getPlayerId() {
 		return playerId;
 	}
@@ -141,7 +137,6 @@ public abstract class Message implements Cloneable {
 	 * 
 	 * @param playerId
 	 */
-	@Hide
 	public void setPlayerId(short playerId) {
 		this.playerId = playerId;
 	}
@@ -155,7 +150,6 @@ public abstract class Message implements Cloneable {
 	 * @return
 	 * 		destinationPlayerId
 	 */
-	@Hide
 	public short getDestinationPlayerId() {
 		return destinationPlayerId;
 	}
@@ -168,7 +162,6 @@ public abstract class Message implements Cloneable {
 	 * 
 	 * @param destinationPlayerId
 	 */
-	@Hide
 	public void setDestinationPlayerId(short destinationPlayerId) {
 		this.destinationPlayerId = destinationPlayerId;
 	}
@@ -180,7 +173,6 @@ public abstract class Message implements Cloneable {
 	 * 
 	 * @param client
 	 */
-	@Hide
 	public void setMessageClient(MessageClient client) {
 		this.client = client;
 	}
@@ -195,7 +187,6 @@ public abstract class Message implements Cloneable {
 	 * 		the MessageClient this message was received to or
 	 * 		sent from
 	 */
-	@Hide
 	public MessageClient getMessageClient() {
 		return client;
 	}
@@ -204,57 +195,46 @@ public abstract class Message implements Cloneable {
 		return (Message)super.clone();
 	}
 
-	@Hide
 	public long getTimestamp() {
 		return timestamp;
 	}
 	
-	@Hide
 	public void setTimestamp(long timestamp) {
 		this.timestamp = timestamp;
 	}
 	
-	@Hide
 	public int getTries() {
 		return tries;
 	}
 	
-	@Hide
 	public void setTries(int tries) {
 		this.tries = tries;
 	}
 	
-	@Hide
 	public int getMaxTries() {
 		return maxTries;
 	}
 	
-	@Hide
 	public void setMaxTries(int maxTries) {
 		this.maxTries = maxTries;
 	}
 	
-	@Hide
 	public long getTimeout() {
 		return timeout;
 	}
 	
-	@Hide
 	public void setTimeout(long timeout) {
 		this.timeout = timeout;
 	}
 	
-	@Hide
 	public TranslatedMessage getTranslatedMessage() {
 		return translated;
 	}
 	
-	@Hide
 	public void setTranslatedMessage(TranslatedMessage translated) {
 		this.translated = translated;
 	}
 	
-	@Hide
 	public static synchronized int nextUniqueId() {
 		if (UNIQUE_ID == Integer.MAX_VALUE - 1) UNIQUE_ID = 0;
 		return ++UNIQUE_ID;

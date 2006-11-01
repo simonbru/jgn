@@ -40,13 +40,11 @@ import java.nio.*;
  * @author Matthew D. Hicks
  */
 public class CharacterConverter implements Converter {
-	public Object set(Object object, Method setter, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
-		Character c = new Character(buffer.getChar());
-		if (setter != null) setter.invoke(object, new Object[] {c});
-		return c;
+	public Object set(ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
+		return buffer.getChar();
 	}
 
-	public void get(Object object, Method getter, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
-		buffer.putChar(((Character)getter.invoke(object, EMPTY_ARRAY)).charValue());
+	public void get(Object obj, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
+		buffer.putChar(((Character)obj).charValue());
 	}
 }

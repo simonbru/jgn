@@ -40,13 +40,11 @@ import java.nio.*;
  * @author Matthew D. Hicks
  */
 public class LongConverter implements Converter {
-	public Object set(Object object, Method setter, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
-		Long l = new Long(buffer.getLong());
-		if (setter != null) setter.invoke(object, new Object[] {l});
-		return l;
+	public Object set(ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
+		return buffer.getLong();
 	}
 
-	public void get(Object object, Method getter, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
-		buffer.putLong(((Long)getter.invoke(object, EMPTY_ARRAY)).longValue());
+	public void get(Object obj, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
+		buffer.putLong(((Long)obj).longValue());
 	}
 }

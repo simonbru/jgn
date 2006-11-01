@@ -42,7 +42,7 @@ import com.captiveimagination.jgn.message.*;
  */
 public class TranslatedMessage extends Message {
 	private byte[] translated;
-	private Message message;
+	private transient Message message;
 
 	public byte[] getTranslated() {
 		return translated;
@@ -52,12 +52,10 @@ public class TranslatedMessage extends Message {
 		this.translated = translated;
 	}
 	
-	@Hide
 	public Message getOriginalMessage() {
 		return message;
 	}
 	
-	@Hide
 	public void setOriginalMessage(Message message) {
 		this.message = message;
 	}

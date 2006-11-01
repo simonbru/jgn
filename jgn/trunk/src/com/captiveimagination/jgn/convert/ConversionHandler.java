@@ -41,6 +41,7 @@ import java.util.*;
 import com.captiveimagination.jgn.*;
 import com.captiveimagination.jgn.message.*;
 import com.captiveimagination.jgn.message.type.*;
+import com.captiveimagination.jgn.test.basic.*;
 
 /**
  * ConversionHandlers exist to process incoming and outgoing Messages
@@ -48,7 +49,7 @@ import com.captiveimagination.jgn.message.type.*;
  * @author Matthew D. Hicks
  */
 public class ConversionHandler {
-	private static final MethodComparator methodComparator = new MethodComparator();
+	private static final FieldComparator fieldComparator = new FieldComparator();
 	private static final HashSet<String> ignore = new HashSet<String>();
 	private static final HashMap<Class<? extends Message>, ConversionHandler> messageToHandler = new HashMap<Class<? extends Message>, ConversionHandler>();
 	static {
@@ -57,14 +58,12 @@ public class ConversionHandler {
 	}
 
 	private Converter[] converters;
-	private Method[] getters;
-	private Method[] setters;
+	private Field[] fields;
 	private Class messageClass;
 
-	private ConversionHandler(Converter[] converters, Method[] getters, Method[] setters, Class messageClass) {
+	private ConversionHandler(Converter[] converters, Field[] fields, Class messageClass) {
 		this.converters = converters;
-		this.getters = getters;
-		this.setters = setters;
+		this.fields = fields;
 		this.messageClass = messageClass;
 	}
 
@@ -78,7 +77,7 @@ public class ConversionHandler {
 				throw new MessageHandlingException("Unable to instantiate message (make sure the constructor is visible).", message, exc);
 			}
 			for (int i = 0; i < converters.length; i++) {
-				converters[i].set(message, setters[i], buffer);
+				fields[i].set(message, converters[i].set(buffer));
 			}
 			return message;
 		} catch (InstantiationException exc) {
@@ -96,7 +95,7 @@ public class ConversionHandler {
 		try {// Write the message type
 			buffer.putShort(message.getMessageClient().getMessageTypeId(message.getClass()));
 			for (int i = 0; i < converters.length; i++) {
-				converters[i].get(message, getters[i], buffer);
+				converters[i].get(fields[i].get(message), buffer);
 			}
 		}
 		// do not catch BufferOverflowException!
@@ -113,126 +112,65 @@ public class ConversionHandler {
 		ConversionHandler handler = messageToHandler.get(messageClass);
 
 		if (handler != null) return handler;
-
 		// Introspect Class
 		ArrayList<Converter> converters = new ArrayList<Converter>();
-		ArrayList<Method> getters = new ArrayList<Method>();
-		ArrayList<Method> setters = new ArrayList<Method>();
-		Method[] ms = messageClass.getMethods();
-		ArrayList<Method> methods = new ArrayList<Method>();
-		Collections.addAll(methods, ms);
-		Collections.sort(methods, methodComparator);
+		ArrayList<Field> fields = new ArrayList<Field>();
+		
+		ArrayList<Field> allFields = new ArrayList<Field>();
+		Class c = messageClass;
+		while (c != null) {
+			Collections.addAll(allFields, c.getDeclaredFields());
+			c = c.getSuperclass();
+		}
+		Collections.sort(allFields, fieldComparator);
 		
 		// Special circumstances handled here
 		if ((UniqueMessage.class.isAssignableFrom(messageClass)) || (IdentityMessage.class.isAssignableFrom(messageClass))) {
 			// Add validation for UniqueMessage
-			try {
-				converters.add(Converter.CONVERTERS.get(long.class));
-				Method getter = messageClass.getMethod("getId", new Class[0]);
-				getter.setAccessible(true);
-				Method setter = messageClass.getMethod("setId", new Class[] {long.class});
-				setter.setAccessible(true);
-				getters.add(getter);
-				setters.add(setter);
-			} catch(SecurityException exc) {
-				exc.printStackTrace();
-			} catch(NoSuchMethodException exc) {
-				exc.printStackTrace();
-			}
+			addField(Message.class, converters, fields, "id", long.class);
 		}
 		if (PlayerMessage.class.isAssignableFrom(messageClass)) {
 			// Add validation for PlayerMessage
-			try {
-				converters.add(Converter.CONVERTERS.get(short.class));
-				Method getter = messageClass.getMethod("getPlayerId", new Class[0]);
-				getter.setAccessible(true);
-				Method setter = messageClass.getMethod("setPlayerId", new Class[] {short.class});
-				setter.setAccessible(true);
-				getters.add(getter);
-				setters.add(setter);
-				
-				converters.add(Converter.CONVERTERS.get(short.class));
-				getter = messageClass.getMethod("getDestinationPlayerId", new Class[0]);
-				getter.setAccessible(true);
-				setter = messageClass.getMethod("setDestinationPlayerId", new Class[] {short.class});
-				setter.setAccessible(true);
-				getters.add(getter);
-				setters.add(setter);
-			} catch(SecurityException exc) {
-				exc.printStackTrace();
-			} catch(NoSuchMethodException exc) {
-				exc.printStackTrace();
-			}
+			addField(Message.class, converters, fields, "playerId", short.class);
+			addField(Message.class, converters, fields, "destinationPlayerId", short.class);
 		}
 		if (GroupMessage.class.isAssignableFrom(messageClass)) {
 			// Add validation for GroupMessage
-			try {
-				converters.add(Converter.CONVERTERS.get(short.class));
-				Method getter = messageClass.getMethod("getGroupId", new Class[0]);
-				getter.setAccessible(true);
-				Method setter = messageClass.getMethod("setGroupId", new Class[] {short.class});
-				setter.setAccessible(true);
-				getters.add(getter);
-				setters.add(setter);
-			} catch(SecurityException exc) {
-				exc.printStackTrace();
-			} catch(NoSuchMethodException exc) {
-				exc.printStackTrace();
-			}
+			addField(Message.class, converters, fields, "groupId", short.class);
 		}
 		if (TimestampedMessage.class.isAssignableFrom(messageClass)) {
 			// Add validation for TimestampedMessage
-			try {
-				converters.add(Converter.CONVERTERS.get(long.class));
-				Method getter = messageClass.getMethod("getTimestamp", new Class[0]);
-				getter.setAccessible(true);
-				Method setter = messageClass.getMethod("setTimestamp", new Class[] {long.class});
-				setter.setAccessible(true);
-				getters.add(getter);
-				setters.add(setter);
-			} catch(SecurityException exc) {
-				exc.printStackTrace();
-			} catch(NoSuchMethodException exc) {
-				exc.printStackTrace();
-			}
+			addField(Message.class, converters, fields, "timestamp", long.class);
 		}
 		
 		// Add standard getter/setter aspects
-		for (Method getter : methods) {
-			if (!getter.getName().startsWith("get")) continue; // Make sure it's a getter
-			if (getter.getAnnotation(Hide.class) != null) {
-				continue;
-			}
-			if (ignore.contains(getter.getName())) continue; // Methods to be ignored
-			String name = getter.getName().substring(3);
-			Method setter = null;
-			for (Method m : methods) {
-				if (m.getName().equals("set" + name)) {
-					if (m.getParameterTypes().length == 1) {
-						setter = m;
-						break;
-					}
-				}
-			}
-
-			if (setter == null) {
-				continue;
-			}
-
-			Converter converter = getConverter(getter.getReturnType());
-			if (converter != null) {
-				converters.add(converter);
-				getter.setAccessible(true);
-				setter.setAccessible(true);
-				getters.add(getter);
-				setters.add(setter);
-			}
+		for (Field field : allFields) {
+			if (Modifier.isTransient(field.getModifiers())) continue;	// Make sure it's not transient
+			if (Modifier.isFinal(field.getModifiers())) continue;		// If it's final we can't change it
+			if (Modifier.isStatic(field.getModifiers())) continue;		// We don't want to touch static fields
+			addField(field.getDeclaringClass(), converters, fields, field.getName(), field.getType());
 		}
 
-		handler = new ConversionHandler(converters.toArray(new Converter[converters.size()]), getters
-						.toArray(new Method[getters.size()]), setters.toArray(new Method[setters.size()]), messageClass);
+		handler = new ConversionHandler(
+						converters.toArray(new Converter[converters.size()]),
+						fields.toArray(new Field[fields.size()]),
+						messageClass);
 		messageToHandler.put(messageClass, handler);
 		return handler;
+	}
+	
+	private static final void addField(Class messageClass, ArrayList<Converter> converters, ArrayList<Field> fields, String fieldName, Class fieldClass) {
+		try {
+			converters.add(getConverter(fieldClass));
+			Field field = messageClass.getDeclaredField(fieldName);
+			field.setAccessible(true);
+			fields.add(field);
+		} catch(SecurityException exc) {
+			exc.printStackTrace();
+		} catch(NoSuchFieldException exc) {
+			System.err.println("No such field \"" + fieldName + "\" on \"" + messageClass.getName() + "\".");
+			exc.printStackTrace();
+		}
 	}
 
 	public static final Converter getConverter(Class c) {

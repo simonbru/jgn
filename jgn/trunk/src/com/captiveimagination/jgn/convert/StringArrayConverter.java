@@ -41,7 +41,7 @@ import java.nio.*;
  * @author Matthew D. Hicks
  */
 public class StringArrayConverter implements Converter {
-	public Object set(Object object, Method setter, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
+	public Object set(ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
 		int length = buffer.getInt();
 		String[] array = null;
 		if (length != -1) {
@@ -60,13 +60,12 @@ public class StringArrayConverter implements Converter {
 				}
 			}
 		}
-		if (setter != null) setter.invoke(object, new Object[] {array});
 		return array;
 	}
 
-	public void get(Object object, Method getter, ByteBuffer buffer) throws IllegalArgumentException,
+	public void get(Object obj, ByteBuffer buffer) throws IllegalArgumentException,
 					IllegalAccessException, InvocationTargetException {
-		String[] array = (String[])getter.invoke(object, EMPTY_ARRAY);
+		String[] array = (String[])obj;
 		if (array == null) {
 			buffer.putInt(-1);
 		} else {
@@ -88,5 +87,4 @@ public class StringArrayConverter implements Converter {
 			}
 		}
 	}
-
 }

@@ -46,34 +46,29 @@ import java.util.*;
  */
 public interface Converter {
 	/**
-	 * Represents an empty byte array with a length of 0.
-	 */
-	public static final Object[] EMPTY_ARRAY = new Object[0];
-
-	/**
 	 * Defines the mappings of classes to converters.
 	 */
 	public static final HashMap<Class, Converter> CONVERTERS = new HashMap<Class, Converter>();
 
 	/**
-	 * Reads content from <code>buffer</code> and applies it via
-	 * <code>setter</code> to <code>object</code>.
+	 * Reads content from <code>buffer</code> and returns it.
 	 * 
-	 * @param object
-	 * @param setter
 	 * @param buffer
+	 * @return value retrieved from <code>buffer</code>
+	 * @throws IllegalArgumentException
+	 * @throws IllegalAccessException
+	 * @throws InvocationTargetException
 	 */
-	public Object set(Object object, Method setter, ByteBuffer buffer) throws IllegalArgumentException,
-					IllegalAccessException, InvocationTargetException;
+	public Object set(ByteBuffer buffer) throws IllegalArgumentException,IllegalAccessException, InvocationTargetException;
 
 	/**
-	 * Reads content from <code>ojbect</code> via <code>getter</code>
-	 * and applies it to <code>buffer</code>.
+	 * Applies contents of <code>obj</code> to <code>buffer</code>.
 	 * 
-	 * @param object
-	 * @param getter
+	 * @param obj
 	 * @param buffer
+	 * @throws IllegalArgumentException
+	 * @throws IllegalAccessException
+	 * @throws InvocationTargetException
 	 */
-	public void get(Object object, Method getter, ByteBuffer buffer) throws IllegalArgumentException,
-					IllegalAccessException, InvocationTargetException;
+	public void get(Object obj, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException;
 }

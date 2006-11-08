@@ -47,7 +47,7 @@ import com.captiveimagination.jgn.translation.encryption.*;
  * @author Matthew D. Hicks
  */
 public class TestStressMessageServer {
-	private static final int MAX = 10000000; //2000000000;
+	private static final int MAX = 100000; //2000000000;
 	
 	public static int receiveCount = 0;
 	public static MessageClient client1;

@@ -50,10 +50,8 @@ import com.captiveimagination.jgn.test.basic.*;
  */
 public class ConversionHandler {
 	private static final FieldComparator fieldComparator = new FieldComparator();
-	private static final HashSet<String> ignore = new HashSet<String>();
 	private static final HashMap<Class<? extends Message>, ConversionHandler> messageToHandler = new HashMap<Class<? extends Message>, ConversionHandler>();
 	static {
-		ignore.add("getClass");
 		initConverters();
 	}
 
@@ -97,9 +95,7 @@ public class ConversionHandler {
 			for (int i = 0; i < converters.length; i++) {
 				converters[i].get(fields[i].get(message), buffer);
 			}
-		}
-		// do not catch BufferOverflowException!
-		catch (IllegalArgumentException exc) {
+		} catch (IllegalArgumentException exc) {
 			throw new MessageHandlingException("Corrupt message-format", message, exc);
 		} catch (IllegalAccessException exc) {
 			throw new MessageHandlingException("Corrupt message-format", message, exc);
@@ -161,10 +157,13 @@ public class ConversionHandler {
 	
 	private static final void addField(Class messageClass, ArrayList<Converter> converters, ArrayList<Field> fields, String fieldName, Class fieldClass) {
 		try {
-			converters.add(getConverter(fieldClass));
-			Field field = messageClass.getDeclaredField(fieldName);
-			field.setAccessible(true);
-			fields.add(field);
+			Converter converter = getConverter(fieldClass);
+			if (converter != null) {
+				converters.add(converter);
+				Field field = messageClass.getDeclaredField(fieldName);
+				field.setAccessible(true);
+				fields.add(field);
+			}
 		} catch(SecurityException exc) {
 			exc.printStackTrace();
 		} catch(NoSuchFieldException exc) {

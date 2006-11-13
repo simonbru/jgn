@@ -83,6 +83,9 @@ public class MessageClient implements MessageSender {
 	private Message failedMessage;
 	private String kickReason;
 	
+	private volatile long receivedCount;
+	private volatile long sentCount;
+	
 	private HashMap<Short,Class<? extends Message>> registry;
 	private HashMap<Class<? extends Message>,Short> registryReverse;
 	
@@ -187,6 +190,7 @@ public class MessageClient implements MessageSender {
 				throw new ConnectionException("Connection is closing, no more messages being accepted.");
 			}
 			outgoingQueue.add(m);
+			sentCount++;
 		} catch(CloneNotSupportedException exc) {
 			throw new RuntimeException(exc);
 		}
@@ -349,6 +353,14 @@ public class MessageClient implements MessageSender {
 	
 	public long lastSent() {
 		return lastSent;
+	}
+	
+	public long getReceivedCount() {
+		return receivedCount;
+	}
+	
+	public long getSentCount() {
+		return sentCount;
 	}
 	
 	protected void certifyMessage(long messageId) {

@@ -35,19 +35,18 @@ package com.captiveimagination.jgn.test.basic;
 
 import java.net.*;
 
-import javax.crypto.*;
 
 import com.captiveimagination.jgn.*;
 import com.captiveimagination.jgn.event.*;
 import com.captiveimagination.jgn.message.*;
 import com.captiveimagination.jgn.queue.*;
-import com.captiveimagination.jgn.translation.encryption.*;
+import com.captiveimagination.jgn.util.*;
 
 /**
  * @author Matthew D. Hicks
  */
 public class TestStressMessageServer {
-	private static final int MAX = 100000; //2000000000;
+	private static final int MAX = 1000000; //2000000000;
 	
 	public static int receiveCount = 0;
 	public static MessageClient client1;
@@ -60,6 +59,8 @@ public class TestStressMessageServer {
 			public void connected(MessageClient client) {
 				System.out.println("S1> Connected: " + client);
 				client1 = client;
+				ClientMonitor m1 = new ClientMonitor("Client1", client1, 1000);
+				JGN.createThread(m1).start();
 			}
 
 			public void negotiationComplete(MessageClient client) {
@@ -95,35 +96,35 @@ public class TestStressMessageServer {
 			}
 			
 		});
-		Thread t = new Thread() {
-			private long cycle;
-			
-			public void run() {
-				try {
-					while (true) {
-						if (System.currentTimeMillis() - cycle > 1000) {
-							if (client1 != null) {
-								System.out.println("Received: " + receiveCount + 
-												 ", " + client1.getIncomingMessageQueue().getTotal() + "(" + client1.getIncomingMessageQueue().getSize() + ")" +
-												 ", " + client1.getOutgoingMessageQueue().getTotal() + "(" + client1.getOutgoingMessageQueue().getSize() + ")" +
-												 ", " + client1.getOutgoingQueue().getTotal() + "(" + client1.getOutgoingQueue().getSize() + ")" +
-												 
-												 ", " + client2.getIncomingMessageQueue().getTotal() + "(" + client2.getIncomingMessageQueue().getSize() + ")" +
-												 ", " + client2.getOutgoingMessageQueue().getTotal() + "(" + client2.getOutgoingMessageQueue().getSize() + ")" +
-												 ", " + client2.getOutgoingQueue().getTotal() + "(" + client2.getOutgoingQueue().getSize() + ")");
-							}
-							cycle = System.currentTimeMillis();
-						}
-						Thread.sleep(1);
-					}
-				} catch(Exception exc) {
-					exc.printStackTrace();
-				}
-			}
-		};
+//		Thread t = new Thread() {
+//			private long cycle;
+//			
+//			public void run() {
+//				try {
+//					while (true) {
+//						if (System.currentTimeMillis() - cycle > 1000) {
+//							if (client1 != null) {
+//								System.out.println("Received: " + receiveCount + 
+//												 ", " + client1.getIncomingMessageQueue().getTotal() + "(" + client1.getIncomingMessageQueue().getSize() + ")" +
+//												 ", " + client1.getOutgoingMessageQueue().getTotal() + "(" + client1.getOutgoingMessageQueue().getSize() + ")" +
+//												 ", " + client1.getOutgoingQueue().getTotal() + "(" + client1.getOutgoingQueue().getSize() + ")" +
+//												 
+//												 ", " + client2.getIncomingMessageQueue().getTotal() + "(" + client2.getIncomingMessageQueue().getSize() + ")" +
+//												 ", " + client2.getOutgoingMessageQueue().getTotal() + "(" + client2.getOutgoingMessageQueue().getSize() + ")" +
+//												 ", " + client2.getOutgoingQueue().getTotal() + "(" + client2.getOutgoingQueue().getSize() + ")");
+//							}
+//							cycle = System.currentTimeMillis();
+//						}
+//						Thread.sleep(1);
+//					}
+//				} catch(Exception exc) {
+//					exc.printStackTrace();
+//				}
+//			}
+//		};
 		//t.setDaemon(true);
 		//t.setPriority(Thread.MIN_PRIORITY);
-		t.start();
+//		t.start();
 		
 		final MessageServer server2 = new TCPMessageServer(new InetSocketAddress(InetAddress.getLocalHost(), 2000));
 		
@@ -140,6 +141,8 @@ public class TestStressMessageServer {
 			public void connected(MessageClient client) {
 				System.out.println("S2> Connected: " + client);
 				client2 = client;
+				ClientMonitor m2 = new ClientMonitor("Client2", client2, 1000);
+				JGN.createThread(m2).start();
 			}
 
 			public void negotiationComplete(MessageClient client) {

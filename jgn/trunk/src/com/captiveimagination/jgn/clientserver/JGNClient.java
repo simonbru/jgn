@@ -242,7 +242,6 @@ public class JGNClient implements Updatable {
 		getServerConnection().sendMessage(message);
 		JGNConnection[] connections = getConnections();
 		for (JGNConnection connection : connections) {
-			System.out.println("Sending message: " + getPlayerId() + " to " + connection.getPlayerId());
 			connection.sendMessage(message);
 		}
 	}

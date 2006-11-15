@@ -58,6 +58,7 @@ public abstract class MessageServer implements Updatable {
 	public static ConnectionController DEFAULT_CONNECTION_CONTROLLER = new DefaultConnectionController();
 	
 	private static HashMap<Class,ArrayList<Class>> classHierarchyCache = new HashMap<Class,ArrayList<Class>>();
+	private static HashMap<Class,ArrayList<Method>> listenerDynamicMethods = new HashMap<Class, ArrayList<Method>>();
 	
 	private long serverId;
 	private SocketAddress address;
@@ -655,25 +656,35 @@ public abstract class MessageServer implements Updatable {
 	
 	private static void callMethod(MessageListener listener, String methodName, Message message, boolean callAll) {
         try {
-            Method[] allMethods = listener.getClass().getMethods();
-            ArrayList<Method> m = new ArrayList<Method>();
-            for (int i = 0; i < allMethods.length; i++) {
-                if ((allMethods[i].getName().equals(methodName)) && (allMethods[i].getParameterTypes().length == 1)) {
-                    m.add(allMethods[i]);
-                }
-            }
-            
-            // Check to see if an interface is found first
-            ArrayList classes = getClassList(message.getClass());
-            for (int j = 0; j < classes.size(); j++) {
-            	for (int i = 0; i < m.size(); i++) {
-                    if (((Method)m.get(i)).getParameterTypes()[0] == classes.get(j)) {
-                        ((Method)m.get(i)).setAccessible(true);
-                        ((Method)m.get(i)).invoke(listener, new Object[] {message});
-                        if (!callAll) return;
-                    }
-                }
-            }
+        	ArrayList<Method> methods = listenerDynamicMethods.get(listener.getClass());
+        	if (methods == null) {	// Not already cached
+        		methods = new ArrayList<Method>();
+        		listenerDynamicMethods.put(listener.getClass(), methods);
+	            Method[] allMethods = listener.getClass().getMethods();
+	            ArrayList<Method> m = new ArrayList<Method>();
+	            for (int i = 0; i < allMethods.length; i++) {
+	                if ((allMethods[i].getName().equals(methodName)) && (allMethods[i].getParameterTypes().length == 1)) {
+	                    m.add(allMethods[i]);
+	                }
+	            }
+	            
+	            // Check to see if an interface is found first
+	            ArrayList classes = getClassList(message.getClass());
+	            for (int j = 0; j < classes.size(); j++) {
+	            	for (int i = 0; i < m.size(); i++) {
+	                    if (m.get(i).getParameterTypes()[0] == classes.get(j)) {
+	                        m.get(i).setAccessible(true);
+	                        m.get(i).invoke(listener, new Object[] {message});
+	                        methods.add(m.get(i));
+	                        if (!callAll) return;
+	                    }
+	                }
+	            }
+        	} else {		// Utilize cache of methods for listener
+        		for (Method m : methods) {
+        			m.invoke(listener, new Object[] {message});
+        		}
+        	}
         } catch(Throwable t) {
             System.err.println("Object: " + listener + ", MethodName: " + methodName + ", Var: " + message + ", callAll: " + callAll);
             t.printStackTrace();

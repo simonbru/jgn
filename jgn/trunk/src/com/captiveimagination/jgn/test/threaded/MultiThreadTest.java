@@ -59,7 +59,7 @@ public class MultiThreadTest
             {
                try
                {
-                  final MessageClient client = server2.connectAndWait(new InetSocketAddress(InetAddress.getLocalHost(), 1000), 50000);
+                  final MessageClient client = server2.connectAndWait(new InetSocketAddress(InetAddress.getLocalHost(), 1000), 5000);
                   if (client == null)
                   {
                      System.err.println("client timeout");

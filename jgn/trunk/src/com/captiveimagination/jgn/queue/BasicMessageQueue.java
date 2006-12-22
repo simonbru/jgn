@@ -93,7 +93,9 @@ public class BasicMessageQueue implements MessageQueue {
 	
 	public void remove(Message message) {
 		synchronized(list) {
-			list.remove(message);
+			if (list.remove(message)) {
+				size--;
+			}
 		}
 	}
 }

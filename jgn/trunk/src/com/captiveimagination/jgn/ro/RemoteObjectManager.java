@@ -52,7 +52,7 @@ public class RemoteObjectManager {
 			objectMap = new HashMap<Class<? extends RemoteObject>,RemoteInvocationListener>();
 			remoteObjectMap.put(server, objectMap);
 		}
-		if (objectMap.containsKey(object)) throw new IOException("A RemoteObject has already been registered by this name on this MessageServer: " + object.getClass().getName());
+		if (objectMap.containsKey(remoteClass)) throw new IOException("A RemoteObject has already been registered by this name on this MessageServer: " + object.getClass().getName());
 		RemoteInvocationListener ril = new RemoteInvocationListener(remoteClass, object, server);
 		objectMap.put(remoteClass, ril);
 	}

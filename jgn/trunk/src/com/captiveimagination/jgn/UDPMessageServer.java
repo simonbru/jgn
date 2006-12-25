@@ -98,9 +98,6 @@ public class UDPMessageServer extends NIOMessageServer {
 			while ((message = readMessage(client)) != null) {
 				client.getIncomingMessageQueue().add(message);
 			}
-		} catch(IOException exc) {
-			// Handle connections being closed
-			if (client != null) disconnectInternal(client, false);
 		} catch(MessageHandlingException exc) {
 			// FIXME we need to show the cause!
 			// appearantly IOE is not suitable for this
@@ -165,7 +162,7 @@ public class UDPMessageServer extends NIOMessageServer {
 		client.setStatus(MessageClient.Status.NEGOTIATING);
 		getMessageClients().add(client);
 		getIncomingConnectionQueue().add(client);
-		client.getMessageServer().getConnectionController().negotiate(client);
+		getConnectionController().negotiate(client);
 		return client;
 	}
 }

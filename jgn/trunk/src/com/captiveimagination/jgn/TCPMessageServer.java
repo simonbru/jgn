@@ -76,17 +76,21 @@ public class TCPMessageServer extends NIOMessageServer {
 		((SocketChannel)channel).finishConnect();
 		MessageClient client = (MessageClient)channel.keyFor(selector).attachment();
 		getIncomingConnectionQueue().add(client);
-		client.getMessageServer().getConnectionController().negotiate(client);
+		getConnectionController().negotiate(client);
 	}
 	
 	protected void read(SelectableChannel channel) throws IOException {
 		MessageClient client = (MessageClient)channel.keyFor(selector).attachment();
+		boolean readOk = false;
 		try {
-			((SocketChannel)channel).read(client.getReadBuffer());
+			readOk = (((SocketChannel)channel).read(client.getReadBuffer()) != -1);
 		} catch(IOException exc) {
-			// Handle connections being closed
+			// readOk is false
+		}
+		if (!readOk) {		// Disconnect the connection as it was not able to read properly
 			disconnectInternal(client, false);
 		}
+		
 		Message message;
 		try {
 			while ((message = readMessage(client)) != null) {
@@ -151,6 +155,7 @@ public class TCPMessageServer extends NIOMessageServer {
 	
 	public MessageClient connect(SocketAddress address) throws IOException {
 		MessageClient client = getMessageClient(address);
+		System.out.println("******** Client: " + client);
 		if ((client != null) && (client.getStatus() != MessageClient.Status.DISCONNECTING) && (client.getStatus() != MessageClient.Status.DISCONNECTED)) {
 			return client;	// Client already connected, simply return it
 		}

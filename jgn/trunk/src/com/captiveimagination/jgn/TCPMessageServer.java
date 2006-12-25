@@ -42,7 +42,7 @@ import com.captiveimagination.jgn.message.*;
 /**
  * @author Matthew D. Hicks
  */
-public class TCPMessageServer extends NIOMessageServer {
+public final class TCPMessageServer extends NIOMessageServer {
 	public TCPMessageServer(SocketAddress address) throws IOException {
 		this(address, 1024);
 	}
@@ -95,7 +95,7 @@ public class TCPMessageServer extends NIOMessageServer {
 		try {
 			while ((message = readMessage(client)) != null) {
 //				System.out.println("Adding to incoming message queue: " + message);
-				client.getIncomingMessageQueue().add(message);
+				client.receiveMessage(message);
 			}
 		} catch (MessageHandlingException exc) {
 			// FIXME we need to show the cause!

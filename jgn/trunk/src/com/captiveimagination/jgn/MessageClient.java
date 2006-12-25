@@ -51,7 +51,7 @@ import com.captiveimagination.jgn.stream.*;
  * 
  * @author Matthew D. Hicks
  */
-public class MessageClient implements MessageSender {
+public final class MessageClient implements MessageSender {
 	public static enum Status {
 		NOT_CONNECTED,
 		NEGOTIATING,
@@ -194,6 +194,16 @@ public class MessageClient implements MessageSender {
 		} catch(CloneNotSupportedException exc) {
 			throw new RuntimeException(exc);
 		}
+	}
+	
+	/**
+	 * Used as a mechanism for receiving messages
+	 * 
+	 * @param message
+	 */
+	protected void receiveMessage(Message message) {
+		getIncomingMessageQueue().add(message);
+		receivedCount++;
 	}
 	
 	/**

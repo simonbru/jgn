@@ -47,14 +47,14 @@ public class TestReconnect {
 		InetSocketAddress serverAddress = new InetSocketAddress(InetAddress.getLocalHost(), 1000);
 		
 		// Create Server
-		MessageServer server = new UDPMessageServer(serverAddress);
+		MessageServer server = new TCPMessageServer(serverAddress);
 		DebugListener serverListener = new DebugListener("Server");
 		server.addConnectionListener(serverListener);
 		server.addMessageListener(serverListener);
 		JGN.createThread(server).start();
 		
 		// Create Client
-		MessageServer client = new UDPMessageServer(new InetSocketAddress(InetAddress.getLocalHost(), 2000));
+		MessageServer client = new TCPMessageServer(new InetSocketAddress(InetAddress.getLocalHost(), 2000));
 		DebugListener clientListener = new DebugListener("Client");
 		client.addConnectionListener(clientListener);
 		client.addMessageListener(clientListener);
@@ -64,12 +64,11 @@ public class TestReconnect {
 		MessageClient connection = client.connectAndWait(serverAddress, 5000);
 		if (connection != null) {
 			System.out.println("Successful connection #1");
-			connection.disconnect();
-			Thread.sleep(1000);
-			connection = client.connectAndWait(serverAddress, 5000);
+			connection.disconnectAndWait(5000);
+			connection = client.connectAndWait(serverAddress, 15000);
 			if (connection != null) {
 				System.out.println("Successful connection #2");
-				connection.disconnect();
+				connection.disconnectAndWait(5000);
 			} else {
 				System.out.println("Connection #2 failed!");
 			}

@@ -392,6 +392,16 @@ public class MessageClient implements MessageSender {
 		setStatus(Status.DISCONNECTING);
 	}
 	
+	public void disconnectAndWait(long timeout) throws IOException, InterruptedException {
+		disconnect();
+		long time = System.currentTimeMillis();
+		while (System.currentTimeMillis() <= time + timeout) {
+			if (status != Status.DISCONNECTED) return;
+			Thread.sleep(1);
+		}
+		throw new IOException("MessageClient did not disconnect within the allotted time (" + status.toString() + ").");
+	}
+	
 	public void kick(String reason) {
 		getMessageServer().getConnectionController().kick(this, reason);
 		setStatus(Status.DISCONNECTING);

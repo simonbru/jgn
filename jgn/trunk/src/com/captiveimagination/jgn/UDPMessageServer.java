@@ -43,7 +43,7 @@ import com.captiveimagination.jgn.message.*;
 /**
  * @author Matthew D. Hicks
  */
-public class UDPMessageServer extends NIOMessageServer {
+public final class UDPMessageServer extends NIOMessageServer {
 	private DatagramChannel channel;
 	private ByteBuffer readLookup;
 	
@@ -96,7 +96,7 @@ public class UDPMessageServer extends NIOMessageServer {
 			
 			Message message;
 			while ((message = readMessage(client)) != null) {
-				client.getIncomingMessageQueue().add(message);
+				client.receiveMessage(message);
 			}
 		} catch(MessageHandlingException exc) {
 			// FIXME we need to show the cause!

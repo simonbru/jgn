@@ -96,46 +96,10 @@ public class TestStressMessageServer {
 			}
 			
 		});
-//		Thread t = new Thread() {
-//			private long cycle;
-//			
-//			public void run() {
-//				try {
-//					while (true) {
-//						if (System.currentTimeMillis() - cycle > 1000) {
-//							if (client1 != null) {
-//								System.out.println("Received: " + receiveCount + 
-//												 ", " + client1.getIncomingMessageQueue().getTotal() + "(" + client1.getIncomingMessageQueue().getSize() + ")" +
-//												 ", " + client1.getOutgoingMessageQueue().getTotal() + "(" + client1.getOutgoingMessageQueue().getSize() + ")" +
-//												 ", " + client1.getOutgoingQueue().getTotal() + "(" + client1.getOutgoingQueue().getSize() + ")" +
-//												 
-//												 ", " + client2.getIncomingMessageQueue().getTotal() + "(" + client2.getIncomingMessageQueue().getSize() + ")" +
-//												 ", " + client2.getOutgoingMessageQueue().getTotal() + "(" + client2.getOutgoingMessageQueue().getSize() + ")" +
-//												 ", " + client2.getOutgoingQueue().getTotal() + "(" + client2.getOutgoingQueue().getSize() + ")");
-//							}
-//							cycle = System.currentTimeMillis();
-//						}
-//						Thread.sleep(1);
-//					}
-//				} catch(Exception exc) {
-//					exc.printStackTrace();
-//				}
-//			}
-//		};
-		//t.setDaemon(true);
-		//t.setPriority(Thread.MIN_PRIORITY);
-//		t.start();
 		
 		final MessageServer server2 = new TCPMessageServer(new InetSocketAddress(InetAddress.getLocalHost(), 2000));
 		
 		JGN.createThread(server1, server2).start();
-		
-//		KeyGenerator kgen = KeyGenerator.getInstance("Blowfish");
-//		SecretKey skey = kgen.generateKey();
-//		byte[] raw = skey.getEncoded();
-//		BlowfishDataTranslator trans = new BlowfishDataTranslator(raw);
-//		server1.addDataTranslator(trans);
-//		server2.addDataTranslator(trans);
 		
 		server2.addConnectionListener(new ConnectionListener() {
 			public void connected(MessageClient client) {
@@ -162,8 +126,6 @@ public class TestStressMessageServer {
 			System.out.println("Connection established!");
 			BasicMessage message = new BasicMessage();
 			long time = System.currentTimeMillis();
-			//Thread.currentThread().setPriority(Thread.MIN_PRIORITY);
-			//message.setData(new byte[512]);
 			for (int i = 0; i < MAX; i++) {
 				message.setValue(i);
 				try {

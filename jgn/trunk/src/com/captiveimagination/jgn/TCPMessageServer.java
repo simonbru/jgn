@@ -73,10 +73,11 @@ public final class TCPMessageServer extends NIOMessageServer {
 	}
 
 	protected void connect(SelectableChannel channel) throws IOException {
-		((SocketChannel)channel).finishConnect();
-		MessageClient client = (MessageClient)channel.keyFor(selector).attachment();
-		getIncomingConnectionQueue().add(client);
-		getConnectionController().negotiate(client);
+		if (((SocketChannel)channel).finishConnect()) {
+			MessageClient client = (MessageClient)channel.keyFor(selector).attachment();
+			getIncomingConnectionQueue().add(client);
+			getConnectionController().negotiate(client);
+		}
 	}
 	
 	protected void read(SelectableChannel channel) throws IOException {

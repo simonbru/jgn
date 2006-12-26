@@ -80,12 +80,13 @@ public class SharedObject {
 		return localObject;
 	}
 	
-	protected void add(MessageServer server, ObjectCreateMessage message) {
+	protected void add(MessageServer server, ObjectCreateMessage message, ByteBuffer buffer) {
 		if (!servers.contains(server)) {
 			servers.add(server);
 			message.setName(name);
 			message.setInterfaceClass(interfaceClass.getName());
 			server.broadcast(message);
+			updateClientOrServer(null, server, buffer);
 		}
 	}
 
@@ -95,11 +96,12 @@ public class SharedObject {
 		return servers.remove(server);
 	}
 
-	protected void add(MessageClient client, ObjectCreateMessage message) {
+	protected void add(MessageClient client, ObjectCreateMessage message, ByteBuffer buffer) {
 		addInternal(client);
 		message.setName(name);
 		message.setInterfaceClass(interfaceClass.getName());
 		client.sendMessage(message);
+		updateClientOrServer(client, null, buffer);
 	}
 	
 	protected void addInternal(MessageClient client) {
@@ -115,13 +117,13 @@ public class SharedObject {
 		message.setInterfaceClass(interfaceClass.getName());
 		client.sendMessage(message);
 		// Send all values for object
-		updateClient(client, buffer);
+		updateClientOrServer(client, null, buffer);
 	}
 	
-	protected void updateClient(MessageClient client, ByteBuffer buffer) {
+	protected void updateClientOrServer(MessageClient client, MessageServer server, ByteBuffer buffer) {
 		ObjectUpdateMessage update = new ObjectUpdateMessage();
 		String[] fields = converters.keySet().toArray(new String[converters.size()]);
-		update(buffer, update, fields, client);
+		update(buffer, update, fields, client, server);
 	}
 
 	protected boolean remove(MessageClient client, ObjectDeleteMessage message) {
@@ -145,10 +147,10 @@ public class SharedObject {
 	protected void update(ByteBuffer buffer, ObjectUpdateMessage message) {
 		if (updates.size() == 0) return;
 		String[] fields = updates.toArray(new String[updates.size()]);
-		update(buffer, message, fields, null);
+		update(buffer, message, fields, null, null);
 	}
 	
-	protected void update(ByteBuffer buffer, ObjectUpdateMessage message, String[] fields, MessageClient client) {
+	protected void update(ByteBuffer buffer, ObjectUpdateMessage message, String[] fields, MessageClient client, MessageServer server) {
 		message.setName(name);
 		Converter converter;
 		Method getter;
@@ -170,6 +172,8 @@ public class SharedObject {
 
 		if (client != null) {
 			client.sendMessage(message);
+		} else if (server != null) {
+			server.broadcast(message);
 		} else {
 			// Send to MessageServer clients
 			Iterator<MessageServer> serverIterator = servers.iterator();

@@ -33,15 +33,11 @@
  */
 package com.captiveimagination.jgn.so;
 
-import com.captiveimagination.jgn.message.*;
-import com.captiveimagination.jgn.message.type.*;
-
 /**
  * @author Matthew D. Hicks
  *
  */
-public class ObjectCreateMessage extends Message implements CertifiedMessage {
-	private String name;
+public class ObjectCreateMessage extends ObjectUpdateMessage {
 	private String interfaceClass;
 
 	public String getInterfaceClass() {
@@ -50,13 +46,5 @@ public class ObjectCreateMessage extends Message implements CertifiedMessage {
 
 	public void setInterfaceClass(String interfaceClass) {
 		this.interfaceClass = interfaceClass;
-	}
-
-	public String getName() {
-		return name;
-	}
-
-	public void setName(String name) {
-		this.name = name;
 	}
 }

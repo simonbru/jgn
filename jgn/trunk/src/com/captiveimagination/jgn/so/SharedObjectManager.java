@@ -60,6 +60,7 @@ public class SharedObjectManager extends MessageAdapter implements BeanChangeLis
 	private ByteBuffer outgoingBuffer;
 	private ByteBuffer incomingBuffer;
 	private ByteBuffer updateBuffer;
+	private ByteBuffer createBuffer;
 	private ObjectCreateMessage createMessage;
 	private ObjectUpdateMessage updateMessage;
 	private ObjectDeleteMessage deleteMessage;
@@ -75,6 +76,7 @@ public class SharedObjectManager extends MessageAdapter implements BeanChangeLis
 		outgoingBuffer = ByteBuffer.allocateDirect(512 * 1000);
 		incomingBuffer = ByteBuffer.allocateDirect(512 * 1000);
 		updateBuffer = ByteBuffer.allocateDirect(512 * 1000);
+		createBuffer = ByteBuffer.allocateDirect(512 * 1000);
 		createMessage = new ObjectCreateMessage();
 		updateMessage = new ObjectUpdateMessage();
 		deleteMessage = new ObjectDeleteMessage();
@@ -169,7 +171,8 @@ public class SharedObjectManager extends MessageAdapter implements BeanChangeLis
 	}
 	
 	public void addShare(Object object, MessageServer server) {
-		registry.get(object).add(server, createMessage);
+		createBuffer.clear();
+		registry.get(object).add(server, createMessage, createBuffer);
 	}
 	
 	public boolean removeShare(Object object, MessageServer server) {
@@ -177,7 +180,8 @@ public class SharedObjectManager extends MessageAdapter implements BeanChangeLis
 	}
 	
 	public void addShare(Object object, MessageClient client) {
-		registry.get(object).add(client, createMessage);
+		createBuffer.clear();
+		registry.get(object).add(client, createMessage, createBuffer);
 	}
 	
 	public boolean removeShare(Object object, MessageClient client) {

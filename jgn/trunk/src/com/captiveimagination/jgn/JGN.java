@@ -178,19 +178,20 @@ class UpdatableRunnable implements Runnable {
 	}
 	
 	public void run() {
-		boolean alive = false;
+ 		boolean alive;
 		do {
-			try {
-				for (int i = 0; i < updatables.length; i++) {
-					if (updatables[i].isAlive()) {
-						alive = true;
-						updatables[i].update();
-					}
-				}
-			} catch(Throwable t) {
-				throw new RuntimeException(t);
-			}
-			if (sleep > 0) {
+      alive = false;
+  		for (Updatable u : updatables) {
+	    	if (u.isAlive()) {
+					alive = true;     // ase: if at least one u is alive(), keep running
+          try {
+						u.update();
+          } catch(Throwable t) {
+				    throw new RuntimeException(t);
+			    }
+        }
+      }
+      if (sleep > 0) {
 				try {
 					Thread.sleep(1);
 				} catch(InterruptedException exc) {

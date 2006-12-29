@@ -45,10 +45,11 @@ import com.captiveimagination.jgn.queue.*;
 import com.captiveimagination.jgn.stream.*;
 
 /**
- * MessageClient defines the communication layer
- * between the local machine and the remote
+ * MessageClient defines the communication layer  between the local machine and the remote
  * machine.
- * 
+ *
+ * [ase]: it does that, by providing datastructures for Messageflows, state information about the
+ *        current connection
  * @author Matthew D. Hicks
  */
 public final class MessageClient implements MessageSender {
@@ -64,27 +65,27 @@ public final class MessageClient implements MessageSender {
 	private SocketAddress address;
 	private MessageServer server;
 	private Status status;
-	private long lastReceived;
-	private long lastSent;
-	private MessageQueue outgoingQueue;				// Waiting to be sent via updateTraffic()
+	private MessageQueue outgoingQueue;					// Waiting to be sent (eg written to socket) via updateTraffic()
 	private MessageQueue incomingMessages;			// Waiting for MessageListener handling
 	private MessageQueue outgoingMessages;			// Waiting for MessageListener handling
-	private BasicMessageQueue certifiableMessages;	// Waiting for a Receipt message to certify the message was received
+	private final BasicMessageQueue certifiableMessages;	// Waiting for a Receipt message to certify the message was received
 	private MessageQueue certifiedMessages;			// Waiting for MessageListener handling
-	private MessageQueue failedMessages;			// Waiting for MessageListener handling
-	private ArrayList<MessageListener> messageListeners;
+	private MessageQueue failedMessages;				// Waiting for MessageListener handling
+	private final ArrayList<MessageListener> messageListeners;
 	private HashMap<Short,JGNInputStream> inputStreams;
 	private HashMap<Short,JGNOutputStream> outputStreams;
 	private CombinedPacket currentWrite;
 	private boolean sentRegistration;				// Refers to if registration message has been sent
-	
+	private long lastReceived;              // last time I got a message
+	private long lastSent;                  // last time I published a message
+
 	private int readPosition;
 	private ByteBuffer readBuffer;
-	private Message failedMessage;
+	private Message overhangMessage;				// holds overflow from PacketCombiner
 	private String kickReason;
 	
-	private volatile long receivedCount;
-	private volatile long sentCount;
+	private volatile long receivedCount;    // statistics only
+	private volatile long sentCount;        // same
 	
 	private HashMap<Short,Class<? extends Message>> registry;
 	private HashMap<Class<? extends Message>,Short> registryReverse;
@@ -108,104 +109,53 @@ public final class MessageClient implements MessageSender {
 		
 		registry = new HashMap<Short,Class<? extends Message>>();
 		registryReverse = new HashMap<Class<? extends Message>,Short>();
-		received();
-		sent();
-	}
-	
-	public void setId(long id) {
-		this.id = id;
-	}
-	
-	public long getId() {
-		return id;
-	}
-	
-	public Status getStatus() {
-		return status;
-	}
-	
-	public void setStatus(Status status) {
-		this.status = status;
-	}
-	
-	public boolean isConnected() {
-		return status == Status.CONNECTED;
-	}
-	
-	public CombinedPacket getCurrentWrite() {
-		return currentWrite;
-	}
-	
-	public void setCurrentWrite(CombinedPacket currentWrite) {
-		this.currentWrite = currentWrite;
+		received();  // first time initialize watch-clocks to be used by my MessageServer
+		sent();      // same.
 	}
 
-	public SocketAddress getAddress() {
-		return address;
-	}
+	//**************************** GETTER/SETTER *****************************/
+
+	public void setId(long id) { this.id = id; }
+	public long getId() {	return id; }
+
+	public Status getStatus() {	return status;}
+	public void setStatus(Status status) {this.status = status;	}
 	
-	public MessageServer getMessageServer() {
-		return server;
-	}
+	public SocketAddress getAddress() { return address;	}
+	public MessageServer getMessageServer() {	return server; }
 	
+	public void received() { lastReceived = System.currentTimeMillis(); }
+	public long lastReceived() { return lastReceived; }
+
+	public void sent() { lastSent = System.currentTimeMillis(); }
+	public long lastSent() { return lastSent;}
+
+	public long getReceivedCount() { return receivedCount; }
+	public long getSentCount() { return sentCount;}
+
+
+	protected ByteBuffer getReadBuffer() { return readBuffer; }
+	protected int getReadPosition() {	return readPosition; }
+	protected void setReadPosition(int readPosition) { this.readPosition = readPosition; }
+
+	protected CombinedPacket getCurrentWrite() { return currentWrite;}
+	protected void setCurrentWrite(CombinedPacket currentWrite) { this.currentWrite = currentWrite; }
+
+	protected Message getOverhangMessage() { return overhangMessage;}
+	protected void setOverhangMessage(Message overhangMessage) { this.overhangMessage = overhangMessage;}
+
 	/**
-	 * Sends a message to the remote machine
-	 * that this connection is associated to.
-	 * The Message is submitted to the outgoing
-	 * queue and processed from the associated
-	 * MessageServer's updateTraffic method.
-	 * 
-	 * Note that the message sent here is cloned
-	 * and is utilized instead of the actual
-	 * message received. This allows for re-use
-	 * of objects when sending without any problems
-	 * attempting to send.
-	 * 
-	 * @param message
+	 * true if the negotiating phase has taken place just after sending LocalRegistrationMessage
+	 * @return boolean
 	 */
-	public void sendMessage(Message message) throws ConnectionException {
-		try {
-			Message m = message.clone();
-			
-			m.setMessageClient(this);
-			
-			// Make sure we know if we've already sent a registration message
-			if (m instanceof LocalRegistrationMessage) {
-				sentRegistration = true;
-			}
-			// Assign unique id if this is a UniqueMessage
-			if (m instanceof IdentityMessage) {
-				// Ignore setting an id
-			} else if (m instanceof UniqueMessage) {
-				m.setId(Message.nextUniqueId());
-			}
-			
-			if (getStatus() == Status.DISCONNECTED) {
-				throw new ConnectionException("Connection is closed, no more messages being accepted.");
-			} else if (message instanceof DisconnectMessage) {
-				// This is a possible occurrence under valid circumstances
-			} else if (message instanceof Receipt) {
-				// If it hasn't finished disconnecting we can try to send a receipt
-			} else if (getStatus() == Status.DISCONNECTING) {
-				throw new ConnectionException("Connection is closing, no more messages being accepted.");
-			}
-			outgoingQueue.add(m);
-			sentCount++;
-		} catch(CloneNotSupportedException exc) {
-			throw new RuntimeException(exc);
-		}
-	}
-	
-	/**
-	 * Used as a mechanism for receiving messages
-	 * 
-	 * @param message
-	 */
-	protected void receiveMessage(Message message) {
-		getIncomingMessageQueue().add(message);
-		receivedCount++;
-	}
-	
+	protected boolean hasSentRegistration() {	return sentRegistration; }
+
+	protected void setKickReason(String reason) {	this.kickReason = reason; }
+	protected String getKickReason() { return kickReason; }
+
+
+	//************************ MESSAGEQUEUES *****************************/
+
 	/**
 	 * Represents the MessageQueue containing all messages that
 	 * need to be sent to this client.
@@ -248,6 +198,7 @@ public final class MessageClient implements MessageSender {
 	 * 		MessageQueue
 	 */
 	public BasicMessageQueue getCertifiableMessageQueue() {
+		// todo ase: check for blocking cond. against certifyMessage()
 		return certifiableMessages;
 	}
 	
@@ -274,27 +225,12 @@ public final class MessageClient implements MessageSender {
 	public MessageQueue getFailedMessageQueue() {
 		return failedMessages;
 	}
-	
-	public void addMessageListener(MessageListener listener) {
-		synchronized (messageListeners) {
-			messageListeners.add(listener);
-		}
-	}
-	
-	public boolean removeMessageListener(MessageListener listener) {
-		synchronized (messageListeners) {
-			return messageListeners.remove(listener);
-		}
-	}
 
-	public ArrayList<MessageListener> getMessageListeners() {
-		return messageListeners;
-	}
-	
+	//****************************** STREAMS *************************/
+
 	public JGNInputStream getInputStream() throws IOException {
 		return getInputStream((short)0);
 	}
-	
 	public JGNInputStream getInputStream(short streamId) throws IOException {
 		if (inputStreams.containsKey(streamId)) {
 			throw new StreamInUseException("The stream " + streamId + " is currently in use and must be closed before another session can be established.");
@@ -303,18 +239,16 @@ public final class MessageClient implements MessageSender {
 		inputStreams.put(streamId, stream);
 		return stream;
 	}
-	
 	public void closeInputStream(short streamId) throws IOException {
 		if (inputStreams.containsKey(streamId)) {
 			if (!inputStreams.get(streamId).isClosed()) inputStreams.get(streamId).close();
 			inputStreams.remove(streamId);
 		}
 	}
-	
+
 	public JGNOutputStream getOutputStream() throws IOException {
 		return getOutputStream((short)0);
 	}
-	
 	public JGNOutputStream getOutputStream(short streamId) throws IOException {
 		if (outputStreams.containsKey(streamId)) {
 			throw new StreamInUseException("The stream " + streamId + " is currently in use and must be closed before another session can be established.");
@@ -323,19 +257,51 @@ public final class MessageClient implements MessageSender {
 		outputStreams.put(streamId, stream);
 		return stream;
 	}
-	
 	public void closeOutputStream(short streamId) throws IOException {
 		if (outputStreams.containsKey(streamId)) {
 			if (!outputStreams.get(streamId).isClosed()) outputStreams.get(streamId).close();
 			outputStreams.remove(streamId);
 		}
 	}
+
+	//****************************** NOTIFICATION *****************************/
+
+	/**
+	 * adds a new MessageListener, that gets notified, when there is a MessageListener.MESSAGE_EVENT
+	 * this only refers to messages to/from THIS client.
+	 * @see MessageListener
+	 * @param listener
+	 */
+	public void addMessageListener(MessageListener listener) {
+		synchronized (messageListeners) {
+			messageListeners.add(listener);
+		}
+	}
+	public boolean removeMessageListener(MessageListener listener) {
+		synchronized (messageListeners) {
+			return messageListeners.remove(listener);
+		}
+	}
+	public ArrayList<MessageListener> getMessageListeners() {
+		return messageListeners;
+	}
 	
-	public short getMessageTypeId(Class<? extends Message> c) {
+	//************************* LOCAL REGISTRY ***********************/
+	/**
+	 * if the local registry had the messageclass registered, return it's id.
+	 * else ask JGN's registry, but then accept only negative values, meaning system ids
+	 *
+	 * Note, we store the messagetype numbers from my partner at the other side of the wire!
+	 *
+	 * @param c the class to be looked up
+	 * @return short - the id
+	 * @throws MessageHandlingException - when Messageclass was not registered before
+	 */
+	public short getMessageTypeId(Class<? extends Message> c) throws MessageHandlingException{
 		if (!registryReverse.containsKey(c)) {
-			short id = JGN.getMessageTypeId(c);
+			short	id = JGN.getMessageTypeId(c);
 			if (id < 0) return id;		// if it's a system id we return the internal value
-			throw new NoClassDefFoundError("The Message " + c.getName() + " is not registered, make sure to register with JGN.register() before using.");
+			throw new MessageHandlingException("The Message " + c.getName() + " is not registered, make sure to register with JGN.register() before using.");
 		}
 		return registryReverse.get(c);
 	}
@@ -349,31 +315,67 @@ public final class MessageClient implements MessageSender {
 		registryReverse.put(c, typeId);
 	}
 	
-	public void received() {
-		lastReceived = System.currentTimeMillis();
+	//**************************** CONNECTION RELATED ************************/
+
+	public boolean isConnected() { return status == Status.CONNECTED; }
+
+	/**
+	 * Sends a message to the remote machine that this connection is associated to.
+	 * The Message is submitted to the outgoing queue and processed from the associated
+	 * MessageServer's updateTraffic method.
+	 *
+	 * Note that the message sent here is cloned and is utilized instead of the actual
+	 * message received. This allows for re-use  of objects when sending without any problems
+	 * attempting to send.
+	 *
+	 * @param message
+	 */
+	public void sendMessage(Message message) throws ConnectionException {
+		try {
+			Message m = message.clone();
+
+			m.setMessageClient(this);
+
+			// Make sure we know if we've already sent a registration message
+			if (m instanceof LocalRegistrationMessage) {
+				sentRegistration = true;
+			}
+			// Assign unique id if this is a UniqueMessage
+			if (m instanceof IdentityMessage) {
+				// Ignore setting an id
+			} else if (m instanceof UniqueMessage) {
+				m.setId(Message.nextUniqueId());
+			}
+
+			if (getStatus() == Status.DISCONNECTED) {
+				throw new ConnectionException("Connection is closed, no more messages being accepted.");
+			} else if (message instanceof DisconnectMessage) {
+				// This is a possible occurrence under valid circumstances
+			} else if (message instanceof Receipt) {
+				// If it hasn't finished disconnecting we can try to send a receipt
+			} else if (getStatus() == Status.DISCONNECTING) {
+				throw new ConnectionException("Connection is closing, no more messages being accepted.");
+			}
+			outgoingQueue.add(m);
+			sentCount++;
+		} catch(CloneNotSupportedException exc) {
+			// TODO think about Exception here !
+			throw new RuntimeException(exc);
+		}
 	}
-	
-	public long lastReceived() {
-		return lastReceived;
+
+	/**
+	 * Used as a mechanism for receiving messages
+	 *
+	 * @param message
+	 */
+	protected void receiveMessage(Message message) {
+		getIncomingMessageQueue().add(message);
+		receivedCount++;
 	}
-	
-	public void sent() {
-		lastSent = System.currentTimeMillis();
-	}
-	
-	public long lastSent() {
-		return lastSent;
-	}
-	
-	public long getReceivedCount() {
-		return receivedCount;
-	}
-	
-	public long getSentCount() {
-		return sentCount;
-	}
-	
+
 	protected void certifyMessage(long messageId) {
+		// todo ase: check for blocking cond. against getCertifiableMessageQueue()
 		synchronized(certifiableMessages) {
 			Message firstMessage = certifiableMessages.poll();
 			if (firstMessage == null) {
@@ -385,7 +387,7 @@ public final class MessageClient implements MessageSender {
 				return;
 			}
 			certifiableMessages.add(firstMessage);
-			Message m = null;
+			Message m;
 			while ((m = certifiableMessages.poll()) != firstMessage) {
 				if (m.getId() == messageId) {
 					certifiedMessages.add(m);
@@ -393,10 +395,24 @@ public final class MessageClient implements MessageSender {
 				}
 				certifiableMessages.add(m);
 			}
-			if (m != null) certifiableMessages.add(m);
+			// ase: this is always true: --> if (m != null)
+				certifiableMessages.add(m);
 		}
 	}
 	
+	protected boolean isDisconnectable() {
+		if (status == Status.DISCONNECTING) {
+			if (!outgoingQueue.isEmpty()) return false;
+			if (!incomingMessages.isEmpty()) return false;
+			if (!outgoingMessages.isEmpty()) return false;
+			if (!certifiableMessages.isEmpty()) return false;
+			if (!certifiedMessages.isEmpty()) return false;
+			if (!failedMessages.isEmpty()) return false;
+			return true;
+		}
+		return false;
+	}
+
 	public void disconnect() {
 		getMessageServer().getConnectionController().disconnect(this);
 		setStatus(Status.DISCONNECTING);
@@ -417,48 +433,4 @@ public final class MessageClient implements MessageSender {
 		setStatus(Status.DISCONNECTING);
 	}
 
-	protected ByteBuffer getReadBuffer() {
-		return readBuffer;
-	}
-	
-	protected int getReadPosition() {
-		return readPosition;
-	}
-	
-	protected void setReadPosition(int readPosition) {
-		this.readPosition = readPosition;
-	}
-
-	protected Message getFailedMessage() {
-		return failedMessage;
-	}
-	
-	protected void setFailedMessage(Message failedMessage) {
-		this.failedMessage = failedMessage;
-	}
-
-	protected boolean isDisconnectable() {
-		if (status == Status.DISCONNECTING) {
-			if (!outgoingQueue.isEmpty()) return false;
-			if (!incomingMessages.isEmpty()) return false;
-			if (!outgoingMessages.isEmpty()) return false;
-			if (!certifiableMessages.isEmpty()) return false;
-			if (!certifiedMessages.isEmpty()) return false;
-			if (!failedMessages.isEmpty()) return false;
-			return true;
-		}
-		return false;
-	}
-
-	protected boolean hasSentRegistration() {
-		return sentRegistration;
-	}
-
-	protected void setKickReason(String reason) {
-		this.kickReason = reason;
-	}
-	
-	protected String getKickReason() {
-		return kickReason;
-	}
 }

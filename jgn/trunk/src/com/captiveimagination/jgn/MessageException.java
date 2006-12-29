@@ -34,6 +34,11 @@
 package com.captiveimagination.jgn;
 
 /**
+ * an exception concerned with any problems around Message
+ *
+ * [ase]: this seems to be more of an general purpose high level Exception
+ *        -- is subclassed in ConnectionException [/ase]
+ * 
  * @author Matthew D. Hicks
  *
  */

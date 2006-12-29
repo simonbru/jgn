@@ -51,6 +51,12 @@ import com.captiveimagination.jgn.translation.*;
 /**
  * MessageServer is the abstract foundation from which all sending and receiving
  * of Messages occur.
+ *
+ * It implements Updatable which defines a method update(). Normally this method will be
+ * called periodically to enable serving all MessageClients and related tasks.
+ *
+ * 
+ *
  * @author Matthew D. Hicks
  */
 public abstract class MessageServer implements Updatable {

@@ -38,8 +38,8 @@ public class PacketCombiner {
 		boolean bufferFull = false;
 		
 		while (true) {
-			Message message = client.getFailedMessage();
-			client.setFailedMessage(null);
+			Message message = client.getOverhangMessage();
+			client.setOverhangMessage(null);
 			if (message == null) {
 				message = queue.poll();
 			}
@@ -74,7 +74,7 @@ public class PacketCombiner {
 				//System.out.println("MessageLength(Write): " + (messageEnd - messageStart - 4));
 			} catch(BufferOverflowException exc) {
 				buffer.position(messageStart);
-				client.setFailedMessage(message);
+				client.setOverhangMessage(message);
 				bufferFull = true;
 				break;
 			}

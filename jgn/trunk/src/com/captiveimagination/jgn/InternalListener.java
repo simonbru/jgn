@@ -53,55 +53,73 @@ class InternalListener implements MessageListener, ConnectionListener {
 	private InternalListener() {
 	}
 
-	@SuppressWarnings("all")
+	public static final InternalListener getInstance() {
+			if (instance == null) {
+				instance = new InternalListener();
+			}
+			return instance;
+		}
+
+	@SuppressWarnings({"unchecked"})
 	public void messageReceived(Message message) {
+		MessageClient myClient = message.getMessageClient();
+
 		if (message instanceof LocalRegistrationMessage) {
+
 			// Verify if connection is valid
-			String filterMessage = message.getMessageClient().getMessageServer().shouldFilterConnection(message.getMessageClient());
+			String filterMessage = myClient.getMessageServer().shouldFilterConnection(myClient);
 			if (filterMessage != null) {
 				// They have been filtered, so we kick them
-				message.getMessageClient().kick(filterMessage);
+				myClient.kick(filterMessage);
 				return;
 			}
 
 			// Handle incoming negotiation information
+			/* [ase] this message holds the Message NAMES and their MessageIds
+			*  as they are used on the other side of the 'wire'. We have to store
+			*  them within the MC, because they will differ from mine!
+			* [/ase]
+			*/
 			LocalRegistrationMessage m = (LocalRegistrationMessage)message;
-			message.getMessageClient().setId(m.getId());
+			myClient.setId(m.getId());
 			String[] messages = m.getMessageClasses();
 			short[] ids = m.getIds();
+
 			int i = 0;
 			try {
 				for (; i < messages.length; i++) {
-					message.getMessageClient().register(ids[i], (Class<? extends Message>)Class.forName(messages[i]));
+					myClient.register(ids[i], (Class<? extends Message>)Class.forName(messages[i]));
 				}
-				message.getMessageClient().setStatus(MessageClient.Status.CONNECTED);
-				message.getMessageClient().getMessageServer().getNegotiatedConnectionQueue().add(
-								message.getMessageClient());
+				// transfer ok, put client into CONNECTED state, and prepare to notify ConnectionListeners
+				myClient.setStatus(MessageClient.Status.CONNECTED);
+				myClient.getMessageServer().getNegotiatedConnectionQueue().add(myClient);
+
 			} catch (ClassNotFoundException exc) {
-				System.err
-								.println("Unable to find the message: " + messages[i]
+				System.err.println("Unable to find the message: " + messages[i]
 												+ " in the ClassLoader. Trace follows:");
 				// TODO handle more gracefully
 				throw new RuntimeException(exc);
 			}
 
-			if (!message.getMessageClient().hasSentRegistration()) {
-				message.getMessageClient().getMessageServer().getConnectionController().negotiate(
-								message.getMessageClient());
+			if (!myClient.hasSentRegistration()) {
+				myClient.getMessageServer().getConnectionController().negotiate(myClient);
 			}
+
 		} else if (message instanceof DisconnectMessage) {
 			// Disconnect from the remote client
-			message.getMessageClient().setKickReason(((DisconnectMessage)message).getReason());
-			message.getMessageClient().setStatus(MessageClient.Status.DISCONNECTING);
+			myClient.setKickReason(((DisconnectMessage)message).getReason());
+			myClient.setStatus(MessageClient.Status.DISCONNECTING);
 		}
+
 		if (message instanceof CertifiedMessage) {
 			// Send back a message to the sender to let them know the message was received
 			Receipt receipt = new Receipt();
 			receipt.setCertifiedId(message.getId());
-			message.getMessageClient().sendMessage(receipt);
+			myClient.sendMessage(receipt);
+
 		} else if (message instanceof Receipt) {
 			// Received confirmation of a CertifiedMessage
-			message.getMessageClient().certifyMessage(((Receipt)message).getCertifiedId());
+			myClient.certifyMessage(((Receipt)message).getCertifiedId());
 		}
 	}
 
@@ -117,16 +135,8 @@ class InternalListener implements MessageListener, ConnectionListener {
 	public void messageFailed(Message message) {
 	}
 
-	public static final InternalListener getInstance() {
-		if (instance == null) {
-			instance = new InternalListener();
-		}
-		return instance;
-	}
 
 	public void connected(MessageClient client) {
-		// Send the registration message
-		//client.getMessageServer().getConnectionController().negotiate(client);
 	}
 
 	public void negotiationComplete(MessageClient client) {

@@ -48,7 +48,7 @@ import com.captiveimagination.jgn.translation.*;
 public abstract class Message implements Cloneable {
 	private static int UNIQUE_ID = 0;
 	
-	private long id;
+	private transient long id;
 	private transient short groupId;
 	private transient short playerId;
 	private transient short destinationPlayerId;

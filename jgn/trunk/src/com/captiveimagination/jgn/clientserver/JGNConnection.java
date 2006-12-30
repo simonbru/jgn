@@ -40,7 +40,7 @@ import com.captiveimagination.jgn.message.*;
  * @author Matthew D. Hicks
  */
 public interface JGNConnection extends MessageSender {
-	//public <T extends Message & PlayerMessage> void sendMessage(T message);
+
 	public void sendMessage(Message message);
 	
 	public short getPlayerId();

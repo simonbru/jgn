@@ -44,6 +44,5 @@ package com.captiveimagination.jgn.message.type;
  */
 public interface GroupMessage {
 	public short getGroupId();
-	
 	public void setGroupId(short groupId);
 }

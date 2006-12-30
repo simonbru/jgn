@@ -65,9 +65,7 @@ public abstract class NIOMessageServer extends MessageServer {
 	protected abstract boolean write(SelectableChannel channel) throws IOException;
 	
 	protected void disconnectInternal(MessageClient client, boolean graceful) throws IOException {
-		Iterator<SelectionKey> iterator = selector.keys().iterator();
-		while (iterator.hasNext()) {
-			SelectionKey key = iterator.next();
+		for (SelectionKey key : selector.keys()) {
 			if (key.attachment() == client) {
 				key.channel().close();
 				key.cancel();
@@ -93,6 +91,7 @@ public abstract class NIOMessageServer extends MessageServer {
 		getDisconnectedConnectionQueue().add(client);
 		
 		// Remove the connection from the MessageServer
+		// TODO ase: double remove client !?!?!
 		getMessageClients().remove(client);
 	}
 	
@@ -102,9 +101,7 @@ public abstract class NIOMessageServer extends MessageServer {
 		
 		// If should be shutting down, check
 		if ((getMessageClients().size() == 0) && (!keepAlive)) {
-			Iterator<SelectionKey> iterator = selector.keys().iterator();
-			while (iterator.hasNext()) {
-				SelectionKey key = iterator.next();
+			for (SelectionKey key : selector.keys()) {
 				key.channel().close();
 				key.cancel();
 			}
@@ -126,7 +123,7 @@ public abstract class NIOMessageServer extends MessageServer {
 					read(activeKey.channel());
 				}
 				if ((activeKey.isValid()) && (activeKey.isWritable())) {
-					while (write(activeKey.channel())) continue;
+					while (write(activeKey.channel())) {}
 				}
 				if ((activeKey.isValid()) && (activeKey.isConnectable())) {
 					connect(activeKey.channel());

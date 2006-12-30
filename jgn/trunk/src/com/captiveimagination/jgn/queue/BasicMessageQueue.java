@@ -40,11 +40,16 @@ import com.captiveimagination.jgn.message.*;
 /**
  * BasicMessageQueue handles the basic function of enqueuing and
  * retrieving messages.
- * 
+ *
+ * ase: note, size and total are not really states of the datastructure, so
+ *      they might be *temporarily* out of sync with the correct size of the
+ *      queue.
+ * /ase
+ *
  * @author Matthew D. Hicks
  */
 public class BasicMessageQueue implements MessageQueue {
-	private LinkedList<Message> list;
+	private final LinkedList<Message> list;
 	private volatile int size;
 	private volatile long total;
 	

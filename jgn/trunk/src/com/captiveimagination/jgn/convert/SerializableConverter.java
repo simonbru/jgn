@@ -43,7 +43,7 @@ import java.nio.*;
 public class SerializableConverter implements Converter {
     public Object set(ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
         int length = buffer.getInt();
-        byte[] array = null;
+        byte[] array;
         Object obj = null;
         if (length != -1) {
             array = new byte[length];

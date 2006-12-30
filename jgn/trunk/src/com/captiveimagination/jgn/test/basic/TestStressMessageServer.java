@@ -134,7 +134,8 @@ public class TestStressMessageServer {
 					i--;
 					try {
 						Thread.sleep(1);
-					} catch(InterruptedException ie) {}
+					} catch(InterruptedException ie) {//aha
+					}
 				}
 			}
 			System.out.println("Enqueued in: " + (System.currentTimeMillis() - time) + "ms");

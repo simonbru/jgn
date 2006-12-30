@@ -64,20 +64,21 @@ public final class UDPMessageServer extends NIOMessageServer {
 		return channel;
 	}
 	
-	protected void accept(SelectableChannel channel) throws IOException {
+	protected void accept(SelectableChannel channel) {
 		// UDP Message Server will never receive an accept event
 	}
 
-	protected void connect(SelectableChannel channel) throws IOException {
+	protected void connect(SelectableChannel channel) {
 		// UDP Message Server will never receive a connect event
 	}
 
 	protected void read(SelectableChannel c) throws IOException {
-		MessageClient client = null;
+		MessageClient client;
 		try {
 			InetSocketAddress address = (InetSocketAddress)channel.receive(readLookup);
 			if (address == null) {
-				// TODO a message was sent but never reached the host - figure out how to use this
+				// _TODO a message was sent but never reached the host - figure out how to use this
+				// ase: this seems to be ok
 				return;
 			}
 			
@@ -122,8 +123,7 @@ public final class UDPMessageServer extends NIOMessageServer {
 			} else {
 				CombinedPacket combined;
 				try {
-					// TODO make 50000 adjustable (getter/setter)
-					combined = PacketCombiner.combine(client, 50000);
+					combined = PacketCombiner.combine(client);
 				} catch (MessageHandlingException exc) {
 					// FIXME handle properly
 					exc.printStackTrace();
@@ -153,7 +153,7 @@ public final class UDPMessageServer extends NIOMessageServer {
 		return false;
 	}
 
-	public MessageClient connect(SocketAddress address) throws IOException {
+	public MessageClient connect(SocketAddress address) {
 		MessageClient client = getMessageClient(address);
 		if ((client != null) && (client.getStatus() != MessageClient.Status.DISCONNECTING) && (client.getStatus() != MessageClient.Status.DISCONNECTED)) {
 			return client;		// Client already connected, simply return it

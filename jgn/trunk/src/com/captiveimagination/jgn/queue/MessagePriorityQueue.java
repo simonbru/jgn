@@ -61,7 +61,8 @@ public class MessagePriorityQueue implements MessageQueue {
 		if (message == null) throw new NullPointerException("Message must not be null");
 		
 		PriorityMessage m = (PriorityMessage)message;
-		
+		// TODO should we check instanceof here, it's a public method
+		// ..at the moment add will only be called from MultiMessageQueue, and then message IS a prioMess.
 		int p = m.getPriority();
 
 		if (p < PriorityMessage.PRIORITY_TRIVIAL || p > PriorityMessage.PRIORITY_CRITICAL)

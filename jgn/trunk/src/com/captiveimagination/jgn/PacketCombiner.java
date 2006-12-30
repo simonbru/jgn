@@ -26,11 +26,16 @@ public class PacketCombiner {
 	/**
 	 * Combines as much as possible Messages from the client into a single
 	 * packet.
+	 *
+	 * ase: as a sideeffect it currently sets the messageClient amd timestamp properties of the
+	 *      message involved. Also, if the Message is an OrderedMessage, the OrderId will be set here.
+	 * /ase
 	 * 
 	 * @param client
-	 * @return CombinedPacket containing the buffer containing multiple packets, list of messages, and the message positions in the buffer
+	 * @return CombinedPacket containing the buffer containing multiple packets,
+	 *         list of messages, and the message positions in the buffer
 	 */
-	public static final synchronized CombinedPacket combine(MessageClient client, int maxBytes) throws MessageHandlingException {
+	public static final synchronized CombinedPacket combine(MessageClient client) throws MessageHandlingException {
 		MessageQueue queue = client.getOutgoingQueue();
 		CombinedPacket packet = new CombinedPacket(client);
 		
@@ -51,7 +56,7 @@ public class PacketCombiner {
 					break;
 				}
 			}
-			
+			// TODO: ase check if this is reasonable
 			message.setMessageClient(client);
 			if (message instanceof OrderedMessage) {
 				OrderedMessage.assignOrderId((OrderedMessage)message);

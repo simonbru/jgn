@@ -42,11 +42,16 @@ import com.captiveimagination.jgn.message.*;
  * @author Matthew D. Hicks
  */
 public interface MessageListener {
-	public static final int RECEIVED = 1;
-	public static final int SENT = 2;
-	public static final int CERTIFIED = 3;
-	public static final int FAILED = 4;
-	
+//	public static final int RECEIVED = 1;
+//	public static final int SENT = 2;
+//	public static final int CERTIFIED = 3;
+//	public static final int FAILED = 4;
+	public static enum MESSAGE_EVENT {
+		RECEIVED,
+		SENT,
+		CERTIFIED,
+		FAILED
+	}
 	/**
 	 * This method is invoked when a message has been
 	 * received.

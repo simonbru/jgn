@@ -45,6 +45,6 @@ public class IntegerConverter implements Converter {
 	}
 
 	public void get(Object obj, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
-		buffer.putInt(((Integer)obj).intValue());
+		buffer.putInt((Integer) obj);
 	}
 }

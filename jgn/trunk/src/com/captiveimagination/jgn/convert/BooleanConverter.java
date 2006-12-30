@@ -45,6 +45,6 @@ public class BooleanConverter implements Converter {
 	}
 
 	public void get(Object obj, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
-		buffer.put(((Boolean)obj).booleanValue() ? (byte)1 : (byte)0);
+		buffer.put((Boolean) obj ? (byte)1 : (byte)0);
 	}
 }

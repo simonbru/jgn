@@ -45,6 +45,6 @@ public class CharacterConverter implements Converter {
 	}
 
 	public void get(Object obj, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
-		buffer.putChar(((Character)obj).charValue());
+		buffer.putChar((Character) obj);
 	}
 }

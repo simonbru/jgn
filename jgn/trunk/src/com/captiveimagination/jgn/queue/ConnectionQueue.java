@@ -38,9 +38,14 @@ import java.util.*;
 import com.captiveimagination.jgn.*;
 
 /**
- * ConnectionQueue is a thread-safe queue for containing MesageClients until
+ * ConnectionQueue is a thread-safe queue for containing MessageClients until
  * they can be processed by the ConnectionListeners.
- * 
+ *
+ * ase: note, size is not really state of the datastructure, so
+ *      might be *temporarily* out of sync with the correct size of the
+ *      queue.
+ * /ase
+ *
  * @author Matthew D. Hicks
  */
 public class ConnectionQueue {
@@ -53,12 +58,9 @@ public class ConnectionQueue {
 
 	public void add(MessageClient c) {
 		if (c == null) throw new NullPointerException("MessageClient must not be null");
-
-
 		synchronized (queue) {
 			queue.addLast(c);
 		}
-
 		size++;
 	}
 	

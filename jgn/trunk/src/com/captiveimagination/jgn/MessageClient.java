@@ -359,7 +359,7 @@ public final class MessageClient implements MessageSender {
 			outgoingQueue.add(m);
 			sentCount++;
 		} catch(CloneNotSupportedException exc) {
-			// TODO think about Exception here !
+			// TODO think about this Exception here !
 			throw new RuntimeException(exc);
 		}
 	}

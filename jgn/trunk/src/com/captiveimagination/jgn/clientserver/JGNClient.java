@@ -51,14 +51,13 @@ public class JGNClient implements Updatable {
 	private short playerId;
 	private MessageServer reliableServer;
 	private MessageServer fastServer;
-	private ClientServerConnectionController controller;
 	private ConcurrentLinkedQueue<JGNConnectionListener> listeners;
 	private ConcurrentLinkedQueue<JGNConnectionListener> serverListeners;
 	
 	private boolean connectedFlag;
 	
 	private JGNDirectConnection serverConnection;
-	private ConcurrentLinkedQueue<JGNConnection> connections;
+	private final ConcurrentLinkedQueue<JGNConnection> connections;
 	
 	public JGNClient(MessageServer reliableServer, MessageServer fastServer) {
 		id = JGN.generateUniqueId();
@@ -92,7 +91,7 @@ public class JGNClient implements Updatable {
 			}
 		};
 		
-		controller = new ClientServerConnectionController(this);
+		ClientServerConnectionController controller = new ClientServerConnectionController(this);
 		
 		if (reliableServer != null) {
 			reliableServer.setConnectionController(controller);
@@ -150,16 +149,14 @@ public class JGNClient implements Updatable {
 		if ((!connectedFlag) && (serverListeners.size() > 0) && (isServerConnected())) {
 			// Connection event for establishing server connection
 			connectedFlag = true;
-			Iterator<JGNConnectionListener> iterator = serverListeners.iterator();
-			while (iterator.hasNext()) {
-				iterator.next().connected(serverConnection);
+			for (JGNConnectionListener serverListener : serverListeners) {
+				serverListener.connected(serverConnection);
 			}
 		} else if ((connectedFlag) && (serverListeners.size() > 0) && (!isServerConnected())) {
 			// Disconnection event for broken server connection
 			connectedFlag = false;
-			Iterator<JGNConnectionListener> iterator = serverListeners.iterator();
-			while (iterator.hasNext()) {
-				iterator.next().disconnected(serverConnection);
+			for (JGNConnectionListener serverListener : serverListeners) {
+				serverListener.disconnected(serverConnection);
 			}
 		}
 	}
@@ -226,9 +223,7 @@ public class JGNClient implements Updatable {
 	}
 	
 	public JGNConnection getConnection(short playerId) {
-		Iterator<JGNConnection> iterator = connections.iterator();
-		while (iterator.hasNext()) {
-			JGNConnection connection = iterator.next();
+		for (JGNConnection connection : connections) {
 			if (connection.getPlayerId() == playerId) return connection;
 		}
 		return null;
@@ -287,12 +282,10 @@ public class JGNClient implements Updatable {
 	
 	public boolean isAlive() {
 		if ((reliableServer != null) && (reliableServer.isAlive())) return true;
-		if ((fastServer != null) && (fastServer.isAlive())) return true;
-		return false;
+		return (fastServer != null) && (fastServer.isAlive());
 	}
 
 	protected boolean hasBoth() {
-		if ((reliableServer != null) && (fastServer != null)) return true;
-		return false;
+		return (reliableServer != null) && (fastServer != null);
 	}
 }

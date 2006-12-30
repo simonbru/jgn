@@ -38,6 +38,5 @@ package com.captiveimagination.jgn;
  */
 public interface Updatable {
 	public void update() throws Exception;
-	
 	public boolean isAlive();
 }

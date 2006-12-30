@@ -45,6 +45,6 @@ public class FloatConverter implements Converter {
 	}
 
 	public void get(Object obj, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
-		buffer.putFloat(((Float)obj).floatValue());
+		buffer.putFloat((Float) obj);
 	}
 }

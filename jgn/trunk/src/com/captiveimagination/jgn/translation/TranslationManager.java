@@ -80,8 +80,7 @@ public class TranslationManager {
 			buffer.position(0);
 			short typeId = buffer.getShort();
 			Class<? extends Message> c = JGN.getMessageTypeClass(typeId);
-			Message message = JGN.getConverter(c).receiveMessage(buffer);
-			return message;
+			return JGN.getConverter(c).receiveMessage(buffer);
 		}
 	}
 }

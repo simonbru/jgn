@@ -95,7 +95,6 @@ public class JGNDirectConnection implements JGNConnection {
 		}
 	}
 	
-	//public <T extends Message & PlayerMessage> void sendMessage(T message) {
 	public void sendMessage(Message message) {
 		if (message.getPlayerId() == -1) {
 			message.setPlayerId(getPlayerId());
@@ -105,7 +104,11 @@ public class JGNDirectConnection implements JGNConnection {
 		} else if (fastClient != null) {
 			fastClient.sendMessage(message);
 		} else {
-			reliableClient.sendMessage(message);
+			// ase -- this may throw NPE
+			// reliableClient.sendMessage(message);
+			// -- ase
+			if (reliableClient != null)
+				reliableClient.sendMessage(message);
 		}
 	}
 }

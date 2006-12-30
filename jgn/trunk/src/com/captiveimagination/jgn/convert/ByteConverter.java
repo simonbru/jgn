@@ -45,6 +45,6 @@ public class ByteConverter implements Converter {
 	}
 
 	public void get(Object obj, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
-		buffer.put(((Byte)obj).byteValue());
+		buffer.put((Byte) obj);
 	}
 }

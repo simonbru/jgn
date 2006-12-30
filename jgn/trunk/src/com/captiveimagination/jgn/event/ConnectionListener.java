@@ -36,8 +36,7 @@ package com.captiveimagination.jgn.event;
 import com.captiveimagination.jgn.*;
 
 /**
- * ConnectionListener implementations can be added
- * to any MessageServer to be notified when a
+ * ConnectionListener implementations can be added to any MessageServer to be notified when a
  * connection has been established or lost.
  * 
  * @author Matthew D. Hicks

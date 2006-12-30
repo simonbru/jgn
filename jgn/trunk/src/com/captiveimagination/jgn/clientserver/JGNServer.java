@@ -35,7 +35,6 @@ package com.captiveimagination.jgn.clientserver;
 
 import java.io.*;
 import java.net.*;
-import java.util.*;
 import java.util.concurrent.*;
 
 import com.captiveimagination.jgn.*;
@@ -51,7 +50,6 @@ public class JGNServer implements Updatable {
 	private MessageServer reliableServer;
 	private MessageServer fastServer;
 	private ConcurrentLinkedQueue<JGNDirectConnection> registry;
-	private ServerClientConnectionController controller;
 	private ConcurrentLinkedQueue<JGNConnectionListener> listeners;
 	
 	public JGNServer(MessageServer reliableServer, MessageServer fastServer) {
@@ -61,7 +59,8 @@ public class JGNServer implements Updatable {
 		
 		listeners = new ConcurrentLinkedQueue<JGNConnectionListener>();
 		
-		controller = new ServerClientConnectionController(this);
+		ServerClientConnectionController controller = new ServerClientConnectionController(this);
+
 		if (reliableServer != null) {
 			reliableServer.setConnectionController(controller);
 			reliableServer.addConnectionListener(controller);
@@ -112,12 +111,11 @@ public class JGNServer implements Updatable {
 	}
 	
 	public JGNConnection getConnection(MessageClient client) {
-		Iterator<JGNDirectConnection> iterator = registry.iterator();
-		while (iterator.hasNext()) {
-			JGNDirectConnection connection = iterator.next();
+		for (JGNDirectConnection connection : registry) {
 			if ((connection.getFastClient() != null) && (connection.getFastClient().getId() == client.getId())) {
 				return connection;
-			} else if ((connection.getReliableClient() != null) && (connection.getReliableClient().getId() == client.getId())) {
+			} else
+			if ((connection.getReliableClient() != null) && (connection.getReliableClient().getId() == client.getId())) {
 				return connection;
 			}
 		}
@@ -125,9 +123,7 @@ public class JGNServer implements Updatable {
 	}
 	
 	public JGNConnection getConnection(short playerId) {
-		Iterator<JGNDirectConnection> iterator = registry.iterator();
-		while (iterator.hasNext()) {
-			JGNDirectConnection connection = iterator.next();
+		for (JGNDirectConnection connection : registry) {
 			if (connection.getPlayerId() == playerId) {
 				return connection;
 			}
@@ -176,9 +172,8 @@ public class JGNServer implements Updatable {
 			sendToAllExcept(psm, connection.getPlayerId());
 			
 			// Throw event to listeners of connection
-			Iterator<JGNConnectionListener> iterator = listeners.iterator();
-			while (iterator.hasNext()) {
-				iterator.next().disconnected(connection);
+			for (JGNConnectionListener listener : listeners) {
+				listener.disconnected(connection);
 			}
 		}
 		return connection;
@@ -186,10 +181,10 @@ public class JGNServer implements Updatable {
 
 	public <T extends Message & PlayerMessage> void sendToAllExcept(T message, short exceptionPlayerId) {
 		JGNConnection[] connections = getConnections();
-		for (int i = 0; i < connections.length; i++) {
-			if (connections[i].getPlayerId() != exceptionPlayerId) {
-				if (connections[i].isConnected()) {
-					connections[i].sendMessage(message);
+		for (JGNConnection connection : connections) {
+			if (connection.getPlayerId() != exceptionPlayerId) {
+				if (connection.isConnected()) {
+					connection.sendMessage(message);
 				}
 			}
 		}
@@ -197,10 +192,10 @@ public class JGNServer implements Updatable {
 	
 	public <T extends Message & PlayerMessage> void sendTo(T message, short playerId) {
 		JGNConnection[] connections = getConnections();
-		for (int i = 0; i < connections.length; i++) {
-			if (connections[i].getPlayerId() == playerId) {
-				if (connections[i].isConnected()) {
-					connections[i].sendMessage(message);
+		for (JGNConnection connection : connections) {
+			if (connection.getPlayerId() == playerId) {
+				if (connection.isConnected()) {
+					connection.sendMessage(message);
 				}
 			}
 		}
@@ -239,12 +234,10 @@ public class JGNServer implements Updatable {
 	
 	public boolean isAlive() {
 		if ((reliableServer != null) && (reliableServer.isAlive())) return true;
-		if ((fastServer != null) && (fastServer.isAlive())) return true;
-		return false;
+		return (fastServer != null) && (fastServer.isAlive());
 	}
 	
 	protected boolean hasBoth() {
-		if ((reliableServer != null) && (fastServer != null)) return true;
-		return false;
+		return (reliableServer != null) && (fastServer != null);
 	}
 }

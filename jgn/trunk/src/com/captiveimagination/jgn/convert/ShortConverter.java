@@ -45,6 +45,6 @@ public class ShortConverter implements Converter {
 	}
 
 	public void get(Object obj, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
-		buffer.putShort(((Short)obj).shortValue());
+		buffer.putShort((Short) obj);
 	}
 }

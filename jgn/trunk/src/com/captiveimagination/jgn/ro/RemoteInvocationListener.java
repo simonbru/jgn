@@ -64,11 +64,12 @@ public class RemoteInvocationListener extends MessageAdapter {
 				response.setRemoteObjectName(m.getRemoteObjectName());
 				try {
 					Class[] classes;
-					if (m.getParameters() != null) {
-						classes = new Class[m.getParameters().length];
-						for (int i = 0; i < m.getParameters().length; i++) {
-							if (m.getParameters()[i] != null) {
-								classes[i] = m.getParameters()[i].getClass();
+					Object[] parameters = m.getParameters();
+					if (parameters != null) {
+						classes = new Class[parameters.length];
+						for (int i = 0; i < parameters.length; i++) {
+							if (parameters[i] != null) {
+								classes[i] = parameters[i].getClass();
 							}
 						}
 					} else {
@@ -85,9 +86,15 @@ public class RemoteInvocationListener extends MessageAdapter {
 							}
 						}
 					}
-					method.setAccessible(true);
-					Object obj = method.invoke(object, m.getParameters());
-					response.setResponse((Serializable)obj);
+					//ase --
+					if (method == null)
+					  response.setResponse(new NoSuchMethodException());
+					else {
+						method.setAccessible(true); // may produce NPE!
+						Object obj = method.invoke(object, parameters);
+						response.setResponse((Serializable)obj);
+					}
+					// -- ase
 				} catch(Exception exc) {
 					exc.printStackTrace();
 					response.setResponse(exc);

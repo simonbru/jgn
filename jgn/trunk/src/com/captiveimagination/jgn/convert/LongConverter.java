@@ -45,6 +45,6 @@ public class LongConverter implements Converter {
 	}
 
 	public void get(Object obj, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
-		buffer.putLong(((Long)obj).longValue());
+		buffer.putLong((Long) obj);
 	}
 }

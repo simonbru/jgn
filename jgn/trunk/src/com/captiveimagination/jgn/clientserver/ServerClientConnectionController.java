@@ -33,7 +33,6 @@
  */
 package com.captiveimagination.jgn.clientserver;
 
-import java.util.*;
 import java.util.concurrent.*;
 
 import com.captiveimagination.jgn.*;
@@ -72,9 +71,8 @@ public class ServerClientConnectionController extends DefaultConnectionControlle
 		// Throw event to listeners of connection
 		if (((server.hasBoth()) && (connection.getReliableClient() != null) && (connection.getFastClient() != null)) || (!server.hasBoth())) {
 			ConcurrentLinkedQueue<JGNConnectionListener> listeners = server.getListeners();
-			Iterator<JGNConnectionListener> iterator = listeners.iterator();
-			while (iterator.hasNext()) {
-				iterator.next().connected(connection);
+			for (JGNConnectionListener listener : listeners) {
+				listener.connected(connection);
 			}
 
 			// Send connection message to all connected clients
@@ -85,9 +83,9 @@ public class ServerClientConnectionController extends DefaultConnectionControlle
 
 			// Send messages to the client for all established connections
 			JGNConnection[] connections = server.getConnections();
-			for (int i = 0; i < connections.length; i++) {
-				if (connections[i].getPlayerId() != playerId) {
-					psm.setPlayerId(connections[i].getPlayerId());
+			for (JGNConnection conn : connections) {
+				if (conn.getPlayerId() != playerId) {
+					psm.setPlayerId(conn.getPlayerId());
 					psm.setPlayerStatus(PlayerStatusMessage.STATUS_CONNECTED);
 					connection.sendMessage(psm);
 				}

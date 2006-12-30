@@ -66,9 +66,10 @@ public abstract class OrderedMessage extends Message implements GroupMessage, Ce
 		
 		// TODO should the setOrderId ever be overridden?
 		
-		HashMap<Object,AtomicInteger> connectionOrders = null;
+		HashMap<Object,AtomicInteger> connectionOrders;
 		if (orders.containsKey(message.getMessageClient())) {
-			connectionOrders.get(message.getMessageClient());
+			connectionOrders = orders.get(message.getMessageClient());
+			//ase: was wrong:: connectionOrders.get(message.getMessageClient());
 		} else {
 			connectionOrders = new HashMap<Object,AtomicInteger>();
 			orders.put(message.getMessageClient(), connectionOrders);

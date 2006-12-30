@@ -65,7 +65,7 @@ public final class TCPMessageServer extends NIOMessageServer {
 		connection.configureBlocking(false);
 		connection.socket().setTcpNoDelay(true);
 		SelectionKey key = connection.register(selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
-		MessageClient client = new MessageClient((SocketAddress) connection.socket().getRemoteSocketAddress(), this);
+		MessageClient client = new MessageClient(connection.socket().getRemoteSocketAddress(), this);
 		client.setStatus(MessageClient.Status.NEGOTIATING);
 		key.attach(client);
 		getIncomingConnectionQueue().add(client);
@@ -124,8 +124,7 @@ public final class TCPMessageServer extends NIOMessageServer {
 		} else {
 			CombinedPacket combined;
 			try {
-				// TODO make 50000 adjustable (getter/setter)
-				combined = PacketCombiner.combine(client, 50000);
+				combined = PacketCombiner.combine(client);
 			} catch (MessageHandlingException exc) {
 				// FIXME handle properly
 				exc.printStackTrace();
@@ -156,7 +155,6 @@ public final class TCPMessageServer extends NIOMessageServer {
 	
 	public MessageClient connect(SocketAddress address) throws IOException {
 		MessageClient client = getMessageClient(address);
-		System.out.println("******** Client: " + client);
 		if ((client != null) && (client.getStatus() != MessageClient.Status.DISCONNECTING) && (client.getStatus() != MessageClient.Status.DISCONNECTED)) {
 			return client;	// Client already connected, simply return it
 		}

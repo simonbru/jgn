@@ -52,7 +52,6 @@ public class JGNRelayConnection implements JGNConnection {
 		return playerId;
 	}
 	
-	//public <T extends Message & PlayerMessage> void sendMessage(T message) {
 	public void sendMessage(Message message) {
 		message.setDestinationPlayerId(playerId);
 		client.getServerConnection().sendMessage(message);

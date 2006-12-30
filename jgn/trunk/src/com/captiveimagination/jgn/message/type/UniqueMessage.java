@@ -43,6 +43,5 @@ package com.captiveimagination.jgn.message.type;
  */
 public interface UniqueMessage {
 	public long getId();
-	
 	public void setId(long id);
 }

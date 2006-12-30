@@ -45,6 +45,6 @@ public class DoubleConverter implements Converter {
 	}
 
 	public void get(Object obj, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
-		buffer.putDouble(((Double)obj).doubleValue());
+		buffer.putDouble((Double) obj);
 	}
 }

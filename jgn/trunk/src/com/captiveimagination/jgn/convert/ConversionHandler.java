@@ -41,7 +41,6 @@ import java.util.*;
 import com.captiveimagination.jgn.*;
 import com.captiveimagination.jgn.message.*;
 import com.captiveimagination.jgn.message.type.*;
-import com.captiveimagination.jgn.test.basic.*;
 
 /**
  * ConversionHandlers exist to process incoming and outgoing Messages
@@ -71,14 +70,14 @@ public class ConversionHandler {
 		try {
 			try {
 				message = (Message)messageClass.newInstance();
-			} catch(IllegalAccessException exc) {
+			} catch(IllegalAccessException exc) { // if the class or its nullary constructor is not accessible.
 				throw new MessageHandlingException("Unable to instantiate message (make sure the constructor is visible).", message, exc);
 			}
 			for (int i = 0; i < converters.length; i++) {
 				fields[i].set(message, converters[i].set(buffer));
 			}
 			return message;
-		} catch (InstantiationException exc) {
+		} catch (InstantiationException exc) { // if this Class represents an abstract class etc.
 			throw new MessageHandlingException("Received message-type doesn't have default-constructor", message, exc);
 		} catch (IllegalArgumentException exc) {
 			throw new MessageHandlingException("Corrupt message-format", message, exc);
@@ -104,6 +103,7 @@ public class ConversionHandler {
 		}
 	}
 
+	// TODO ase: check if synchronized is really necessary
 	public static final synchronized ConversionHandler getConversionHandler(Class<? extends Message> messageClass) {
 		ConversionHandler handler = messageToHandler.get(messageClass);
 
@@ -202,7 +202,7 @@ public class ConversionHandler {
 			Converter.CONVERTERS.put(long[].class, new LongArrayConverter());
 			Converter.CONVERTERS.put(float[].class, new FloatArrayConverter());
 			Converter.CONVERTERS.put(double[].class, new DoubleArrayConverter());
-            Converter.CONVERTERS.put(Serializable.class, new SerializableConverter());
+      Converter.CONVERTERS.put(Serializable.class, new SerializableConverter());
 		}
 	}
 }

@@ -61,12 +61,9 @@ public abstract class PriorityMessage extends Message {
 	}
 	
 	/**
-	 * The priority defines how the message is
-	 * handled inside the queue for sending and
-	 * receiving of messages. A high priority message
-	 * that exists in the queue at the same time
-	 * as a low priority message even if the low
-	 * priority message was received first, should
+	 * The priority defines how the message is handled inside the queue for sending and
+	 * receiving of messages. A high priority message that exists in the queue at the same time
+	 * as a low priority message even if the low priority message was received first, should
 	 * be polled before the lower priority message.
 	 * 
 	 * @param priority

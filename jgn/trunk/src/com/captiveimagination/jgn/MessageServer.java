@@ -73,9 +73,9 @@ public abstract class MessageServer implements Updatable {
 	private ConnectionQueue incomingConnections;		// Waiting for ConnectionListener handling
 	private ConnectionQueue negotiatedConnections;		// Waiting for ConnectionListener handling
 	private ConnectionQueue disconnectedConnections;	// Waiting for ConnectionListener handling
-	private ArrayList<ConnectionListener> connectionListeners;
-	private ArrayList<MessageListener> messageListeners;
-	private ArrayList<ConnectionFilter> filters;
+	private final ArrayList<ConnectionListener> connectionListeners;
+	private final ArrayList<MessageListener> messageListeners;
+	private final ArrayList<ConnectionFilter> filters;
 	private ArrayList<DataTranslator> translators;
 	private AbstractQueue<MessageClient> clients;
 	protected boolean keepAlive;
@@ -155,13 +155,12 @@ public abstract class MessageServer implements Updatable {
 	 * 		total number of clients messages sent to
 	 */
 	public int broadcast(Message message) {
-		Iterator<MessageClient> iterator = getMessageClients().iterator();
 		int sent = 0;
-		while (iterator.hasNext()) {
+		for (MessageClient client : getMessageClients()) {
 			try {
-				iterator.next().sendMessage(message);
+				client.sendMessage(message);
 				sent++;
-			} catch(ConnectionException exc) {
+			} catch (ConnectionException exc) {
 				// Ignore when broadcasting
 			}
 		}
@@ -303,13 +302,13 @@ public abstract class MessageServer implements Updatable {
 				synchronized (client.getMessageListeners()) {
 					for (MessageListener listener : client.getMessageListeners()) {
 						//listener.messageReceived(message);
-						sendToListener(message, listener, MessageListener.RECEIVED);
+						sendToListener(message, listener, MessageListener.MESSAGE_EVENT.RECEIVED);
 					}
 				}
 				synchronized (messageListeners) {
 					for (MessageListener listener : messageListeners) {
 						//listener.messageReceived(message);
-						sendToListener(message, listener, MessageListener.RECEIVED);
+						sendToListener(message, listener, MessageListener.MESSAGE_EVENT.RECEIVED);
 					}
 				}
 			}
@@ -323,13 +322,13 @@ public abstract class MessageServer implements Updatable {
 				synchronized (client.getMessageListeners()) {
 					for (MessageListener listener : client.getMessageListeners()) {
 						//listener.messageReceived(message);'
-						sendToListener(message, listener, MessageListener.SENT);
+						sendToListener(message, listener, MessageListener.MESSAGE_EVENT.SENT);
 					}
 				}
 				synchronized (messageListeners) {
 					for (MessageListener listener : messageListeners) {
 						//listener.messageSent(message);
-						sendToListener(message, listener, MessageListener.SENT);
+						sendToListener(message, listener, MessageListener.MESSAGE_EVENT.SENT);
 					}
 				}
 			}
@@ -342,12 +341,12 @@ public abstract class MessageServer implements Updatable {
 				Message message = certifiedMessages.poll();
 				synchronized (client.getMessageListeners()) {
 					for (MessageListener listener : client.getMessageListeners()) {
-						sendToListener(message, listener, MessageListener.CERTIFIED);
+						sendToListener(message, listener, MessageListener.MESSAGE_EVENT.CERTIFIED);
 					}
 				}
 				synchronized (messageListeners) {
 					for (MessageListener listener : messageListeners) {
-						sendToListener(message, listener, MessageListener.CERTIFIED);
+						sendToListener(message, listener, MessageListener.MESSAGE_EVENT.CERTIFIED);
 					}
 				}
 			}
@@ -360,12 +359,12 @@ public abstract class MessageServer implements Updatable {
 				Message message = failedMessages.poll();
 				synchronized (client.getMessageListeners()) {
 					for (MessageListener listener : client.getMessageListeners()) {
-						sendToListener(message, listener, MessageListener.FAILED);
+						sendToListener(message, listener, MessageListener.MESSAGE_EVENT.FAILED);
 					}
 				}
 				synchronized (messageListeners) {
 					for (MessageListener listener : messageListeners) {
-						sendToListener(message, listener, MessageListener.FAILED);
+						sendToListener(message, listener, MessageListener.MESSAGE_EVENT.FAILED);
 					}
 				}
 			}
@@ -452,6 +451,7 @@ public abstract class MessageServer implements Updatable {
 					client.sendMessage(message);
 					client.sent();
 				} catch(QueueFullException exc) {
+					// well, ignore
 				}
 			}
 		}
@@ -584,7 +584,7 @@ public abstract class MessageServer implements Updatable {
 		return translators.remove(translator);
 	}
 	
-	private void translateMessage(Message message) throws MessageHandlingException {
+	private void translateMessage(Message message) { // throws MessageHandlingException {
 		if (translators.size() == 0) {
 			return;
 		}
@@ -605,14 +605,13 @@ public abstract class MessageServer implements Updatable {
 		}
 	}
 	
-	protected Message revertTranslated(TranslatedMessage tm) throws MessageHandlingException {
+	protected Message revertTranslated(TranslatedMessage tm) {//throws MessageHandlingException {
 		try {
 			byte[] b = tm.getTranslated();
 			for (DataTranslator translator : translators) {
 				b = translator.inbound(b);
 			}
-			Message message = TranslationManager.createMessage(b);
-			return message;
+			return TranslationManager.createMessage(b);
 		} catch(Exception exc) {
 			throw new MessageException("Exception during translation", exc);
 		}
@@ -627,36 +626,34 @@ public abstract class MessageServer implements Updatable {
 		}
 		
 		ConversionHandler handler = JGN.getConverter(m.getClass());
-		handler.sendMessage(m, buffer);
+		handler.sendMessage(m, buffer); // this may through a MHE
 	}
 	
-	private static final void sendToListener(Message message, MessageListener listener, int type) {
-		if (type == MessageListener.RECEIVED) {
-			if (listener instanceof DynamicMessageListener) {
-				callMethod(listener, "messageReceived", message, false);
-			} else {
-				listener.messageReceived(message);
-			}
-		} else if (type == MessageListener.SENT) {
-			if (listener instanceof DynamicMessageListener) {
-				callMethod(listener, "messageSent", message, false);
-			} else {
-				listener.messageSent(message);
-			}
-		} else if (type == MessageListener.CERTIFIED) {
-			if (listener instanceof DynamicMessageListener) {
-				callMethod(listener, "messageCertified", message, false);
-			} else {
-				listener.messageCertified(message);
-			}
-		} else if (type == MessageListener.FAILED) {
-			if (listener instanceof DynamicMessageListener) {
-				callMethod(listener, "messageFailed", message, false);
-			} else {
-				listener.messageFailed(message);
-			}
-		} else {
-			throw new RuntimeException("Unknown listener type specified: " + type);
+	private static final void sendToListener(Message message, MessageListener listener,
+																					 MessageListener.MESSAGE_EVENT type) {
+		switch (type) {
+			case CERTIFIED:
+				if (listener instanceof DynamicMessageListener)
+					callMethod(listener, "messageCertified", message, false);
+				else listener.messageCertified(message);
+				break;
+			case FAILED:
+				if (listener instanceof DynamicMessageListener)
+					callMethod(listener, "messageFailed", message, false);
+				else listener.messageFailed(message);
+				break;
+			case RECEIVED:
+				if (listener instanceof DynamicMessageListener)
+					callMethod(listener, "messageReceived", message, false);
+				else listener.messageReceived(message);
+				break;
+			case SENT:
+				if (listener instanceof DynamicMessageListener)
+					callMethod(listener, "messageSent", message, false);
+				else listener.messageSent(message);
+				break;
+			default:
+				throw new RuntimeException("Unknown listener type specified: " + type);
 		}
 	}
 	

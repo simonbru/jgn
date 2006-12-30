@@ -72,14 +72,14 @@ public class TestPacketCombiner extends TestCase{
 								i--;
 							}
 						}
-						CombinedPacket packet = PacketCombiner.combine(client, 50000);
+						CombinedPacket packet = PacketCombiner.combine(client);
 						ByteBuffer buffer = packet.getBuffer();
 						
 						buffer.position(0);
 						int j = 0;
 						while (j < messageCount) {
 							if (!buffer.hasRemaining()) {
-								packet = PacketCombiner.combine(client, 50000);
+								packet = PacketCombiner.combine(client);
 								buffer = packet.getBuffer();
 							}
 							short typeId = buffer.getShort();

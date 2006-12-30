@@ -109,10 +109,12 @@ public class JGNOutputStream extends OutputStream {
 				client.sendMessage(message);
 				keepTrying = false;
 			} catch(QueueFullException exc) {
+				// do nothing *now*
 			}
 			try {
 				Thread.sleep(1);
 			} catch(InterruptedException exc) {
+				// ok
 			}
 		}
 	}

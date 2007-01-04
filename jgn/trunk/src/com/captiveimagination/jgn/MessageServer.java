@@ -616,7 +616,8 @@ public abstract class MessageServer implements Updatable {
 			throw new MessageException("Exception during translation", exc);
 		}
 	}
-	
+
+	// used only by PacketCombiner.combine()
 	protected void convertMessage(Message message, ByteBuffer buffer) throws MessageHandlingException {
 		translateMessage(message);
 		
@@ -625,8 +626,9 @@ public abstract class MessageServer implements Updatable {
 			m = message.getTranslatedMessage();
 		}
 		
-		ConversionHandler handler = JGN.getConverter(m.getClass());
-		handler.sendMessage(m, buffer); // this may through a MHE
+		ConversionHandler handler = ConversionHandler.getConversionHandler(m.getClass());
+		short mid = message.getMessageClient().getMessageTypeId(message.getClass());
+		handler.serializeMessage(m, buffer, mid); // this may through a MHE
 	}
 	
 	private static final void sendToListener(Message message, MessageListener listener,

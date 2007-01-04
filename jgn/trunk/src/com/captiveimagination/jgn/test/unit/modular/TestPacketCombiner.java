@@ -39,6 +39,7 @@ import java.nio.*;
 import junit.framework.*;
 
 import com.captiveimagination.jgn.*;
+import com.captiveimagination.jgn.convert.ConversionHandler;
 import com.captiveimagination.jgn.message.*;
 import com.captiveimagination.jgn.queue.*;
 import com.captiveimagination.jgn.test.basic.*;
@@ -84,7 +85,7 @@ public class TestPacketCombiner extends TestCase{
 							}
 							short typeId = buffer.getShort();
 							Class<? extends Message> c = client.getMessageClass(typeId);
-							Message m = JGN.getConverter(c).receiveMessage(buffer);
+							Message m = ConversionHandler.getConversionHandler(c).deserializeMessage(buffer);
 							if (m.getClass() == message.getClass()) {
 								j++;
 							}

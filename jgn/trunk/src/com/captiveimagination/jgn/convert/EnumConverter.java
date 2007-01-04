@@ -13,8 +13,8 @@
  *   notice, this list of conditions and the following disclaimer in the
  *   documentation and/or other materials provided with the distribution.
  *
- * * Neither the name of 'JavaGameNetworking' nor the names of its contributors 
- *   may be used to endorse or promote products derived from this software 
+ * * Neither the name of 'JavaGameNetworking' nor the names of its contributors
+ *   may be used to endorse or promote products derived from this software
  *   without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
@@ -29,42 +29,16 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Created: Jun 3, 2006
+ * Created: Jan 3, 2007
  */
 package com.captiveimagination.jgn.convert;
 
-import java.lang.reflect.*;
-import java.nio.*;
-import java.util.*;
-
 /**
- * Converter defines the methods necessary to convert from a ByteBuffer
- * and apply the data to a Message as well as from a Message and apply
- * it to a ByteBuffer.
- * 
- * @author Matthew D. Hicks
+ * A dummy converter used for enums. Just marks a short, such that it will not
+ * be taken literally, but indirectly as index into enumConstants.
+ *
+ * @see ConversionHandler
+ * @author Alfons Seul
  */
-public interface Converter {
-
-	/**
-	 * Reads content from <code>buffer</code> and returns it.
-	 * 
-	 * @param buffer
-	 * @return value retrieved from <code>buffer</code>
-	 * @throws IllegalArgumentException
-	 * @throws IllegalAccessException
-	 * @throws InvocationTargetException
-	 */
-	public Object set(ByteBuffer buffer) throws IllegalArgumentException,IllegalAccessException, InvocationTargetException;
-
-	/**
-	 * Applies contents of <code>obj</code> to <code>buffer</code>.
-	 * 
-	 * @param obj
-	 * @param buffer
-	 * @throws IllegalArgumentException
-	 * @throws IllegalAccessException
-	 * @throws InvocationTargetException
-	 */
-	public void get(Object obj, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException;
+public class EnumConverter extends ShortConverter {
 }

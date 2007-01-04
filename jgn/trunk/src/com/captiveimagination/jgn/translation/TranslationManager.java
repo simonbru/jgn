@@ -59,7 +59,8 @@ public class TranslationManager {
 			
 			// Create byte array from message
 			ConversionHandler handler = ConversionHandler.getConversionHandler(message.getClass());
-			handler.sendMessage(message, buffer);
+			short mid = message.getMessageClient().getMessageTypeId(message.getClass());
+			handler.serializeMessage(message, buffer, mid);
 			
 			b = new byte[buffer.position()];
 			buffer.position(0);
@@ -80,7 +81,7 @@ public class TranslationManager {
 			buffer.position(0);
 			short typeId = buffer.getShort();
 			Class<? extends Message> c = JGN.getMessageTypeClass(typeId);
-			return JGN.getConverter(c).receiveMessage(buffer);
+			return ConversionHandler.getConversionHandler(c).deserializeMessage(buffer);
 		}
 	}
 }

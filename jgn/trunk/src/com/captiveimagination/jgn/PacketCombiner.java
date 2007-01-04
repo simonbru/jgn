@@ -69,7 +69,8 @@ public class PacketCombiner {
 				buffer.putInt(-1);
 				
 				// Attempt to put this message into the buffer
-				message.getMessageClient().getMessageServer().convertMessage(message, buffer);
+//				message.getMessageClient().getMessageServer().convertMessage(message, buffer);
+				client.getMessageServer().convertMessage(message, buffer);
 				int messageEnd = buffer.position();
 				//System.out.println("MESSAGE: " + message + ", " + (messageEnd - messageStart - 4));
 				buffer.position(messageStart);

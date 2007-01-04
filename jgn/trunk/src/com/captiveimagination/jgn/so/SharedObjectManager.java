@@ -221,17 +221,21 @@ public class SharedObjectManager extends MessageAdapter implements BeanChangeLis
 		} else if (message instanceof ObjectUpdateMessage) {
 			ObjectUpdateMessage m = (ObjectUpdateMessage)message;
 			Object object = getObject(m.getName());
-			SharedObject so = registry.get(object);
 			if (object != null) {
+				SharedObject so = registry.get(object);
+				
 				incomingBuffer.clear();
 				registry.get(object).apply(m, incomingBuffer);
-			}
-			for (String field : m.getFields()) {
-				applyChanged(m.getName(), object, field, m.getMessageClient());
-				if (so.isLocal()) {
-					beanChanged(object, field, null, null);		// Apply changes so they get sent to all registered
-					// TODO make it so changes don't get sent to the originator of this change (m.getMessageClient())
+				
+				for (String field : m.getFields()) {
+					applyChanged(m.getName(), object, field, m.getMessageClient());
+					if (so.isLocal()) {
+						beanChanged(object, field, null, null);		// Apply changes so they get sent to all registered
+						// TODO make it so changes don't get sent to the originator of this change (m.getMessageClient())
+					}
 				}
+			} else {
+				System.err.println("Tried to update a null object(SharedObject): " + m.getName());
 			}
 		} else if (message instanceof ObjectDeleteMessage) {
 			ObjectDeleteMessage m = (ObjectDeleteMessage)message;

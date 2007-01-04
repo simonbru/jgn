@@ -37,6 +37,7 @@ import java.lang.reflect.*;
 import java.nio.*;
 import java.util.*;
 import java.util.concurrent.*;
+import java.io.Serializable;
 
 import com.captiveimagination.jgn.*;
 import com.captiveimagination.jgn.convert.*;
@@ -101,19 +102,22 @@ public class SharedObjectManager extends MessageAdapter implements BeanChangeLis
 			for (Method m : methods) {
 				if ((m.getName().startsWith("get")) && (m.getParameterTypes().length == 0)) {
 					try {
-						Method setter = beanInterface.getMethod("s" + m.getName().substring(1), new Class[] {m.getReturnType()});
+						Method setter = beanInterface.getMethod("s" + m.getName().substring(1), m.getReturnType());
 						if (setter != null) {
 							String fld = m.getName(); // ...substring(3).toLowerCase(); was wrong
-							String fldName = fld.substring(3,1).toLowerCase() + fld.substring(4);
-							// TODO enum: may be that helps at the moment
+							String fldName = (fld.length() > 4) ?
+																	(fld.substring(3,1).toLowerCase() + fld.substring(4)) :
+																	 fld.substring(3,1).toLowerCase();								
+							Class retType = m.getReturnType();
 							Converter cvt = ConversionHandler.getConverter(retType);
+							// TODO ase:: enum: may be this workaround helps at the moment
 							map.put(fldName, (cvt instanceof EnumConverter) ?
-							                 ConversionHandler.getConverter(Serializable.class) :
-									             cvt); // restores old behaviour on enums!!
+								                 ConversionHandler.getConverter(Serializable.class) :
+										             cvt); // restores old behaviour on enums!!
 							m.setAccessible(true);
 							setter.setAccessible(true);
-							methodMap.put(beanInterface.getName() + ".get." + field, m);
-							methodMap.put(beanInterface.getName() + ".set." + field, setter);
+							methodMap.put(beanInterface.getName() + ".get." + fldName, m);
+							methodMap.put(beanInterface.getName() + ".set." + fldName, setter);
 						}
 					} catch(NoSuchMethodException exc) {
 						// We don't put it in if we can't find a setter with the same signature

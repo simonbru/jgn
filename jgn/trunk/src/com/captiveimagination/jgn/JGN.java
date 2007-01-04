@@ -48,14 +48,14 @@ import com.captiveimagination.jgn.translation.*;
  * specific class but is necessary for the JGN project.
  * 
  * @author Matthew D. Hicks
+ * @author Alfons Seul
  */
 public class JGN {
 	// registry maps (short) id --> messageClass
 	private static final HashMap<Short,Class<? extends Message>> registry = new HashMap<Short,Class<? extends Message>>();
 	// registryReverse maps messageClass --> (short) id
 	private static final HashMap<Class<? extends Message>,Short> registryReverse = new HashMap<Class<? extends Message>,Short>();
-	// converters maps messageClass --> ConversionHandler
-	private static final HashMap<Class<? extends Message>,ConversionHandler> converters = new HashMap<Class<? extends Message>,ConversionHandler>();
+
 
 	static {
 		// Certain messages must be known before negotiation so this is explicitly done here
@@ -88,13 +88,13 @@ public class JGN {
 	 * Messages must be registered via this method preferrably before any communication
 	 * occurs for efficiency in the initial connectivity negotiation process.
 	 *
-	 * [ase] note, this isn't an option, it is a must.
+	 * note, this isn't an option, it is a must.
 	 * the announced class will be registered with registry and reversRegistry, also
 	 * a fitting Conversionhandler will be established
 	 *
 	 * as an implementation detail, note, that all messageclasses registered by this method
 	 * receive a positive id, while system message will have negativ ids.
-	 * [/ase]
+	 *
 	 * 
 	 * @param c the message class to be registered
 	 */
@@ -110,7 +110,10 @@ public class JGN {
 	}
 	
 	private static final void register(Class<? extends Message> c, short id) {
-		converters.put(c, ConversionHandler.getConversionHandler(c));
+		// check if the message follows rules and register conversionHandler for it
+		if (ConversionHandler.getConversionHandler(c) == null) {
+			// this message can't be serialized, what should be done???, Exception ??
+		}
 		registry.put(id, c);
 		registryReverse.put(c, id);
 	}
@@ -121,15 +124,22 @@ public class JGN {
 		
 	/**
 	 * Request the ConversionHandler associated with this Message class.
-	 * 
+	 *
+	 * note, this is a convenience for calling ConversionHandler.getConversionHandler(c)
 	 * @param c the messageclass involved
 	 * @return
-	 * 		ConversionHandler associated with the Class <code>c</code>
+	 * 		ConversionHandler associated with the MessageClass <code>c</code>
 	 * 		if the Message class referenced has not be registered yet
 	 * 		<code>null</code> will be returned.
+	 * @deprecated use ConversionHandler.getConversionHandler(c) instead
 	 */
 	public static final ConversionHandler getConverter(Class<? extends Message> c) {
-		return converters.get(c);
+		ConversionHandler res = ConversionHandler.getConversionHandler(c);
+		if (res == null) {
+			// this messageclass cannot be serialized, take some measures ???
+			// may be this was known earlier, (when registering??)
+		}
+		return res;
 	}
 
 	/**
@@ -193,11 +203,10 @@ public class JGN {
 
 	/**
 	 * tries to generate a pretty random long
-	 * [ase]: random will return the same value
+	 * note: random will return the same value
 	 *        each time the applikation (eg. VM) will start anew.
 	 *        This may be good for developers. Might consider using a private
 	 *        java.util.Random for production.
-	 * [/ase]
 	 *
 	 * @return long
 	 */
@@ -280,7 +289,7 @@ class UpdatableRunnable implements Runnable {
       alive = false;
   		for (Updatable u : updatables) {
 	    	if (u.isAlive()) {
-					alive = true;     // ase: if at least one u is alive(), keep running
+					alive = true;     // if at least one u is alive(), keep running
           try {
 						u.update();
           } catch(Throwable t) {
@@ -291,9 +300,9 @@ class UpdatableRunnable implements Runnable {
       }
       if (sleep > 0) {
 				try {
-					Thread.sleep(sleep);  // ase: changed this from "1" to sleep
+					Thread.sleep(sleep);
 				} catch(InterruptedException exc) {
-					// ase: no real need for --> exc.printStackTrace();
+					// no real need for --> exc.printStackTrace();
 				}
 			} else {
 				Thread.yield();

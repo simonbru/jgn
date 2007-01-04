@@ -40,30 +40,31 @@ import java.util.*;
 
 import com.captiveimagination.jgn.message.*;
 import com.captiveimagination.jgn.translation.*;
+import com.captiveimagination.jgn.convert.ConversionHandler;
 
 /**
  * @author Matthew D. Hicks
  */
 public abstract class NIOMessageServer extends MessageServer {
 	protected Selector selector;
-	
+
 	public NIOMessageServer(SocketAddress address, int maxQueueSize) throws IOException {
 		super(address, maxQueueSize);
-		
+
 		selector = Selector.open();
 		bindServer(address);
 	}
-	
+
 	protected abstract SelectableChannel bindServer(SocketAddress address) throws IOException;
 
 	protected abstract void accept(SelectableChannel channel) throws IOException;
-	
+
 	protected abstract void connect(SelectableChannel channel) throws IOException;
-	
+
 	protected abstract void read(SelectableChannel channel) throws IOException;
-	
+
 	protected abstract boolean write(SelectableChannel channel) throws IOException;
-	
+
 	protected void disconnectInternal(MessageClient client, boolean graceful) throws IOException {
 		for (SelectionKey key : selector.keys()) {
 			if (key.attachment() == client) {
@@ -71,16 +72,16 @@ public abstract class NIOMessageServer extends MessageServer {
 				key.cancel();
 			}
 		}
-		
+
 		// Parse through all the certified messages unsent
 		Message message;
 		while ((message = client.getCertifiableMessageQueue().poll()) != null) {
 			client.getFailedMessageQueue().add(message);
 		}
-		
+
 		// Execute events to invoke any visible events left
 		updateEvents();		// TODO perhaps not remove from getMessageClients() until all events are finished?
-		
+
 		getMessageClients().remove(client);
 		if (graceful) {
 			client.setStatus(MessageClient.Status.DISCONNECTED);
@@ -89,16 +90,16 @@ public abstract class NIOMessageServer extends MessageServer {
 			// TODO implement a feature for knowing if it was gracefully closed
 		}
 		getDisconnectedConnectionQueue().add(client);
-		
+
 		// Remove the connection from the MessageServer
 		// TODO ase: double remove client !?!?!
 		getMessageClients().remove(client);
 	}
-	
+
 	public synchronized void updateTraffic() throws IOException {
 		// Ignore if no longer alive
 		if (!isAlive()) return;
-		
+
 		// If should be shutting down, check
 		if ((getMessageClients().size() == 0) && (!keepAlive)) {
 			for (SelectionKey key : selector.keys()) {
@@ -109,7 +110,7 @@ public abstract class NIOMessageServer extends MessageServer {
 			alive = false;
 			return;
 		}
-		
+
 		// Handle Accept, Read, and Write
 		if (selector.selectNow() > 0) {
 			Iterator<SelectionKey> keys = selector.selectedKeys().iterator();
@@ -150,7 +151,7 @@ public abstract class NIOMessageServer extends MessageServer {
 				client.getReadBuffer().position(position);
 				return null;
 			}
-			Message message = JGN.getConverter(c).receiveMessage(client.getReadBuffer());
+			Message message = ConversionHandler.getConversionHandler(c).deserializeMessage(client.getReadBuffer());
 			if (message instanceof TranslatedMessage) {
 				message = revertTranslated((TranslatedMessage)message);
 			}

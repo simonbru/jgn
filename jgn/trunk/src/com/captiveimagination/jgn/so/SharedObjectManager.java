@@ -103,8 +103,13 @@ public class SharedObjectManager extends MessageAdapter implements BeanChangeLis
 					try {
 						Method setter = beanInterface.getMethod("s" + m.getName().substring(1), new Class[] {m.getReturnType()});
 						if (setter != null) {
-							String field = m.getName().substring(3).toLowerCase();
-							map.put(field, ConversionHandler.getConverter(m.getReturnType()));
+							String fld = m.getName(); // ...substring(3).toLowerCase(); was wrong
+							String fldName = fld.substring(3,1).toLowerCase() + fld.substring(4);
+							// TODO enum: may be that helps at the moment
+							Converter cvt = ConversionHandler.getConverter(retType);
+							map.put(fldName, (cvt instanceof EnumConverter) ?
+							                 ConversionHandler.getConverter(Serializable.class) :
+									             cvt); // restores old behaviour on enums!!
 							m.setAccessible(true);
 							setter.setAccessible(true);
 							methodMap.put(beanInterface.getName() + ".get." + field, m);

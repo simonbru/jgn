@@ -154,13 +154,13 @@ public class SharedObject {
 		message.setName(name);
 		Converter converter;
 		Method getter;
-		for (int i = 0; i < fields.length; i++) {
-			updates.remove(fields[i]);
-			converter = converters.get(fields[i]);
-			getter = SharedObjectManager.getInstance().getMethod(interfaceClass.getName() + ".get." + fields[i]);
+		for (String field : fields) {
+			updates.remove(field);
+			converter = converters.get(field);
+			getter = SharedObjectManager.getInstance().getMethod(interfaceClass.getName() + ".get." + field);
 			try {
 				converter.get(getter.invoke(object, EMPTY_ARGS), buffer);
-			} catch(Exception exc) {
+			} catch (Exception exc) {
 				exc.printStackTrace();	// TODO remove this
 			}
 		}
@@ -176,15 +176,13 @@ public class SharedObject {
 			server.broadcast(message);
 		} else {
 			// Send to MessageServer clients
-			Iterator<MessageServer> serverIterator = servers.iterator();
-			while (serverIterator.hasNext()) {
-				serverIterator.next().broadcast(message);
+			for (MessageServer server1 : servers) {
+				server1.broadcast(message);
 			}
 	
 			// Send to MessageClients
-			Iterator<MessageClient> clientIterator = clients.iterator();
-			while (clientIterator.hasNext()) {
-				client = clientIterator.next();
+			for (MessageClient client1 : clients) {
+				client = client1;
 				if (client.isConnected()) {
 					if (!servers.contains(client.getMessageServer())) {
 						client.sendMessage(message);
@@ -201,9 +199,9 @@ public class SharedObject {
 			for (String field : message.getFields()) {
 				Converter converter = converters.get(field);
 				MagicBeanHandler handler = MagicBeanManager.getInstance().getMagicBeanHandler(object);
-				Method setter = handler.getClass().getMethod("setValue", new Class[] {String.class, Object.class});
+				Method setter = handler.getClass().getMethod("setValue", String.class, Object.class);
 				Object value = converter.set(buffer);
-				setter.invoke(handler, new Object[] {field, value});
+				setter.invoke(handler, field, value);
 			}
 		} catch (IllegalAccessException exc) {
 			exc.printStackTrace();

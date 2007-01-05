@@ -34,7 +34,6 @@
 package com.captiveimagination.jgn;
 
 import java.io.*;
-import java.lang.reflect.*;
 import java.net.*;
 import java.nio.*;
 import java.util.*;
@@ -52,25 +51,27 @@ import com.captiveimagination.jgn.translation.*;
  * MessageServer is the abstract foundation from which all sending and receiving
  * of Messages occur.
  *
- * It implements Updatable which defines a method update(). Normally this method will be
+ * Note, that the name Message'Server' doesn't refer to the common Server as in Client/Server sermon.
+ * It's name stems from the fact, that it locally serves all connections to the outside world. These
+ * connections are realized in (see) MessageClients. While the MessageServer is mainly concerned with
+ * Connections, the MessageClients are mainly responsible for data handling, that will go around with
+ * 'a little help' from the MessageServer.
+ *
+ * MessageServer implements Updatable which defines a method update(). Normally this method will be
  * called periodically to enable serving all MessageClients and related tasks.
  *
- * 
- *
  * @author Matthew D. Hicks
+ * @author Alfons Seul
  */
 public abstract class MessageServer implements Updatable {
 	public static long DEFAULT_TIMEOUT = 30 * 1000;
 	public static ConnectionController DEFAULT_CONNECTION_CONTROLLER = new DefaultConnectionController();
-	
-	private static HashMap<Class,ArrayList<Class>> classHierarchyCache = new HashMap<Class,ArrayList<Class>>();
-	private static HashMap<Class,ArrayList<Method>> listenerDynamicMethods = new HashMap<Class, ArrayList<Method>>();
-	
+
 	private long serverId;
 	private SocketAddress address;
 	private int maxQueueSize;
 	private long connectionTimeout;
-	private ConnectionQueue incomingConnections;		// Waiting for ConnectionListener handling
+	private ConnectionQueue incomingConnections;			// Waiting for ConnectionListener handling
 	private ConnectionQueue negotiatedConnections;		// Waiting for ConnectionListener handling
 	private ConnectionQueue disconnectedConnections;	// Waiting for ConnectionListener handling
 	private final ArrayList<ConnectionListener> connectionListeners;
@@ -413,6 +414,29 @@ public abstract class MessageServer implements Updatable {
 		}
 	}
 	
+	private static void sendToListener(Message message, MessageListener listener,
+																		 MessageListener.MESSAGE_EVENT type) {
+		if (listener instanceof DynamicMessageListener) {
+			DynamicMessageListener dml = (DynamicMessageListener) listener;
+			dml.handle(type, message, dml);
+		} else switch (type) {
+			case CERTIFIED:
+				listener.messageCertified(message);
+				break;
+			case FAILED:
+				listener.messageFailed(message);
+				break;
+			case RECEIVED:
+				listener.messageReceived(message);
+				break;
+			case SENT:
+				listener.messageSent(message);
+				break;
+			default:
+				throw new RuntimeException("Unknown listener type specified: " + type);
+		}
+	}
+
 	/**
 	 * Processes all MessageClients associated with this MessageServer and
 	 * checks for connections that have been closed or have timed out and
@@ -631,91 +655,6 @@ public abstract class MessageServer implements Updatable {
 		handler.serializeMessage(m, buffer, mid); // this may through a MHE
 	}
 	
-	private static final void sendToListener(Message message, MessageListener listener,
-																					 MessageListener.MESSAGE_EVENT type) {
-		switch (type) {
-			case CERTIFIED:
-				if (listener instanceof DynamicMessageListener)
-					callMethod(listener, "messageCertified", message, false);
-				else listener.messageCertified(message);
-				break;
-			case FAILED:
-				if (listener instanceof DynamicMessageListener)
-					callMethod(listener, "messageFailed", message, false);
-				else listener.messageFailed(message);
-				break;
-			case RECEIVED:
-				if (listener instanceof DynamicMessageListener)
-					callMethod(listener, "messageReceived", message, false);
-				else listener.messageReceived(message);
-				break;
-			case SENT:
-				if (listener instanceof DynamicMessageListener)
-					callMethod(listener, "messageSent", message, false);
-				else listener.messageSent(message);
-				break;
-			default:
-				throw new RuntimeException("Unknown listener type specified: " + type);
-		}
-	}
-	
-	private static void callMethod(MessageListener listener, String methodName, Message message, boolean callAll) {
-        try {
-        	ArrayList<Method> methods = listenerDynamicMethods.get(listener.getClass());
-        	if (methods == null) {	// Not already cached
-        		methods = new ArrayList<Method>();
-        		listenerDynamicMethods.put(listener.getClass(), methods);
-	            Method[] allMethods = listener.getClass().getMethods();
-	            ArrayList<Method> m = new ArrayList<Method>();
-	            for (int i = 0; i < allMethods.length; i++) {
-	                if ((allMethods[i].getName().equals(methodName)) && (allMethods[i].getParameterTypes().length == 1)) {
-	                    m.add(allMethods[i]);
-	                }
-	            }
-	            
-	            // Check to see if an interface is found first
-	            ArrayList classes = getClassList(message.getClass());
-	            for (int j = 0; j < classes.size(); j++) {
-	            	for (int i = 0; i < m.size(); i++) {
-	                    if (m.get(i).getParameterTypes()[0] == classes.get(j)) {
-	                        m.get(i).setAccessible(true);
-	                        m.get(i).invoke(listener, new Object[] {message});
-	                        methods.add(m.get(i));
-	                        if (!callAll) return;
-	                    }
-	                }
-	            }
-        	} else {		// Utilize cache of methods for listener
-        		for (Method m : methods) {
-        			m.invoke(listener, new Object[] {message});
-        		}
-        	}
-        } catch(Throwable t) {
-            System.err.println("Object: " + listener + ", MethodName: " + methodName + ", Var: " + message + ", callAll: " + callAll);
-            t.printStackTrace();
-        }
-    }
-	
-	private static ArrayList getClassList(Class c) {
-    	if (classHierarchyCache.containsKey(c)) {
-    		return (ArrayList)classHierarchyCache.get(c);
-    	}
-    	
-    	ArrayList<Class> list = new ArrayList<Class>();
-    	Class[] interfaces;
-    	do {
-    		list.add(c);
-    		interfaces = c.getInterfaces();
-    		for (int i = 0; i < interfaces.length; i++) {
-    			list.add(interfaces[i]);
-    		}
-    	} while ((c = c.getSuperclass()) != null);
-    	
-    	classHierarchyCache.put(c, list);
-    	
-    	return list;
-    }
-
 	public boolean isAlive() {
 		return alive;
 	}

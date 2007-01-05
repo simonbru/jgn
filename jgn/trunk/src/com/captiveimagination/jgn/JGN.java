@@ -55,7 +55,9 @@ public class JGN {
 	private static final HashMap<Short,Class<? extends Message>> registry = new HashMap<Short,Class<? extends Message>>();
 	// registryReverse maps messageClass --> (short) id
 	private static final HashMap<Class<? extends Message>,Short> registryReverse = new HashMap<Class<? extends Message>,Short>();
-
+	// hierarchy maps a messageclass --> List of superclasses, interfaces upto Message.class
+	private static final HashMap< Class<? extends Message>, ArrayList<Class<?>> > hierarchy =
+		 new HashMap<Class<? extends Message>, ArrayList<Class<?>>>();
 
 	static {
 		// Certain messages must be known before negotiation so this is explicitly done here
@@ -116,6 +118,7 @@ public class JGN {
 		}
 		registry.put(id, c);
 		registryReverse.put(c, id);
+		hierarchy.put(c, scanMessClassHierarchy(c)); // build up the hierarchy
 	}
 	
 	private static final short generateId() {
@@ -165,6 +168,39 @@ public class JGN {
 	 */
 	public static final Class<? extends Message> getMessageTypeClass(short typeId) {
 		return registry.get(typeId);
+	}
+
+	/**
+	 * returns a sorted list of superclasses upto Message.class. On each level all the implemented
+	 * Interfaces are recursivly included. This hierarchy is used in DynamicMessageListener mimic,
+	 * to find the next fitting method, if there is no method in Listener that deals directly with
+	 * the argument class.
+	 * @param c - a 'real' message class to get the hierarchy list for
+	 * @return a list of classes and Interfaces representing the superclass/interface structure of c
+	 *         or null, if c was not scanned before
+	 */
+	public static ArrayList<Class<?>> getMessClassHierarchy(Class<? extends Message> c) {
+		return hierarchy.get(c);
+	}
+
+
+	private static ArrayList<Class<?>> scanMessClassHierarchy(Class<?> c) {
+		ArrayList<Class<?>> list = new ArrayList<Class<?>>();
+		do {
+			if (list.contains(c)) break;
+			list.add(c);
+			scanIF(list, c); // recursively find all interfaces and their super
+		} while ((c = c.getSuperclass()) != Message.class); // next superclass
+		return list;
+	}
+
+	private static void scanIF(ArrayList<Class<?>> lst, Class c) {
+		Class[] interfaces = c.getInterfaces();
+		for (Class ifc : interfaces) {
+			if (lst.contains(ifc)) break;
+			lst.add(ifc);
+			scanIF(lst, ifc);
+		}
 	}
 
 	/**

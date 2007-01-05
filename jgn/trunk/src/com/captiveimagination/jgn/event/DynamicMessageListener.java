@@ -33,6 +33,8 @@
  */
 package com.captiveimagination.jgn.event;
 
+import com.captiveimagination.jgn.message.Message;
+
 /**
  * A listener implementing DynamicMessageListener can utilize dynamic introspection
  * features built into JGN to determine the closest matching method to the Message
@@ -42,11 +44,14 @@ package com.captiveimagination.jgn.event;
  * 		messageReceived(Message message)
  * and
  * 		messageReceived(MyMessage message)
- * if you receive a <code>MyMessage</code it will be directly routed to the second method instead
+ * if you receive a <code>MyMessage</code<> it will be directly routed to the second method instead
  * of the first. However, if you receive a <code>YourMessage</code> (and it does not extend
  * <code>MyMessage</code>) it will be routed to the first method.
+ *
+ * 
  * 
  * @author Matthew D. Hicks
  */
 public interface DynamicMessageListener extends MessageListener {
+	void handle(MessageListener.MESSAGE_EVENT type, Message mess, DynamicMessageListener listener);
 }

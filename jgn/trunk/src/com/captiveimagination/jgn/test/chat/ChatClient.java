@@ -40,15 +40,13 @@ import java.net.*;
 import javax.swing.*;
 
 import com.captiveimagination.jgn.*;
-import com.captiveimagination.jgn.message.Message;
 import com.captiveimagination.jgn.clientserver.*;
 import com.captiveimagination.jgn.event.*;
 
 /**
  * @author Matthew D. Hicks
  */
-//public class ChatClient extends DynamicMessageAdapter implements ActionListener {
-public class ChatClient extends MessageAdapter implements ActionListener {
+public class ChatClient extends DynamicMessageAdapter implements ActionListener {
 	private JGNClient client;
 	private String nickname;
 	private JTextPane textPane;
@@ -101,16 +99,16 @@ public class ChatClient extends MessageAdapter implements ActionListener {
 		}
 	}
 	
-//	public void messageReceived(NamedChatMessage message) {
-//		writeMessage(message.getPlayerId(), message.getPlayerName(), message.getText());
-//	}
-
-	public void messageReceived(Message nm) {
-		if (nm instanceof NamedChatMessage) {
-			NamedChatMessage message = (NamedChatMessage)nm;
-			writeMessage(message.getPlayerId(), message.getPlayerName(), message.getText());
-		}
+	public void messageReceived(NamedChatMessage message) {
+		writeMessage(message.getPlayerId(), message.getPlayerName(), message.getText());
 	}
+
+//	public void messageReceived(Message nm) {
+//		if (nm instanceof NamedChatMessage) {
+//			NamedChatMessage message = (NamedChatMessage)nm;
+//			writeMessage(message.getPlayerId(), message.getPlayerName(), message.getText());
+//		}
+//	}
 	
 	private void writeMessage(short playerId, String playerName, String text) {
 		String message = "[" + playerName + ":" + playerId + "]: " + text;

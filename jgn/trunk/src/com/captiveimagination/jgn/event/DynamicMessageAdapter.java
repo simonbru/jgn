@@ -38,9 +38,13 @@ import com.captiveimagination.jgn.message.*;
 /**
  * Convenience implementation around DynamicMessageListener
  * 
+ * all implementation details are hidden away into BaseDynamicMessageListener,
+ * that implements the DynamicMessageListener.handle() method.
+ *
  * @author Matthew D. Hicks
+ * @author Alfons Seul
  */
-public class DynamicMessageAdapter implements DynamicMessageListener {
+public class DynamicMessageAdapter extends BaseDynamicMessageListener {
 	public void messageReceived(Message message) {
 	}
 

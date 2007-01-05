@@ -36,15 +36,13 @@ package com.captiveimagination.jgn.test.chat;
 import java.net.*;
 
 import com.captiveimagination.jgn.*;
-import com.captiveimagination.jgn.message.Message;
 import com.captiveimagination.jgn.clientserver.*;
 import com.captiveimagination.jgn.event.*;
 
 /**
  * @author Matthew D. Hicks
  */
-//public class ChatServer extends DynamicMessageAdapter {
-public class ChatServer extends MessageAdapter {
+public class ChatServer extends DynamicMessageAdapter {
 	public ChatServer() throws Exception {
 		JGN.register(NamedChatMessage.class);
 		
@@ -55,17 +53,17 @@ public class ChatServer extends MessageAdapter {
 		JGN.createThread(server).start();
 	}
 
-	public void messageReceived(Message nm) {
-		if (nm instanceof NamedChatMessage) {
-			NamedChatMessage message = (NamedChatMessage)nm;
-			System.out.println("Message received: " + message.getPlayerName() + ", " + message.getText() + ", " + message.getDestinationPlayerId());
-		}
+//	public void messageReceived(Message nm) {
+//		if (nm instanceof NamedChatMessage) {
+//			NamedChatMessage message = (NamedChatMessage)nm;
+//			System.out.println("Message received: " + message.getPlayerName() + ", " + message.getText() + ", " + message.getDestinationPlayerId());
+//		}
+//	}
+
+	public void messageReceived(NamedChatMessage message) {
+		System.out.println("Message received: " + message.getPlayerName() + ", " + message.getText() + ", " + message.getDestinationPlayerId());
 	}
 
-//	public void messageReceived(NamedChatMessage message) {
-//		System.out.println("Message received: " + message.getPlayerName() + ", " + message.getText() + ", " + message.getDestinationPlayerId());
-//	}
-//
 	public static void main(String[] args) throws Exception {
 		new ChatServer();
 	}

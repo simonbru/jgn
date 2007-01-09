@@ -63,7 +63,9 @@ public class DefaultConnectionController implements ConnectionController {
  * is responsible for notifying the remote server of the disconnection.
  */
 	public void disconnect(MessageClient client) {
-		client.sendMessage(new DisconnectMessage());
+		if (! (client.getStatus() == MessageClient.Status.DISCONNECTED))
+			// !! todo: include other states as well ? !!
+			client.sendMessage(new DisconnectMessage());
 	}
 
 	

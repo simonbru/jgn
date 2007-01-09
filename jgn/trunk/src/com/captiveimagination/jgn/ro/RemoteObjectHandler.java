@@ -64,7 +64,9 @@ public class RemoteObjectHandler extends MessageAdapter implements InvocationHan
 		RemoteObjectRequestMessage request = new RemoteObjectRequestMessage();
 		request.setRemoteObjectName(remoteClass.getName());
 		request.setMethodName(method.getName());
-		request.setParameters(args);
+		// todo: make sure args are serializable
+		Serializable[] sargs = (Serializable[])args;
+		request.setParameters(sargs);
 		client.sendMessage(request);
 		
 		long time = System.currentTimeMillis();

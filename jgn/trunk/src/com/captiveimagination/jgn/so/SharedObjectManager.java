@@ -106,8 +106,8 @@ public class SharedObjectManager extends MessageAdapter implements BeanChangeLis
 						if (setter != null) {
 							String fld = m.getName(); // ...substring(3).toLowerCase(); was wrong
 							String fldName = (fld.length() > 4) ?
-																	(fld.substring(3,1).toLowerCase() + fld.substring(4)) :
-																	 fld.substring(3,1).toLowerCase();								
+																	(fld.substring(3,4).toLowerCase() + fld.substring(4)) :
+																	 fld.substring(3,4).toLowerCase();								
 							Class retType = m.getReturnType();
 							Converter cvt = ConversionHandler.getConverter(retType);
 							// TODO ase:: enum: may be this workaround helps at the moment

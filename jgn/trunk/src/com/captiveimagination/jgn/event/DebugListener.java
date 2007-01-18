@@ -50,7 +50,7 @@ public class DebugListener implements MessageListener, ConnectionListener {
 	}
 
 	public void messageCertified(Message message) {
-		System.out.println(id + ": messageCertified() @ " + message.getMessageClient().getAddress() + " : " + message);
+		System.out.println(id + ": messageCertified() from " + message.getMessageClient().getAddress() + " for " + message);
 	}
 
 	public void messageFailed(Message message) {
@@ -58,26 +58,27 @@ public class DebugListener implements MessageListener, ConnectionListener {
 	}
 
 	public void messageReceived(Message message) {
-		System.out.println(id + ": messageReceived() @ " + message.getMessageClient().getAddress() + " : " + message);
+		System.out.println(id + ": messageReceived() from " + message.getMessageClient().getAddress() + " : " + message);
 	}
 
 	public void messageSent(Message message) {
-		System.out.println(id + ": messageSent() @ " + message.getMessageClient().getAddress() + " : " + message);
+		System.out.println(id + ": messageSent() to " + message.getMessageClient().getAddress() + " : " + message);
 	}
 
 	public void connected(MessageClient client) {
-		System.out.println(id + ": connected() @ " + client.getAddress() + " id: " + client.getId());
+		System.out.println(id + ": connected() with " + client.getAddress() + " Clientid: " + client.getId());
 	}
 
 	public void disconnected(MessageClient client) {
-		System.out.println(id + ": disconnected() @ " + client.getAddress() + " id: " + client.getId());
+		System.out.println(id + ": disconnected() from " + client.getAddress() + " Clientid: " + client.getId()+
+                       ". (Reason: "+client.getCloseReason()+")");
 	}
 
 	public void negotiationComplete(MessageClient client) {
-		System.out.println(id + ": negotiationComplete() @ " + client.getAddress() + " id: " + client.getId());
+		System.out.println(id + ": negotiationComplete() with " + client.getAddress() + " Clientid: " + client.getId());
 	}
 
 	public void kicked(MessageClient client, String reason) {
-		System.out.println(id + ": kicked() @ " + client.getAddress() + " id: " + client.getId() + ", Reason: " + reason);
+		System.out.println(id + ": kicked() @ " + client.getAddress() + " Clientid: " + client.getId() + ", because: " + reason);
 	}
 }

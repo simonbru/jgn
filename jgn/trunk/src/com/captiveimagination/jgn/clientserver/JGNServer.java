@@ -146,8 +146,7 @@ public class JGNServer implements Updatable {
 			connection = new JGNDirectConnection();
 			registry.add(connection);
 		}
-		// TODO handle this without explicit knowledge of the MessageServer type
-		if (client.getMessageServer() instanceof TCPMessageServer) {
+		if (client.getMessageServer().getServerType() == MessageServer.ServerType.TCP) {
 			connection.setReliableClient(client);
 		} else {
 			connection.setFastClient(client);

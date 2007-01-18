@@ -64,11 +64,15 @@ import com.captiveimagination.jgn.translation.*;
  * @author Alfons Seul
  */
 public abstract class MessageServer implements Updatable {
+
+	public enum ServerType { Unknown, TCP, UDP }     // set by subclasses
+
 	public static long DEFAULT_TIMEOUT = 30 * 1000;
 	public static ConnectionController DEFAULT_CONNECTION_CONTROLLER = new DefaultConnectionController();
 
 	private long serverId;
 	private SocketAddress address;
+	private ServerType srvType;
 	private int maxQueueSize;
 	private long connectionTimeout;
 	private ConnectionQueue incomingConnections;			// Waiting for ConnectionListener handling
@@ -78,7 +82,8 @@ public abstract class MessageServer implements Updatable {
 	private final ArrayList<MessageListener> messageListeners;
 	private final ArrayList<ConnectionFilter> filters;
 	private ArrayList<DataTranslator> translators;
-	private AbstractQueue<MessageClient> clients;
+  protected ArrayList<String> blacklist;            // list of blocked IP-adresses; null = no blocks at all
+  protected AbstractQueue<MessageClient> clients;
 	protected boolean keepAlive;
 	protected boolean alive;
 	
@@ -86,6 +91,7 @@ public abstract class MessageServer implements Updatable {
 	
 	public MessageServer(SocketAddress address, int maxQueueSize) throws IOException {
 		serverId = JGN.generateUniqueId();
+		srvType = ServerType.Unknown;
 		
 		this.address = address;
 		this.maxQueueSize = maxQueueSize;
@@ -112,48 +118,34 @@ public abstract class MessageServer implements Updatable {
 		RemoteObjectManager.registerRemoteObject(Ping.class, new ServerPing(), this);
 	}
 	
-	public void setMessageServerId(long serverId) {
-		this.serverId = serverId;
-	}
+	public void setMessageServerId(long serverId) { this.serverId = serverId;}
+	public long getMessageServerId() {return serverId;}
 	
-	public long getMessageServerId() {
-		return serverId;
-	}
-	
-	public int getMaxQueueSize() {
-		return maxQueueSize;
-	}
-	
-	public void setConnectionTimeout(long connectionTimeout) {
-		this.connectionTimeout = connectionTimeout;
-	}
-	
-	protected ConnectionQueue getIncomingConnectionQueue() {
-		return incomingConnections;
-	}
-	
-	protected ConnectionQueue getNegotiatedConnectionQueue() {
-		return negotiatedConnections;
-	}
-	
-	protected ConnectionQueue getDisconnectedConnectionQueue() {
-		return disconnectedConnections;
-	}
-	
-	protected AbstractQueue<MessageClient> getMessageClients() {
-		return clients;
-	}
-	
-	protected ConnectionController getConnectionController() {
-		return controller;
-	}
+  public ServerType getServerType() {return srvType; }
+  protected void setServerType(ServerType st) { srvType = st; }
 
-	/**
+  public SocketAddress getSocketAddress() { return address; }
+  public boolean isAlive() { return alive; }
+	public int getMaxQueueSize() {return maxQueueSize;}
+
+	public void setConnectionTimeout(long connectionTimeout) {this.connectionTimeout = connectionTimeout;}
+  public ConnectionController getConnectionController() {return controller;}
+  public void setConnectionController(ConnectionController controller) {this.controller = controller;}
+
+	protected ConnectionQueue getIncomingConnectionQueue() {return incomingConnections;}
+	protected ConnectionQueue getNegotiatedConnectionQueue() {return negotiatedConnections;}
+	protected ConnectionQueue getDisconnectedConnectionQueue() {return disconnectedConnections;}
+
+  protected AbstractQueue<MessageClient> getMessageClients() { return clients;}
+	public void setBlacklist(ArrayList<String> blcklst) {blacklist = blcklst;}
+  public ArrayList<String> getBlacklist() {return blacklist;}
+
+
+  /**
 	 * Sends <code>message</code> to all connected clients.
 	 * 
-	 * @param message
-	 * @return
-	 * 		total number of clients messages sent to
+	 * @param   message
+	 * @return	total number of clients messages sent to
 	 */
 	public int broadcast(Message message) {
 		int sent = 0;
@@ -163,29 +155,13 @@ public abstract class MessageServer implements Updatable {
 				sent++;
 			} catch (ConnectionException exc) {
 				// Ignore when broadcasting
+			} catch (QueueFullException qfe) {
+				// Ignore when broadcasting
 			}
 		}
 		return sent;
 	}
 	
-	/**
-	 * Replace the current implementation of ConnectionController with another
-	 * alternative.
-	 * 
-	 * @param controller
-	 */
-	public void setConnectionController(ConnectionController controller) {
-		this.controller = controller;
-	}
-	
-	/**
-	 * @return
-	 * 		the SocketAddress representing the remote host
-	 * 		machine
-	 */
-	public SocketAddress getSocketAddress() {
-		return address;
-	}
 
 	public MessageClient getMessageClient(SocketAddress address) {
 		for (MessageClient client : getMessageClients()) {
@@ -223,24 +199,26 @@ public abstract class MessageServer implements Updatable {
 	 * @return
 	 * 		MessageClient for the connection that is established.
 	 * @throws IOException
-	 * @throws InterruptedException 
 	 */
-	public MessageClient connectAndWait(SocketAddress address, int timeout) throws IOException, InterruptedException {
-		MessageClient client = connect(address);
-		long time = System.currentTimeMillis();
+	public MessageClient connectAndWait(SocketAddress address, int timeout) throws IOException {
+    MessageClient client = connect(address);
+    if (client == null) return null; // can happen when IOE on channel.connect() see TCPMessageServer.connect
+
+    long time = System.currentTimeMillis();
 		while (System.currentTimeMillis() < time + timeout) {
-			if (client.isConnected()) {
-				return client;
-			}
-			Thread.sleep(10);
-		}
+			if (client.isConnected())	return client;
+      try { Thread.sleep(10);
+      } catch (InterruptedException e) { //
+      }
+    }
 		// Last attempt before failing
 		if (client.isConnected()) return client;
-		client.disconnect();
+    client.setCloseReason(MessageClient.CloseReason.TimeoutConnect);
+    client.disconnect();
 		return null;
 	}
 		
-	protected abstract void disconnectInternal(MessageClient client, boolean graceful) throws IOException;
+	protected abstract void disconnectInternal(MessageClient client, MessageClient.CloseReason reason);
 	
 	/**
 	 * Closes all open connections to remote clients
@@ -259,12 +237,13 @@ public abstract class MessageServer implements Updatable {
 		long time = System.currentTimeMillis();
 		while (System.currentTimeMillis() <= time + timeout) {
 			if (!isAlive()) return;
+      // TODO: change this is ugly
 			synchronized (getMessageClients()) {
 				if ((getMessageClients().size() > 0) && (getMessageClients().peek().getStatus() == MessageClient.Status.CONNECTED)) {
 					getMessageClients().peek().disconnect();
 				}
 			}
-			Thread.sleep(1);
+			Thread.sleep(10);
 		}
 		throw new IOException("MessageServer did not shutdown within the allotted time (" + getMessageClients().size() + ").");
 	}
@@ -296,95 +275,44 @@ public abstract class MessageServer implements Updatable {
 		
 		// Process incoming Messages to the listeners
 		for (MessageClient client : clients) {
-			MessageQueue incomingMessages = client.getIncomingMessageQueue();
-			while (!incomingMessages.isEmpty()) {
-				Message message = incomingMessages.poll();
-//				System.out.println("Processing message: " + message);
-				synchronized (client.getMessageListeners()) {
-					for (MessageListener listener : client.getMessageListeners()) {
-						//listener.messageReceived(message);
-						sendToListener(message, listener, MessageListener.MESSAGE_EVENT.RECEIVED);
-					}
-				}
-				synchronized (messageListeners) {
-					for (MessageListener listener : messageListeners) {
-						//listener.messageReceived(message);
-						sendToListener(message, listener, MessageListener.MESSAGE_EVENT.RECEIVED);
-					}
-				}
-			}
+			notifyIncoming(client);
 		}
 
 		// Process outgoing Messages to the listeners
 		for (MessageClient client : clients) {
-			MessageQueue outgoingMessages = client.getOutgoingMessageQueue();
-			while (!outgoingMessages.isEmpty()) {
-				Message message = outgoingMessages.poll();
-				synchronized (client.getMessageListeners()) {
-					for (MessageListener listener : client.getMessageListeners()) {
-						//listener.messageReceived(message);'
-						sendToListener(message, listener, MessageListener.MESSAGE_EVENT.SENT);
-					}
-				}
-				synchronized (messageListeners) {
-					for (MessageListener listener : messageListeners) {
-						//listener.messageSent(message);
-						sendToListener(message, listener, MessageListener.MESSAGE_EVENT.SENT);
-					}
-				}
-			}
+			notifyOutgoing(client);
 		}
 		
 		// Process certified Messages to the listeners
 		for (MessageClient client : clients) {
-			MessageQueue certifiedMessages = client.getCertifiedMessageQueue();
-			while (!certifiedMessages.isEmpty()) {
-				Message message = certifiedMessages.poll();
-				synchronized (client.getMessageListeners()) {
-					for (MessageListener listener : client.getMessageListeners()) {
-						sendToListener(message, listener, MessageListener.MESSAGE_EVENT.CERTIFIED);
-					}
-				}
-				synchronized (messageListeners) {
-					for (MessageListener listener : messageListeners) {
-						sendToListener(message, listener, MessageListener.MESSAGE_EVENT.CERTIFIED);
-					}
-				}
-			}
+			notifyCertified(client);
 		}
 		
 		// Process the list of certified messages that have failed
 		for (MessageClient client : clients) {
-			MessageQueue failedMessages = client.getFailedMessageQueue();
-			while (!failedMessages.isEmpty()) {
-				Message message = failedMessages.poll();
-				synchronized (client.getMessageListeners()) {
-					for (MessageListener listener : client.getMessageListeners()) {
-						sendToListener(message, listener, MessageListener.MESSAGE_EVENT.FAILED);
-					}
-				}
-				synchronized (messageListeners) {
-					for (MessageListener listener : messageListeners) {
-						sendToListener(message, listener, MessageListener.MESSAGE_EVENT.FAILED);
-					}
-				}
-			}
+			notifyFailed(client);
 		}
 		
 		// Process the list of certified messages that still are waiting for certification
 		for (MessageClient client : clients) {
-			List<Message> messages = client.getCertifiableMessageQueue().clonedList();
-			for (Message m : messages) {
+			MessageQueue messages = client.getCertifiableMessageQueue();
+			while (!messages.isEmpty()) {
+				Message m = messages.poll();
 				if ((m.getTimestamp() != -1) && (m.getTimestamp() + m.getTimeout() < System.currentTimeMillis())) {
 					if ((m.getTries() == m.getMaxTries()) || (!m.getMessageClient().isConnected())) {
 						// Message failed
 						client.getFailedMessageQueue().add(m);
 						client.getCertifiableMessageQueue().remove(m);
 					} else {
-						System.out.println("Lets try to resend: " + m.getClass());
+//						System.out.println("Lets try to resend: " + m.getClass());
 						m.setTries(m.getTries() + 1);
 						m.setTimestamp(-1);
-						client.getOutgoingQueue().add(m);	// We don't want to clone or reset the unique id
+
+						try {
+							client.getOutgoingQueue().add(m);	// We don't want to clone or reset the unique id
+						} catch (QueueFullException qfe) {
+							client.getCertifiableMessageQueue().add(m); // try next time again
+						}
 					}
 				}
 			}
@@ -438,63 +366,232 @@ public abstract class MessageServer implements Updatable {
 	}
 
 	/**
+	 * Process incoming Messages to the listeners
+	 * @param client
+	 */
+	protected void notifyIncoming(MessageClient client) {
+		MessageQueue incomingMessages = client.getIncomingMessageQueue();
+		while (!incomingMessages.isEmpty()) {
+			Message message = incomingMessages.poll();
+			synchronized (client.getMessageListeners()) {
+				for (MessageListener listener : client.getMessageListeners()) {
+					sendToListener(message, listener, MessageListener.MESSAGE_EVENT.RECEIVED);
+				}
+			}
+			synchronized (messageListeners) {
+				for (MessageListener listener : messageListeners) {
+					sendToListener(message, listener, MessageListener.MESSAGE_EVENT.RECEIVED);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Process outgoing Messages to the listeners
+	 * @param client
+	 */
+	protected void notifyOutgoing(MessageClient client) {
+		MessageQueue outgoingMessages = client.getOutgoingMessageQueue();
+		while (!outgoingMessages.isEmpty()) {
+			Message message = outgoingMessages.poll();
+			synchronized (client.getMessageListeners()) {
+				for (MessageListener listener : client.getMessageListeners()) {
+					sendToListener(message, listener, MessageListener.MESSAGE_EVENT.SENT);
+				}
+			}
+			synchronized (messageListeners) {
+				for (MessageListener listener : messageListeners) {
+					sendToListener(message, listener, MessageListener.MESSAGE_EVENT.SENT);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Process certified Messages to the listeners
+	 * @param client
+	 */
+	protected void notifyCertified(MessageClient client) {
+		MessageQueue certifiedMessages = client.getCertifiedMessageQueue();
+		while (!certifiedMessages.isEmpty()) {
+			Message message = certifiedMessages.poll();
+			synchronized (client.getMessageListeners()) {
+				for (MessageListener listener : client.getMessageListeners()) {
+					sendToListener(message, listener, MessageListener.MESSAGE_EVENT.CERTIFIED);
+				}
+			}
+			synchronized (messageListeners) {
+				for (MessageListener listener : messageListeners) {
+					sendToListener(message, listener, MessageListener.MESSAGE_EVENT.CERTIFIED);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Process the list of certified messages that have failed
+	 * @param client
+	 */
+	protected void notifyFailed(MessageClient client) {
+		MessageQueue failedMessages = client.getFailedMessageQueue();
+		while (!failedMessages.isEmpty()) {
+			Message message = failedMessages.poll();
+			synchronized (client.getMessageListeners()) {
+				for (MessageListener listener : client.getMessageListeners()) {
+					sendToListener(message, listener, MessageListener.MESSAGE_EVENT.FAILED);
+				}
+			}
+			synchronized (messageListeners) {
+				for (MessageListener listener : messageListeners) {
+					sendToListener(message, listener, MessageListener.MESSAGE_EVENT.FAILED);
+				}
+			}
+		}
+	}
+
+	/**
+	 * convenience routine that calls messagelisteners on all messageEvents in
+	 * MessageClient.
+	 * Used from DisconnectInternal()
+	 * @param c
+	 */
+	protected void notifyClient(MessageClient c) {
+		notifyIncoming(c);
+		notifyOutgoing(c);
+		notifyCertified(c);
+		notifyFailed(c);
+	}
+
+	/**
 	 * Processes all MessageClients associated with this MessageServer and
 	 * checks for connections that have been closed or have timed out and
 	 * removes them.
 	 */
 	public synchronized void updateConnections() {
-		// Cycle through connections and see if any have timed out
-		for (MessageClient client : clients) {
-			if ((client.isConnected()) && (client.lastReceived() + connectionTimeout < System.currentTimeMillis())) {
-				client.disconnect();
-				client.received();
-			}
-		}
-		
-		// Cycle through connections in a disconnecting state for too long
-		for (MessageClient client : clients) {
-			if ((client.getStatus() == MessageClient.Status.DISCONNECTING) && (client.lastReceived() + (connectionTimeout / 3) < System.currentTimeMillis())) {
-				try {
-					client.getMessageServer().disconnectInternal(client, false);
-					clients.remove(client);
-				} catch(IOException exc) {
-					exc.printStackTrace();
-					// TODO handle more gracefully
-				}
-			}
-		}
-		
-		// Send Noops to connections that are still alive
-		NoopMessage message = null;
-		for (MessageClient client : clients) {
-			if ((client.isConnected()) && (client.lastSent() + (connectionTimeout / 3) < System.currentTimeMillis())) {
-				if (message == null) {
-					message = new NoopMessage();
-				}
-				try {
-					client.sendMessage(message);
-					client.sent();
-				} catch(QueueFullException exc) {
-					// well, ignore
-				}
-			}
-		}
-		
-		// If attempting to shutdown make sure all MessageClients are closed before alive = false
-		if ((!keepAlive) && (alive)) {
-			synchronized (getMessageClients()) {
-				for (MessageClient client : getMessageClients()) {
-					if (client.getStatus() != MessageClient.Status.DISCONNECTED) {
-						break;
-					}
-				}
-				alive = false;
-			}
-		}
+//		// Cycle through connections and see if any have timed out
+//		for (MessageClient client : clients) {
+//			if ((client.isConnected()) && (client.lastReceived() + connectionTimeout < System.currentTimeMillis())) {
+//				client.disconnect();
+//				client.received();
+//			}
+//		}
+//
+//		// Cycle through connections in a disconnecting state
+//		// disconnect them if possible,
+//		//  -- or if too long in disconnecting state
+//		for (MessageClient client : clients) {
+//			if (client.getStatus() == MessageClient.Status.DISCONNECTING) {
+//			  if (client.isDisconnectable()) {
+//					// we don't know any more what led to this ...
+//					disconnectInternal(client, MessageClient.CloseReason.Ignore);
+//				}
+//				else if (client.lastReceived() + (connectionTimeout / 3) < System.currentTimeMillis()) {
+//					disconnectInternal(client, MessageClient.CloseReason.TimeoutDisconnect);
+//				}
+//			}
+//		}
+//
+//    for (MessageClient client : clients) {
+//      if ((client.getStatus() == MessageClient.Status.NEGOTIATING) &&
+//          (client.lastReceived() + (connectionTimeout / 30) < System.currentTimeMillis())) {
+//          disconnectInternal(client, MessageClient.CloseReason.TimeoutConnect);
+//      }
+//    }
+//
+//		// Send Noops to connections that are still alive
+//		NoopMessage message = null;
+//		for (MessageClient client : clients) {
+//			if ((client.isConnected()) && (client.lastSent() + (connectionTimeout / 3) < System.currentTimeMillis())) {
+//				if (message == null) {
+//					message = new NoopMessage();
+//				}
+//				try {
+//					client.sendMessage(message);
+//					client.sent();
+//				} catch(QueueFullException exc) {
+//					// well, ignore
+//				}
+//			}
+//		}
+//
+//		// If attempting to shutdown make sure all MessageClients are closed before alive = false
+//		if ((!keepAlive) && (alive)) {
+//			synchronized (getMessageClients()) {
+//				for (MessageClient client : getMessageClients()) {
+//					if (client.getStatus() != MessageClient.Status.DISCONNECTED) {
+//						return;
+//					}
+//				}
+//				alive = false;
+//			}
+//		}
+    NoopMessage message = null;
+
+    // Cycle through connections and see if anything to do
+    for (MessageClient client : clients) {
+      switch (client.getStatus()) {
+
+        case NEGOTIATING:
+          // disconnect if negotiating state too long
+          if (client.lastReceived() + (connectionTimeout / 3) < System.currentTimeMillis()) {
+            disconnectInternal(client, MessageClient.CloseReason.TimeoutConnect);
+          }
+          break;
+
+        case CONNECTED:
+          // disconnect, if timed out
+          if (client.lastReceived() + connectionTimeout < System.currentTimeMillis()) {
+            client.setCloseReason(MessageClient.CloseReason.TimeoutRead);
+            client.disconnect();
+            client.received();
+          }
+
+          // send Noop, if needs
+          if (client.lastSent() + (connectionTimeout / 3) < System.currentTimeMillis()) {
+            if (message == null) message = new NoopMessage();
+            try {
+              client.sendMessage(message);
+              client.sent();
+            } catch(QueueFullException exc) {
+              // well, ignore
+            }
+          }
+          break;
+
+        case DISCONNECTING:
+          // disconnect finally, if possible
+          if (client.isDisconnectable()) {
+            // we don't know any more what led to this ...
+            disconnectInternal(client, MessageClient.CloseReason.Ignore);
+          }
+          // staying too long in state
+          else if (client.lastReceived() + (connectionTimeout / 3) < System.currentTimeMillis()) {
+            disconnectInternal(client, MessageClient.CloseReason.TimeoutDisconnect);
+          }
+          break;
+
+        case DISCONNECTED:
+          break;
+        case NOT_CONNECTED:
+          break;
+      }
+    }
+
+    // If attempting to shutdown make sure all MessageClients are closed before alive = false
+    if ((!keepAlive) && (alive)) {
+      synchronized (getMessageClients()) {
+        for (MessageClient client : getMessageClients()) {
+          if (client.getStatus() != MessageClient.Status.DISCONNECTED) {
+            return;
+          }
+        }
+        alive = false;
+      }
+    }
 	}
 	
 	/**
-	 * Convenience method to call updateTraffic() and updateEvents().
+	 * Convenience method to call updateTraffic(), updateEvents() and updateConnections().
 	 * This is only necessary if you aren't explicitly calling these
 	 * methods already.
 	 * 
@@ -655,7 +752,4 @@ public abstract class MessageServer implements Updatable {
 		handler.serializeMessage(m, buffer, mid); // this may through a MHE
 	}
 	
-	public boolean isAlive() {
-		return alive;
-	}
 }

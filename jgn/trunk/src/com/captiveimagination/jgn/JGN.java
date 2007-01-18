@@ -34,6 +34,7 @@
 package com.captiveimagination.jgn;
 
 import java.util.*;
+import java.lang.reflect.Constructor;
 
 import com.captiveimagination.jgn.clientserver.message.*;
 import com.captiveimagination.jgn.convert.*;
@@ -52,12 +53,15 @@ import com.captiveimagination.jgn.translation.*;
  */
 public class JGN {
 	// registry maps (short) id --> messageClass
-	private static final HashMap<Short,Class<? extends Message>> registry = new HashMap<Short,Class<? extends Message>>();
+	private static final HashMap<Short,Class<? extends Message>> registry =
+      new HashMap<Short,Class<? extends Message>>();
 	// registryReverse maps messageClass --> (short) id
-	private static final HashMap<Class<? extends Message>,Short> registryReverse = new HashMap<Class<? extends Message>,Short>();
+	private static final HashMap<Class<? extends Message>,Short> registryReverse =
+      new HashMap<Class<? extends Message>,Short>();
 	// hierarchy maps a messageclass --> List of superclasses, interfaces upto Message.class
 	private static final HashMap< Class<? extends Message>, ArrayList<Class<?>> > hierarchy =
-		 new HashMap<Class<? extends Message>, ArrayList<Class<?>>>();
+		  new HashMap<Class<? extends Message>, ArrayList<Class<?>>>();
+	private static final int systemIdCnt; // used in populateLocalRegistryMessage()
 
 	static {
 		// Certain messages must be known before negotiation so this is explicitly done here
@@ -84,6 +88,8 @@ public class JGN {
 		register(ObjectDeleteMessage.class, --n);
 		// Translation
 		register(TranslatedMessage.class, --n);
+
+		systemIdCnt = registry.size();
 	}
 	
 	/**
@@ -99,11 +105,29 @@ public class JGN {
 	 *
 	 * 
 	 * @param c the message class to be registered
+	 * @throws RuntimeException if class has no parameterless Ctor,
+	 *                          or a single, non-static, non-final, non-transient field isn't
+	 *                          serializable.
 	 */
 	public static final synchronized void register(Class<? extends Message> c) {
 		if (registry.containsValue(c))
 			return;
-		
+
+		// check for existence of a parameterless constructor
+		// since system message don't need this check, it's put into the public access point:
+		Constructor[] ctors = c.getConstructors();
+		boolean hasIt = false;
+		for (Constructor ctor : ctors) {
+			if (ctor.getParameterTypes().length == 0) {
+				hasIt = true;
+				break;
+			}
+		}
+		if (! hasIt)
+      // this message can't be serialized, this is an application error.
+      // Stop further processing
+			throw new RuntimeException("Fatal: Message "+c.getName()+" can't be serialized. Check Constructors.");
+
 		short id = generateId();
 		while (registry.containsKey(id)) {
 			id = generateId();
@@ -114,7 +138,9 @@ public class JGN {
 	private static final void register(Class<? extends Message> c, short id) {
 		// check if the message follows rules and register conversionHandler for it
 		if (ConversionHandler.getConversionHandler(c) == null) {
-			// this message can't be serialized, what should be done???, Exception ??
+			// this message can't be serialized, this is an application error.
+			// Stop further processing
+			throw new RuntimeException("Fatal: Message "+c.getName()+" can't be serialized. Check Fields.");
 		}
 		registry.put(id, c);
 		registryReverse.put(c, id);
@@ -124,26 +150,30 @@ public class JGN {
 	private static final short generateId() {
 		return (short)Math.round(Math.random() * Short.MAX_VALUE);
 	}
-		
-	/**
-	 * Request the ConversionHandler associated with this Message class.
-	 *
-	 * note, this is a convenience for calling ConversionHandler.getConversionHandler(c)
-	 * @param c the messageclass involved
-	 * @return
-	 * 		ConversionHandler associated with the MessageClass <code>c</code>
-	 * 		if the Message class referenced has not be registered yet
-	 * 		<code>null</code> will be returned.
-	 * @deprecated use ConversionHandler.getConversionHandler(c) instead
-	 */
-	public static final ConversionHandler getConverter(Class<? extends Message> c) {
-		ConversionHandler res = ConversionHandler.getConversionHandler(c);
-		if (res == null) {
-			// this messageclass cannot be serialized, take some measures ???
-			// may be this was known earlier, (when registering??)
-		}
-		return res;
-	}
+
+//	------- not used anymore since Jan 16, 2007
+//	/**
+//	 * Request the ConversionHandler associated with this Message class.
+//	 *
+//	 * note, this is a convenience for calling ConversionHandler.getConversionHandler(c)
+//	 * @param c the messageclass involved
+//	 * @return
+//	 * 		ConversionHandler associated with the MessageClass <code>c</code>
+//	 * 		if the Message class referenced has not be registered yet
+//	 * 		<code>null</code> will be returned.
+//	 * @deprecated use ConversionHandler.getConversionHandler(c) instead
+//	 */
+//	public static final ConversionHandler getConverter(Class<? extends Message> c) {
+//		ConversionHandler res = ConversionHandler.getConversionHandler(c);
+//		if (res == null) { // couldn't find nor create a handler:
+//			// although this might have been known earlier, (when registering)
+//			// Stop further processing, this is an application error.
+//			throw new RuntimeException("Fatal: Message "+c.getName()+" can't be serialized. Check Fields.");
+//		}
+//		return res;
+//	}
+
+
 
 	/**
 	 * request the id associated locally with the messageclass given
@@ -183,7 +213,6 @@ public class JGN {
 		return hierarchy.get(c);
 	}
 
-
 	private static ArrayList<Class<?>> scanMessClassHierarchy(Class<?> c) {
 		ArrayList<Class<?>> list = new ArrayList<Class<?>>();
 		do {
@@ -211,19 +240,12 @@ public class JGN {
 	 * @param message the LRM to be filled in
 	 */
 	public static final void populateRegistrationMessage(LocalRegistrationMessage message) {
-		message.setPriority(PriorityMessage.PRIORITY_HIGH);
-
-		// all registered keys
-		Short[] registeredIds = registry.keySet().toArray(new Short[registry.keySet().size()]);
-		
-		// Determine non-system message count
-		int nonSystem = 0;
-		for (Short s : registeredIds) {
-			if (s >= 0) nonSystem++;
-		}
-		
+		// destination arrays
+		int nonSystem = registry.size() - systemIdCnt; 		// slightly more efficient than old version
 		short[] ids = new short[nonSystem];
 		String[] names = new String[nonSystem];
+		// registered keys
+		Short[] registeredIds = registry.keySet().toArray(new Short[registry.keySet().size()]);
 
 		// extract id + name
 		int count = 0;
@@ -233,8 +255,11 @@ public class JGN {
 			names[count] = registry.get(id).getName();
 			count++;
 		}
+
 		message.setIds(ids);
 		message.setMessageClasses(names);
+		message.setPriority(PriorityMessage.PRIORITY_HIGH);
+
 	}
 
 	/**
@@ -270,7 +295,7 @@ public class JGN {
 	 * same as createRunnable(Updatable... updatables) but lets you specify the sleep time
 	 * between passes.
 	 *
-	 * @param sleep - time to snare in ms
+	 * @param sleep - time to snare in ms, if <=0 will instead Thread.yield()
 	 * @param updatables -one or more "tasks" to be done until they are not any more alive.
 	 * @return Runnable - ready for wrapping into a thread and get started.
 	 */
@@ -286,12 +311,28 @@ public class JGN {
 	 * @return Thread
 	 */
 	public static final Thread createThread(Updatable... updatables) {
-		return new Thread(createRunnable(updatables));
+		return createThread(1, updatables);
 	}
+
+	/**
+	 * same as createThread(Updatable... updatables) but lets you specify the sleep time
+	 * between passes.
+	 * The returned thread will have a name of "JGN_Upd"
+	 *
+	 * @param sleep - time to snare in ms, if <=0 will instead Thread.yield()
+	 * @param updatables -one or more "tasks" to be done until they are not any more alive.
+	 * @return Thread - ready for getting started.
+	 */
+	public static final Thread createThread(long sleep, Updatable... updatables) {
+		Thread res = new Thread(createRunnable(sleep, updatables));
+		res.setName("JGN_Upd");
+		return res;
+	}
+
 }
 
 /**
- * A Runnable that within it's run method cycle a list of updatables as long as they
+ * A Runnable that within it's run method, cycles a list of updatables as long as they
  * stay alive. Additionally a sleep time between cycles can be specified
  */
 class UpdatableRunnable implements Runnable {
@@ -302,7 +343,7 @@ class UpdatableRunnable implements Runnable {
 	 * Creates the Runnable
 	 * @param sleep      if > 0, will sleep this amount in ms between cycles;
 	 *                   else no delay (but a Thread.yield instead)
-	 *                   NOTE, that bigger values may reduce the response time of the system
+	 *                   NOTE that bigger values may reduce the response time of the system
 	 *                   but too small a value will possibly eat up most CPU time, and make other
 	 *                   threads unresponsive.
 	 * @param updatables the tasks, to be run by executing their update() method.
@@ -339,6 +380,7 @@ class UpdatableRunnable implements Runnable {
 					Thread.sleep(sleep);
 				} catch(InterruptedException exc) {
 					// no real need for --> exc.printStackTrace();
+					// therefore t'is space for rent...
 				}
 			} else {
 				Thread.yield();

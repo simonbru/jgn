@@ -213,9 +213,10 @@ public class ConversionHandler {
 	 * @return a MessageConversionHandler
 	 */
 	public static final synchronized ConversionHandler getConversionHandler(Class<? extends Message> messageClass) {
-		ConversionHandler handler = messageToHandler.get(messageClass);
 
+		ConversionHandler handler = messageToHandler.get(messageClass);
 		if (handler != null) return handler;
+
 		// Introspect Class
 		ArrayList<Converter> converters = new ArrayList<Converter>();
 		ArrayList<Field> fields = new ArrayList<Field>();
@@ -257,7 +258,14 @@ public class ConversionHandler {
 			if (Modifier.isFinal(field.getModifiers())) continue;		// If it's final we can't change it
 			if (Modifier.isStatic(field.getModifiers())) continue;		// We don't want to touch static fields
 			if (field.isSynthetic()) continue;		      // We don't like fields we didn't write srv code for
-			addField(field.getDeclaringClass(), converters, fields, field.getName(), field.getType());
+
+			// we deny to handle a message class that has non-serializable fields
+			Class fldClass = field.getType();
+			if (! (fldClass.isPrimitive() || Serializable.class.isAssignableFrom(fldClass)))
+				return null; // this will probably throw an 'illegal messagetype' exception
+
+			if (! addField(field.getDeclaringClass(), converters, fields, field.getName(), fldClass))
+				return null; // problems with field converter
 		}
 
 		// create a new handler
@@ -270,22 +278,27 @@ public class ConversionHandler {
 		return handler;
 	}
 	
-	private static final void addField(Class messageClass, ArrayList<Converter> converters, ArrayList<Field> fields, String fieldName, Class fieldClass) {
+	private static final boolean addField(Class messageClass, ArrayList<Converter> converters,
+																		 ArrayList<Field> fields, String fieldName, Class fieldClass) {
 		try {
 			Converter converter = getConverter(fieldClass);
-			if (converter != null) {
-				converters.add(converter);
-				Field field = messageClass.getDeclaredField(fieldName);
-				field.setAccessible(true);
-				fields.add(field);
-			}
+			if (converter == null)
+        return false;
+
+      converters.add(converter);
+      Field field = messageClass.getDeclaredField(fieldName);
+      field.setAccessible(true);
+      fields.add(field);
+			return true;
+
 		} catch(SecurityException exc) {
 			exc.printStackTrace();
-		} catch(NoSuchFieldException exc) {
+      return false;
+    } catch(NoSuchFieldException exc) {
 			System.err.println("No such field \"" + fieldName + "\" on \"" + messageClass.getName() + "\".");
 			exc.printStackTrace();
-		}
-		// TODO what shall we do on error here ???
+      return false;
+    }
 	}
 
 	/**

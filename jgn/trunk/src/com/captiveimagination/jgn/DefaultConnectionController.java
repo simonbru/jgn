@@ -64,7 +64,6 @@ public class DefaultConnectionController implements ConnectionController {
  */
 	public void disconnect(MessageClient client) {
 		if (! (client.getStatus() == MessageClient.Status.DISCONNECTED))
-			// !! todo: include other states as well ? !!
 			client.sendMessage(new DisconnectMessage());
 	}
 

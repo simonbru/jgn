@@ -42,30 +42,58 @@ import com.captiveimagination.jgn.message.type.*;
  * and ConnectionListener and handles internal event handling. Removing the InternalListener
  * from a MessageServer is not a good idea unless you have replicated all functionality
  * contained within this listener.
+ *
+ * Currently only used for handling 'System-level' messages on messageReceived and messageSent
  * 
  * This is a singleton object.
  * 
  * @author Matthew D. Hicks
  */
 class InternalListener implements MessageListener, ConnectionListener {
-	private static InternalListener instance;
 
-	private InternalListener() {
-	}
+	private static InternalListener instance;
+	private InternalListener() {} // I'm a singleton
 
 	public static final InternalListener getInstance() {
-			if (instance == null) {
-				instance = new InternalListener();
-			}
-			return instance;
+		if (instance == null) {
+			instance = new InternalListener();
 		}
+		return instance;
+	}
 
+	/**
+	 * handles all 'System' messages received:
+	 * -- LocalRegistrationMessage:
+	 *         First checks if a filter condition exists in MessageServer for the given
+	 *         MessageClient. If true the connection will be kicked.
+	 *
+	 *         Else extracts the (user)message id's and names as used on the REMOTE
+	 *         side and stores them into local Registry of MessageClient (they will differ
+	 *         from those used on THIS side of the connection).
+	 *
+	 *         if this MessageClient hasn't sent a LRM, (which means, the negotiation startet
+	 *         from the other side) the ConnectionController of the MessageServer of the
+	 *         current MessageClient will be asked to handle negotiation.
+	 *
+	 * -- DisconnectMessage:
+	 *         Sets the associated MessageClient to DISCONNECTING. That state will eventually
+	 *         be picked up by the MessageServer and transitet into DISCONNECTED. Kickreason and
+	 *         CloseReason are set into MessageClient, before
+	 *
+	 * -- Message instanceof CertifiedMessage:
+	 *         Send back a Receipt with the Receipt-Id set to the Id of the received Message.
+	 *
+	 * -- Receipt:
+	 *         calls MessageClient.certify() to move the certified message to the CertifiedQueue
+	 *         for event handling
+	 *
+	 * @param message
+	 */
 	@SuppressWarnings({"unchecked"})
 	public void messageReceived(Message message) {
 		MessageClient myClient = message.getMessageClient();
 
 		if (message instanceof LocalRegistrationMessage) {
-
 			// Verify if connection is valid
 			String filterMessage = myClient.getMessageServer().shouldFilterConnection(myClient);
 			if (filterMessage != null) {
@@ -75,11 +103,9 @@ class InternalListener implements MessageListener, ConnectionListener {
 			}
 
 			// Handle incoming negotiation information
-			/* [ase] this message holds the Message NAMES and their MessageIds
-			*  as they are used on the other side of the 'wire'. We have to store
-			*  them within the MC, because they will differ from mine!
-			* [/ase]
-			*/
+			// this message holds the Message NAMES and their MessageIds
+			// as they are used on the other side of the 'wire'. We have to store
+			// them within the MC, because they will differ from mine!
 			LocalRegistrationMessage m = (LocalRegistrationMessage)message;
 			myClient.setId(m.getId());
 			String[] messages = m.getMessageClasses();
@@ -93,12 +119,10 @@ class InternalListener implements MessageListener, ConnectionListener {
 				// transfer ok, put client into CONNECTED state, and prepare to notify ConnectionListeners
 				myClient.setStatus(MessageClient.Status.CONNECTED);
 				myClient.getMessageServer().getNegotiatedConnectionQueue().add(myClient);
-
 			} catch (ClassNotFoundException exc) {
-				System.err.println("Unable to find the message: " + messages[i]
-												+ " in the ClassLoader. Trace follows:");
-				// TODO handle more gracefully
-				throw new RuntimeException(exc);
+				myClient.setStatus(MessageClient.Status.DISCONNECTED);
+				myClient.setCloseReason(MessageClient.CloseReason.ErrMessageWrong);
+				throw new RuntimeException("Message "+messages[i]+" unknown!",exc);
 			}
 
 			if (!myClient.hasSentRegistration()) {
@@ -109,6 +133,9 @@ class InternalListener implements MessageListener, ConnectionListener {
 			// Disconnect from the remote client
 			myClient.setKickReason(((DisconnectMessage)message).getReason());
 			myClient.setStatus(MessageClient.Status.DISCONNECTING);
+			// this could be a reply to my own disconnect()
+			if (myClient.getCloseReason() == MessageClient.CloseReason.NA)
+			  myClient.setCloseReason(MessageClient.CloseReason.ClosedByRemote);
 		}
 
 		if (message instanceof CertifiedMessage) {
@@ -123,6 +150,11 @@ class InternalListener implements MessageListener, ConnectionListener {
 		}
 	}
 
+	/**
+	 * checks if the message that was sent just now is a CertifiedMessage. If so, that
+	 * message will be moved to the Certifiable Queue, where it will await confirmation.
+	 * @param message
+	 */
 	public void messageSent(Message message) {
 		if (message instanceof CertifiedMessage) {
 			message.getMessageClient().getCertifiableMessageQueue().add(message);

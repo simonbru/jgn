@@ -36,6 +36,7 @@ package com.captiveimagination.jgn;
 import java.io.*;
 import java.net.*;
 import java.nio.channels.*;
+import java.nio.ByteBuffer;
 import java.util.*;
 
 import com.captiveimagination.jgn.message.*;
@@ -43,16 +44,25 @@ import com.captiveimagination.jgn.translation.*;
 import com.captiveimagination.jgn.convert.ConversionHandler;
 
 /**
+ * the workhorse for the non blocking servertype.
+ *
+ * provides important functions:
+ * disconnectInternal : close a channel, cleanup a MessageClient
+ * updateTraffic: cycle through all available selected keys (NIO) and dispatch to
+ *                methods defined in subclasses (TCP/UDPMessageServer)
+ *
  * @author Matthew D. Hicks
+ * @author Alfons Seul
  */
 public abstract class NIOMessageServer extends MessageServer {
 	protected Selector selector;
+	private ArrayList<MessageClient> problems;
 
 	public NIOMessageServer(SocketAddress address, int maxQueueSize) throws IOException {
 		super(address, maxQueueSize);
-
 		selector = Selector.open();
 		bindServer(address);
+		problems = new ArrayList<MessageClient>();
 	}
 
 	protected abstract SelectableChannel bindServer(SocketAddress address) throws IOException;
@@ -65,35 +75,33 @@ public abstract class NIOMessageServer extends MessageServer {
 
 	protected abstract boolean write(SelectableChannel channel) throws IOException;
 
-	protected void disconnectInternal(MessageClient client, boolean graceful) throws IOException {
+	protected void disconnectInternal(MessageClient client, MessageClient.CloseReason reason) {
+		// close NIO's channel, remove key
 		for (SelectionKey key : selector.keys()) {
 			if (key.attachment() == client) {
-				key.channel().close();
+				try { key.channel().close();
+				} catch (IOException e) { // ah, bad luck
+				}
 				key.cancel();
+				break;
 			}
 		}
 
 		// Parse through all the certified messages unsent
+		// push them to failed
 		Message message;
 		while ((message = client.getCertifiableMessageQueue().poll()) != null) {
 			client.getFailedMessageQueue().add(message);
 		}
 
-		// Execute events to invoke any visible events left
-		updateEvents();		// TODO perhaps not remove from getMessageClients() until all events are finished?
+		// Execute events to invoke any events left for this client's messages
+		notifyClient(client);
 
-		getMessageClients().remove(client);
-		if (graceful) {
-			client.setStatus(MessageClient.Status.DISCONNECTED);
-		} else {
-			client.setStatus(MessageClient.Status.DISCONNECTED);
-			// TODO implement a feature for knowing if it was gracefully closed
-		}
+  	client.setStatus(MessageClient.Status.DISCONNECTED);
+		if (reason != MessageClient.CloseReason.Ignore)
+			client.setCloseReason(reason);
+		clients.remove(client);
 		getDisconnectedConnectionQueue().add(client);
-
-		// Remove the connection from the MessageServer
-		// TODO ase: double remove client !?!?!
-		getMessageClients().remove(client);
 	}
 
 	public synchronized void updateTraffic() throws IOException {
@@ -111,8 +119,11 @@ public abstract class NIOMessageServer extends MessageServer {
 			return;
 		}
 
+
 		// Handle Accept, Read, and Write
 		if (selector.selectNow() > 0) {
+			problems.clear(); // we'll have no problems at start
+
 			Iterator<SelectionKey> keys = selector.selectedKeys().iterator();
 			while (keys.hasNext()) {
 				SelectionKey activeKey = keys.next();
@@ -121,47 +132,68 @@ public abstract class NIOMessageServer extends MessageServer {
 					accept(activeKey.channel());
 				}
 				if ((activeKey.isValid()) && (activeKey.isReadable())) {
-					read(activeKey.channel());
+            read(activeKey.channel());
 				}
 				if ((activeKey.isValid()) && (activeKey.isWritable())) {
-					while (write(activeKey.channel())) {}
+  					while (write(activeKey.channel())) {}
 				}
 				if ((activeKey.isValid()) && (activeKey.isConnectable())) {
-					connect(activeKey.channel());
-				}
+          try {
+            connect(activeKey.channel());
+          } catch (IOException e) {
+            System.err.println("  ** connect(channel) error:");
+            e.printStackTrace();
+            if ((activeKey.attachment() != null) && (activeKey.attachment() instanceof MessageClient)) {
+              MessageClient mc = (MessageClient)activeKey.attachment();
+              collectTrafficProblem(mc);
+            }
+          }
+        }
+			}
+			// handle all cases where one of the above handler methods reported an error
+			for (MessageClient client : problems ) {
+        System.out.println("  ** problem: client "+client);
+        disconnectInternal(client, client.getCloseReason());
 			}
 		}
 	}
 
+	// collect clients that encounter problems during updateTraffic
+	protected void collectTrafficProblem(MessageClient client) {
+		problems.add(client);
+	}
+
+	// transform client's received byte array into a message
 	protected Message readMessage(MessageClient client) throws MessageHandlingException {
 		client.received();
-		int position = client.getReadBuffer().position();
-		client.getReadBuffer().position(client.getReadPosition());
-		int messageLength = client.getReadBuffer().getInt();
+		ByteBuffer clientBuffer = client.getReadBuffer();
+		int position = clientBuffer.position();
+		clientBuffer.position(client.getReadPosition());
+		int messageLength = clientBuffer.getInt();
 //		System.out.println("***** There is a message to read: " + messageLength + " received data: " + (position - 4 - client.getReadPosition()));
 		if (messageLength <= position - 4 - client.getReadPosition()) {
 			// Read message
-			short typeId = client.getReadBuffer().getShort();
-			Class<? extends Message> c = JGN.getMessageTypeClass(typeId); //client.getMessageClass(typeId);
+			short typeId = clientBuffer.getShort();
+			Class<? extends Message> c = JGN.getMessageTypeClass(typeId);
 			if (c == null) {
 				if (client.isConnected()) {
-					client.getReadBuffer().position(client.getReadPosition());
+					clientBuffer.position(client.getReadPosition());
 					throw new MessageHandlingException("Message received from unknown messageTypeId: " + typeId);
 				}
-				client.getReadBuffer().position(position);
+				clientBuffer.position(position);
 				return null;
 			}
-			Message message = ConversionHandler.getConversionHandler(c).deserializeMessage(client.getReadBuffer());
+			Message message = ConversionHandler.getConversionHandler(c).deserializeMessage(clientBuffer);
 			if (message instanceof TranslatedMessage) {
 				message = revertTranslated((TranslatedMessage)message);
 			}
 			if (messageLength < position - 4 - client.getReadPosition()) {
 				// Still has content
 				client.setReadPosition(messageLength + 4 + client.getReadPosition());
-				client.getReadBuffer().position(position);
+				clientBuffer.position(position);
 			} else {
 				// Clear the buffer
-				client.getReadBuffer().clear();
+				clientBuffer.clear();
 				client.setReadPosition(0);
 			}
 			message.setMessageClient(client);
@@ -170,11 +202,11 @@ public abstract class NIOMessageServer extends MessageServer {
 			// If the capacity of the buffer has been reached
 			// we must compact it
 			// FIXME this involves a data-copy, don't
-			client.getReadBuffer().position(client.getReadPosition());
-			client.getReadBuffer().compact();
+			clientBuffer.position(client.getReadPosition());
+			clientBuffer.compact();
 			position = position - client.getReadPosition();
 			client.setReadPosition(0);
-			client.getReadBuffer().position(position);
+			clientBuffer.position(position);
 		}
 		return null;
 	}

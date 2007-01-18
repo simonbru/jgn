@@ -42,6 +42,7 @@ import com.captiveimagination.jgn.message.*;
 
 /**
  * @author Matthew D. Hicks
+ * @author Alfons Seul
  */
 public final class UDPMessageServer extends NIOMessageServer {
 	private DatagramChannel channel;
@@ -53,6 +54,7 @@ public final class UDPMessageServer extends NIOMessageServer {
 	
 	public UDPMessageServer(SocketAddress address, int maxQueueSize) throws IOException {
 		super(address, maxQueueSize);
+		setServerType(ServerType.UDP);
 		readLookup = ByteBuffer.allocateDirect(1024 * 5);
 	}
 
@@ -61,7 +63,7 @@ public final class UDPMessageServer extends NIOMessageServer {
 		channel.socket().bind(address);
 		channel.configureBlocking(false);
 		channel.register(selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
-		return channel;
+    return channel;
 	}
 	
 	protected void accept(SelectableChannel channel) {
@@ -72,16 +74,23 @@ public final class UDPMessageServer extends NIOMessageServer {
 		// UDP Message Server will never receive a connect event
 	}
 
-	protected void read(SelectableChannel c) throws IOException {
-		MessageClient client;
-		try {
+	protected void read(SelectableChannel c) { //throws IOException {
+		MessageClient client = null;
+    try {
 			InetSocketAddress address = (InetSocketAddress)channel.receive(readLookup);
 			if (address == null) {
-				// _TODO a message was sent but never reached the host - figure out how to use this
-				// ase: this seems to be ok
+				// a message was sent but never reached the host, this seems to be ok
 				return;
 			}
-			
+      // blacklist handling
+      if (blacklist != null) {
+        String newHost = address.getAddress().getHostAddress();
+        if (blacklist.contains(newHost)) {
+          System.out.println("UDP-Srv ("+getMessageServerId()+") Access denied for host: "+newHost);
+          return;
+        }
+      }
+
 			readLookup.limit(readLookup.position());
 			readLookup.position(0);
 			client = getMessageClient(address);
@@ -100,21 +109,28 @@ public final class UDPMessageServer extends NIOMessageServer {
 				client.receiveMessage(message);
 			}
 		} catch(MessageHandlingException exc) {
-			// FIXME we need to show the cause!
-			// appearantly IOE is not suitable for this
-			throw new RuntimeException(exc);
+			client.setCloseReason(MessageClient.CloseReason.ErrMessageWrong);
+			collectTrafficProblem(client);
+		} catch(IOException ioe) {
+			// an error occured while reading, it's bad, we don't know the client
+			// so do nothing
 		}
 	}
 
-	protected boolean write(SelectableChannel c) throws IOException {
+	protected boolean write(SelectableChannel c) {
 		for (MessageClient client : getMessageClients()) {
 			if (client.getCurrentWrite() != null) {
 				client.sent();		// Let the system know something has been written
-				channel.send(client.getCurrentWrite().getBuffer(), client.getAddress());
+				try {
+					channel.send(client.getCurrentWrite().getBuffer(), client.getAddress());
+				} catch (IOException e) { // closed by remote
+					client.setCloseReason(MessageClient.CloseReason.ErrChannelWrite);
+					collectTrafficProblem(client);
+					continue;
+				}
 				if (!client.getCurrentWrite().getBuffer().hasRemaining()) {
 					// Write all messages in combined to sent queue
 					client.getCurrentWrite().process();
-					
 					client.setCurrentWrite(null);
 				} else {
 					// Take completed messages and add them to the sent queue
@@ -125,35 +141,53 @@ public final class UDPMessageServer extends NIOMessageServer {
 				try {
 					combined = PacketCombiner.combine(client);
 				} catch (MessageHandlingException exc) {
-					// FIXME handle properly
-					exc.printStackTrace();
+					client.setCloseReason(MessageClient.CloseReason.ErrMessageWrong);
+					// remember this client for error processing after updateTraffic
+					collectTrafficProblem(client);
 					combined = null;
 				}
 
 				if (combined != null) {
-					channel.send(combined.getBuffer(), client.getAddress());
+					try {
+						channel.send(combined.getBuffer(), client.getAddress());
+					} catch (IOException e) {
+						client.setCloseReason(MessageClient.CloseReason.ErrChannelWrite);
+						// remember this client for error processing after updateTraffic
+						collectTrafficProblem(client);
+						continue;
+					}
 					if (combined.getBuffer().hasRemaining()) {
 						client.setCurrentWrite(combined);
-						
+
 						// Take completed messages and add them to the sent queue
 						combined.process();
-						
+
 						return false;	// No more room for sending
 					} else {
 						client.setCurrentWrite(null);
-						
+
 						// Write all messages in combined to sent queue
 						combined.process();
 					}
-				} else if (client.getStatus() == MessageClient.Status.DISCONNECTING) {
-					disconnectInternal(client, true);
+/* ase: check this:
+        if following was only intended to transit the state from Disconnecting to Disconnected
+        the following omission is ok. That transition is now in updateConnections...
+        otherwise, we'll have to find out what to do
+*/
+//				} else if (client.getStatus() == MessageClient.Status.DISCONNECTING) {
+//					disconnectInternal(client, true);
 				}
 			}
 		}
 		return false;
 	}
 
-	public MessageClient connect(SocketAddress address) {
+  /**
+   * since UDP is connectionless, we just create a MessageClient and start negotiation
+   * @param address
+   * @return a MessageClient pointing to address
+   */
+  public MessageClient connect(SocketAddress address) {
 		MessageClient client = getMessageClient(address);
 		if ((client != null) && (client.getStatus() != MessageClient.Status.DISCONNECTING) && (client.getStatus() != MessageClient.Status.DISCONNECTED)) {
 			return client;		// Client already connected, simply return it

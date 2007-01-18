@@ -65,8 +65,8 @@ import java.util.HashMap;
 public final class MessageClient implements MessageSender {
 
   // preliminary !!!! change to logging
-  private static int debuglevel = 1; // change this to get debug messages to system.out
-
+  private static int debuglevel = -1; // change this to get debug messages to system.out
+                                      // off=-1, error=0, debug=1, info=2, fine=4, finer=5, finest=6
 	/**
 	 * the connection status of this client (positions in the lifecycle)
 	 */

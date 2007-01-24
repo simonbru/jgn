@@ -36,7 +36,6 @@ package com.captiveimagination.jgn.test.so.basic;
 import java.net.*;
 
 import com.captiveimagination.jgn.*;
-import com.captiveimagination.jgn.event.*;
 import com.captiveimagination.jgn.so.*;
 
 /**

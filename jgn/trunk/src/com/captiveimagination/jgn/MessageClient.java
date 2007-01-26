@@ -464,9 +464,9 @@ public final class MessageClient implements MessageSender {
 		if (m instanceof LocalRegistrationMessage) {
 			sentRegistration = true;
 		}
-//		if (m instanceof IdentityMessage) {
-//			// Ignore setting an id
-//		} else
+		if (m instanceof IdentityMessage) {
+			// Ignore setting an id
+		} else
 
 		// Assign unique id if this is a UniqueMessage
     if (m instanceof UniqueMessage) {

@@ -39,6 +39,7 @@ import com.captiveimagination.jgn.message.LocalRegistrationMessage;
 import com.captiveimagination.jgn.message.Message;
 import com.captiveimagination.jgn.message.Receipt;
 import com.captiveimagination.jgn.message.type.UniqueMessage;
+import com.captiveimagination.jgn.message.type.IdentityMessage;
 import com.captiveimagination.jgn.queue.BasicMessageQueue;
 import com.captiveimagination.jgn.queue.MessageQueue;
 import com.captiveimagination.jgn.queue.MultiMessageQueue;

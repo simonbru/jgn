@@ -33,23 +33,30 @@
  */
 package com.captiveimagination.jgn.translation.compression;
 
-import java.io.*;
-import java.util.zip.*;
+import com.captiveimagination.jgn.translation.DataTranslator;
 
-import com.captiveimagination.jgn.translation.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 
 /**
  * @author Matthew D. Hicks
- *
  */
 public class ZipDataTranslator implements DataTranslator {
+	private static Logger LOG = Logger.getLogger("com.captiveimagination.jgn.translation.compression.ZipDataTranslator");
+
 	private int level;
-	
+
 	public ZipDataTranslator(int level) {
 		this.level = level;
 	}
-	
-	public byte[] inbound(byte[] bytes) {
+
+	public byte[] inbound(byte[] bytes) throws Exception {
 		byte[] result = null;
 		try {
 			ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
@@ -68,12 +75,13 @@ public class ZipDataTranslator implements DataTranslator {
 			bos.flush();
 			result = bos.toByteArray();
 		} catch (IOException e) {
-			e.printStackTrace();
+			LOG.log(Level.SEVERE, "", e);
+			throw e;
 		}
 		return result;
 	}
 
-	public byte[] outbound(byte[] bytes) {
+	public byte[] outbound(byte[] bytes) throws Exception {
 		byte[] result = null;
 		ZipEntry entry = new ZipEntry("zipped");
 		try {
@@ -87,7 +95,8 @@ public class ZipDataTranslator implements DataTranslator {
 			zos.close();
 			result = bos.toByteArray();
 		} catch (IOException e) {
-			e.printStackTrace();
+			LOG.log(Level.SEVERE, "", e);
+			throw e;
 		}
 		return result;
 	}

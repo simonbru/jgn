@@ -33,17 +33,19 @@
  */
 package com.captiveimagination.jgn.event;
 
-import com.captiveimagination.jgn.*;
-import com.captiveimagination.jgn.message.*;
+import com.captiveimagination.jgn.MessageClient;
+import com.captiveimagination.jgn.message.Message;
+import com.captiveimagination.jgn.message.NoopMessage;
 
 /**
  * A simple debug listener for MessageListener and ConnectionListener that
  * prints out method invocations.
- * 
+ *
  * @author Matthew D. Hicks
  */
 public class DebugListener implements MessageListener, ConnectionListener {
 	private String id;
+	private boolean ignoreNoop = true;
 
 	public DebugListener(String id) {
 		this.id = id;
@@ -58,10 +60,12 @@ public class DebugListener implements MessageListener, ConnectionListener {
 	}
 
 	public void messageReceived(Message message) {
+		if (!(ignoreNoop && message instanceof NoopMessage))
 		System.out.println(id + ": messageReceived() from " + message.getMessageClient().getAddress() + " : " + message);
 	}
 
 	public void messageSent(Message message) {
+		if (!(ignoreNoop && message instanceof NoopMessage))
 		System.out.println(id + ": messageSent() to " + message.getMessageClient().getAddress() + " : " + message);
 	}
 
@@ -70,8 +74,8 @@ public class DebugListener implements MessageListener, ConnectionListener {
 	}
 
 	public void disconnected(MessageClient client) {
-		System.out.println(id + ": disconnected() from " + client.getAddress() + " Clientid: " + client.getId()+
-                       ". (Reason: "+client.getCloseReason()+")");
+		System.out.println(id + ": disconnected() from " + client.getAddress() + " Clientid: " + client.getId() +
+				". (Reason: " + client.getCloseReason() + ")");
 	}
 
 	public void negotiationComplete(MessageClient client) {

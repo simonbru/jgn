@@ -33,12 +33,15 @@
  */
 package com.captiveimagination.jgn.stream;
 
-import java.io.*;
+import com.captiveimagination.jgn.MessageClient;
+import com.captiveimagination.jgn.event.MessageListener;
+import com.captiveimagination.jgn.message.Message;
+import com.captiveimagination.jgn.message.StreamMessage;
+import com.captiveimagination.jgn.queue.MessagePriorityQueue;
+import com.captiveimagination.jgn.queue.MessageQueue;
 
-import com.captiveimagination.jgn.*;
-import com.captiveimagination.jgn.event.*;
-import com.captiveimagination.jgn.message.*;
-import com.captiveimagination.jgn.queue.*;
+import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * @author Matthew D. Hicks
@@ -48,38 +51,38 @@ public class JGNInputStream extends InputStream implements MessageListener {
 	private short streamId;
 	private MessageQueue queue;
 	private boolean streamClosed;
-	
+
 	private StreamMessage current;
 	private int position;
-	
+
 	public JGNInputStream(MessageClient client, short streamId) {
 		this.client = client;
 		this.streamId = streamId;
 		queue = new MessagePriorityQueue(-1);
 		client.addMessageListener(this);
 	}
-	
+
 	public MessageClient getMessageClient() {
 		return client;
 	}
-	
+
 	public short getStreamId() {
 		return streamId;
 	}
-	
+
 	public int read() throws IOException {
 		while (!streamClosed) {
 			if ((current == null) && (!queue.isEmpty())) {
-				current = (StreamMessage)queue.poll();
+				current = (StreamMessage) queue.poll();
 				position = 0;
 			}
-			
+
 			if (current != null) {
 				if (current.getDataLength() == -1) {
 					streamClosed = true;
 					break;
 				}
-				
+
 				int read = current.getData()[position++];
 				if (position == current.getDataLength()) {
 					current = null;
@@ -88,34 +91,34 @@ public class JGNInputStream extends InputStream implements MessageListener {
 			}
 			try {
 				Thread.sleep(1);
-			} catch(InterruptedException exc) {
-				exc.printStackTrace();
+			} catch (InterruptedException exc) {
+				// ignore !! exc.printStackTrace();
 			}
 		}
 		return -1;
 	}
 
 	public void messageReceived(Message message) {
-		if ((message instanceof StreamMessage) && (((StreamMessage)message).getStreamId() == streamId)) {
+		if ((message instanceof StreamMessage) && (((StreamMessage) message).getStreamId() == streamId)) {
 			queue.add(message);
 		}
 	}
 
 	public void messageSent(Message message) {
 	}
-	
+
 	public void messageCertified(Message message) {
 	}
-	
+
 	public void messageFailed(Message message) {
 	}
-	
+
 	public void close() throws IOException {
 		streamClosed = true;
 		client.removeMessageListener(this);
 		client.closeInputStream(streamId);
 	}
-	
+
 	public boolean isClosed() {
 		return streamClosed;
 	}

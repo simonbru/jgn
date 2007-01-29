@@ -33,11 +33,11 @@
  */
 package com.captiveimagination.jgn.event;
 
-import com.captiveimagination.jgn.message.*;
+import com.captiveimagination.jgn.message.Message;
 
 /**
  * Convenience implementation around DynamicMessageListener
- * 
+ * <p/>
  * all implementation details are hidden away into BaseDynamicMessageListener,
  * that implements the DynamicMessageListener.handle() method.
  *
@@ -50,7 +50,7 @@ public class DynamicMessageAdapter extends BaseDynamicMessageListener {
 
 	public void messageSent(Message message) {
 	}
-	
+
 	public void messageCertified(Message message) {
 	}
 

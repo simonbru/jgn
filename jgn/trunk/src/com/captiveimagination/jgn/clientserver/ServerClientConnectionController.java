@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2005-2006 JavaGameNetworking
+ * Copyright (c) 2005-2007 JavaGameNetworking
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,66 +33,124 @@
  */
 package com.captiveimagination.jgn.clientserver;
 
-import java.util.concurrent.*;
+import com.captiveimagination.jgn.DefaultConnectionController;
+import com.captiveimagination.jgn.JGN;
+import com.captiveimagination.jgn.MessageClient;
+import com.captiveimagination.jgn.clientserver.message.PlayerStatusMessage;
+import com.captiveimagination.jgn.event.ConnectionListener;
+import com.captiveimagination.jgn.event.MessageListener;
+import com.captiveimagination.jgn.message.LocalRegistrationMessage;
+import com.captiveimagination.jgn.message.Message;
+import com.captiveimagination.jgn.message.type.PlayerMessage;
 
-import com.captiveimagination.jgn.*;
-import com.captiveimagination.jgn.clientserver.message.*;
-import com.captiveimagination.jgn.event.*;
-import com.captiveimagination.jgn.message.*;
-import com.captiveimagination.jgn.message.type.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
+ * Controls behaviour of JGNServer.
+ * Responsible for:	negotiating with a new connecting MessageClient,
+ * 		assigning new playerIds
+ * 		notifying other on a new player
+ * 		delegate to JGNServer for disconnects
+ * 		route received PlayerMessages to destination
+ *
  * @author Matthew D. Hicks
  */
-public class ServerClientConnectionController extends DefaultConnectionController implements ConnectionListener, MessageListener {
+public class ServerClientConnectionController extends DefaultConnectionController
+		implements ConnectionListener, MessageListener {
+
+	private static Logger LOG = Logger.getLogger("com.captiveimagination.jgn.clientserver.ServerClientConnectionController");
+
 	private JGNServer server;
 	private boolean[] playerIds;
 
 	public ServerClientConnectionController(JGNServer server) {
 		this.server = server;
-		playerIds = new boolean[Short.MAX_VALUE];
+		playerIds = new boolean[Short.MAX_VALUE]; // wow, 32k players!! ( we count starting at 0 )
 	}
 
+	/**
+	 * A new MessageClient (eg a new Connection either on TCP or UDP) was created and will be
+	 * prepared for operation now. That happens as follows:
+	 * 1.	the MC will be registered in JGNServer. That will use or create a JGNDirectConnection
+	 * that holds the MC as given.
+	 * 2.	if the connection was fresh, playerId was -1. In that case a new playerId will be determined
+	 * and put into the connection record.
+	 * 3.	A LocalRegistrationMessage will be created as usual, BUT the message.ID will be set to the
+	 * newly created playerId. The receiving JGNClient will afterwards use this id to set it's new
+	 * playerId.
+	 * 4.	Only, if the JGNClient is 'fully' connected (eg. if the current JGNServer supports both protocols
+	 * and there are now MessageClients for both, otherwise the client is 'fully' connected with one MC
+	 * already):
+	 * 5.		Inform all ConnectionListeners of JGNServer of the connect
+	 * 6.		Send a new playerId - connecting PlayerStatusMessage to all OTHER JGNClients
+	 * 7.		For each OTHER JGNClient send a PlayerStatusMessage about them to the NEW JGNClient.
+	 *
+	 * @param client
+	 */
+	@Override
 	public void negotiate(MessageClient client) {
+		LOG.log(Level.FINEST, "negotiating client {0}", ("@" + Integer.toHexString(client.hashCode())));
 		JGNDirectConnection connection = (JGNDirectConnection)server.register(client);
-
-		LocalRegistrationMessage message = new LocalRegistrationMessage();
 		short playerId = connection.getPlayerId();
 		if (playerId == -1) {
 			playerId = nextPlayerId();
 			connection.setPlayerId(playerId);
+			LOG.log(Level.FINEST, "playerId set to " + playerId);
 		}
 
+		LocalRegistrationMessage message = new LocalRegistrationMessage();
 		// Send negotiation message back
 		message.setId(playerId);
 		JGN.populateRegistrationMessage(message);
 		client.sendMessage(message);
 
-		// Throw event to listeners of connection
-		if (((server.hasBoth()) && (connection.getReliableClient() != null) && (connection.getFastClient() != null)) || (!server.hasBoth())) {
+		if (((server.hasBoth()) && (connection.getReliableClient() != null) && (connection.getFastClient() != null)) ||
+				(!server.hasBoth()))
+		{ // here, if only single protocol - or both MCs exist; fall through, if conn not 'complete'
+
+			// Throw event to listeners of connection if complete
 			ConcurrentLinkedQueue<JGNConnectionListener> listeners = server.getListeners();
 			for (JGNConnectionListener listener : listeners) {
 				listener.connected(connection);
 			}
 
-			// Send connection message to all connected clients
+			// Send connection message to all (old) connected clients
 			PlayerStatusMessage psm = new PlayerStatusMessage();
 			psm.setPlayerId(playerId);
 			psm.setPlayerStatus(PlayerStatusMessage.STATUS_CONNECTED);
-			server.sendToAllExcept(psm, playerId);
+			server.sendToAllExcept(psm, playerId);	// spare the newby
 
-			// Send messages to the client for all established connections
+			// Send messages to the newby client for all established (old) connections
 			JGNConnection[] connections = server.getConnections();
 			for (JGNConnection conn : connections) {
-				if (conn.getPlayerId() != playerId) {
+				if (conn.getPlayerId() != playerId) { // all conn's but the newby's one
 					psm.setPlayerId(conn.getPlayerId());
-					psm.setPlayerStatus(PlayerStatusMessage.STATUS_CONNECTED);
+					// redundant: psm.setPlayerStatus(PlayerStatusMessage.STATUS_CONNECTED);
 					connection.sendMessage(psm);
 				}
 			}
 		}
+		if (LOG.isLoggable(Level.FINEST)) {
+			dumpConnections(server);
+		}
 	}
 
+	// used only for logging
+	private static void dumpConnections(JGNServer server) {
+		JGNConnection[] all = server.getConnections();
+		LOG.finest("Current Connections:");
+		for (JGNConnection a : all) {
+			JGNDirectConnection da = (JGNDirectConnection) a;
+			String fast = (da.getFastClient() == null) ? "none" : da.getFastClient().getAddress().toString();
+			String reli = (da.getReliableClient() == null) ? "none" : da.getReliableClient().getAddress().toString();
+			LOG.finest("  " + a.getPlayerId() + ": tcp to " + reli + "; udp to " + fast);
+		}
+	}
+
+	// remember all playerIds since I was born. Return next unused.
+	// TODO: linear search not efficient for 'late comers'
 	private synchronized short nextPlayerId() {
 		for (int i = 0; i < playerIds.length; i++) {
 			if (!playerIds[i]) {
@@ -103,15 +161,33 @@ public class ServerClientConnectionController extends DefaultConnectionControlle
 		throw new RuntimeException("Ran out of player ids.");
 	}
 
-	public void connected(MessageClient client) {
+	private synchronized void restorePlayerId(short id) {
+		if (id >= 0 && id < playerIds.length)
+		  playerIds[id] = false;
 	}
 
-	public void disconnected(MessageClient client) {
-		server.unregister(client);
+	/**
+	 * ********************* implements ConnectionListener ******************
+	 */
+
+	public void connected(MessageClient client) {
 	}
 
 	public void negotiationComplete(MessageClient client) {
 	}
+
+	// delegate disconnect logic to my server.unregister()
+	public void disconnected(MessageClient client) {
+		JGNDirectConnection c = (JGNDirectConnection)server.unregister(client);
+		if ((c.getFastClient() == null) && (c.getReliableClient() == null)) {
+			restorePlayerId(c.getPlayerId());
+	}
+	}
+
+
+	/**
+	 * ********************* implements MessageListener ********************
+	 */
 
 	public void messageCertified(Message message) {
 	}
@@ -119,22 +195,41 @@ public class ServerClientConnectionController extends DefaultConnectionControlle
 	public void messageFailed(Message message) {
 	}
 
+	public void messageSent(Message message) {
+	}
+
+	public void kicked(MessageClient client, String reason) {// TODO this should be managed internally
+	}
+
+	// if the message is a PlayerMessage, find the connection for the destinationPlayerId
+	// and send it thereto.
 	public void messageReceived(Message message) {
 		if (message instanceof PlayerMessage) {
-			// Route messages to destination
-			JGNConnection connection = server.getConnection(message.getDestinationPlayerId());
-			// TODO add validation features
-			if (connection != null) {
+			short dp = message.getDestinationPlayerId();
+			if (dp == -2) { // broadcast to all
+				// it's a pitty we can't use following:
+				// server.sendToAllExcept((PlayerMessage)message, message.getPlayerId());
+				//
+				// since either (with cast to PlayerMessage) it will complain about not being a Message
+				// or (without) it will complain about not being a PlayerMessage ...
+				// Facit: use generics with care...
+				JGNConnection[] connections = server.getConnections();
+				for (JGNConnection connection : connections) {
+					if (connection.getPlayerId() != message.getPlayerId()) { // not sender
+						if (connection.isConnected()) {
 				connection.sendMessage(message);
 			}
 		}
 	}
-
-	public void messageSent(Message message) {
+			} else if (dp == -1) {
+			} // that's a message for me (THE server), let another MessageListener handle that
+			else { // send message to explicit dp
+				JGNConnection connection = server.getConnection(dp);
+				// TODO add validation features
+				if (connection != null && connection.isConnected()) { // route message to destination
+					connection.sendMessage(message);
+				}
 	}
-
-	
-	public void kicked(MessageClient client, String reason) {
-		// TODO this should be managed internally
+		} // end of PlayerMessage handling. All other types fall through
 	}
 }

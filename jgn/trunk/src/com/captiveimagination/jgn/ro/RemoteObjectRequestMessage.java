@@ -33,10 +33,8 @@
  */
 package com.captiveimagination.jgn.ro;
 
-import com.captiveimagination.jgn.message.*;
-import com.captiveimagination.jgn.message.type.*;
-
-import java.io.Serializable;
+import com.captiveimagination.jgn.message.PriorityMessage;
+import com.captiveimagination.jgn.message.type.CertifiedMessage;
 
 /**
  * @author Matthew D. Hicks
@@ -44,8 +42,7 @@ import java.io.Serializable;
 public class RemoteObjectRequestMessage extends PriorityMessage implements CertifiedMessage {
 	private String remoteObjectName;
 	private String methodName;
-//	private Object[] parameters; better use Serializable instead
-	private Serializable[] parameters;
+	private Object[] parameters;
 
 	public String getMethodName() {
 		return methodName;
@@ -55,11 +52,11 @@ public class RemoteObjectRequestMessage extends PriorityMessage implements Certi
 		this.methodName = methodName;
 	}
 
-	public Serializable[] getParameters() {
+	public Object[] getParameters() {
 		return parameters;
 	}
 
-	public void setParameters(Serializable[] parameters) {
+	public void setParameters(Object[] parameters) {
 		this.parameters = parameters;
 	}
 

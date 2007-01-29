@@ -33,19 +33,26 @@
  */
 package com.captiveimagination.jgn.translation.compression;
 
-import java.io.*;
-import java.util.zip.*;
+import com.captiveimagination.jgn.translation.DataTranslator;
 
-import com.captiveimagination.jgn.translation.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 /**
  * This translator uses {@link GZIPInputStream} and {@link GZIPOutputStream} for
  * compressing data.
- * 
+ *
  * @author Matthew D. Hicks, Christian Laireiter
  */
 public class GZipDataTranslator implements DataTranslator {
-	public byte[] inbound(byte[] bytes) {
+	private static Logger LOG = Logger.getLogger("com.captiveimagination.jgn.translation.compression.GZipDataTranslator");
+
+	public byte[] inbound(byte[] bytes) throws Exception {
 		byte[] result = null;
 		try {
 			GZIPInputStream gis = new GZIPInputStream(new ByteArrayInputStream(bytes));
@@ -56,13 +63,14 @@ public class GZipDataTranslator implements DataTranslator {
 				bos.write(tmp, 0, read);
 			}
 			result = bos.toByteArray();
-		} catch (Exception e) {
-			e.printStackTrace();
+		} catch (IOException e) {
+			LOG.log(Level.SEVERE, "", e);
+			throw e;
 		}
 		return result;
 	}
 
-	public byte[] outbound(byte[] bytes) {
+	public byte[] outbound(byte[] bytes) throws Exception {
 		byte[] result = null;
 		try {
 			ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -72,8 +80,9 @@ public class GZipDataTranslator implements DataTranslator {
 			gos.finish();
 			gos.close();
 			result = bos.toByteArray();
-		} catch (Exception e) {
-			e.printStackTrace();
+		} catch (IOException e) {
+			LOG.log(Level.SEVERE, "", e);
+			throw e;
 		}
 		return result;
 	}

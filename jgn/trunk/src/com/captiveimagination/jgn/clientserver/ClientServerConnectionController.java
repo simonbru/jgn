@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2005-2006 JavaGameNetworking
+ * Copyright (c) 2005-2007 JavaGameNetworking
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,19 +33,31 @@
  */
 package com.captiveimagination.jgn.clientserver;
 
-import com.captiveimagination.jgn.*;
-import com.captiveimagination.jgn.message.*;
+import com.captiveimagination.jgn.DefaultConnectionController;
+import com.captiveimagination.jgn.JGN;
+import com.captiveimagination.jgn.MessageClient;
+import com.captiveimagination.jgn.message.LocalRegistrationMessage;
 
 /**
  * @author Matthew D. Hicks
  */
 public class ClientServerConnectionController extends DefaultConnectionController {
 	private JGNClient client;
-	
+
 	public ClientServerConnectionController(JGNClient client) {
 		this.client = client;
 	}
-	
+
+	/**
+	 * overrides the DefaultConnectionController.negotiate() insofar, as
+	 * the id of the negotiating LocalRegistrationMessage is not set to the
+	 * messageServerId, but to the id of the corresponding JGNClient!!!
+	 * This makes it possible for the receiving JGNServer to bundle both TCP and UDP
+	 * 'physical' clients as a reference back to this JGNClient. See JGNServer
+	 *
+	 * @param client
+	 */
+	@Override
 	public void negotiate(MessageClient client) {
 		LocalRegistrationMessage message = new LocalRegistrationMessage();
 		JGN.populateRegistrationMessage(message);

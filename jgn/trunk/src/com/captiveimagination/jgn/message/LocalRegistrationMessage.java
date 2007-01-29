@@ -33,33 +33,38 @@
  */
 package com.captiveimagination.jgn.message;
 
-import com.captiveimagination.jgn.message.type.*;
+import com.captiveimagination.jgn.message.type.CertifiedMessage;
+import com.captiveimagination.jgn.message.type.IdentityMessage;
 
 /**
  * This is an internal message utilized during the initial
  * negotiation of a connection to let the remote machine know
  * all of the message registrations and their ids to allow for
  * proper message communication.
- * 
+ *
  * @author Matthew D. Hicks
  */
 public class LocalRegistrationMessage extends PriorityMessage implements CertifiedMessage, IdentityMessage {
 	private short[] ids;
 	private String[] messageClasses;
-	
+
 	public short[] getIds() {
 		return ids;
 	}
-	
+
 	public void setIds(short[] ids) {
 		this.ids = ids;
 	}
-	
+
 	public String[] getMessageClasses() {
 		return messageClasses;
 	}
-	
+
 	public void setMessageClasses(String[] messageClasses) {
 		this.messageClasses = messageClasses;
+	}
+
+	public String toString() {
+		return "LRM id=" + getId() + " size=" + ids.length;
 	}
 }

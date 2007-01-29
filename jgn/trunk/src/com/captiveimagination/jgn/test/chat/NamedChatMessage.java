@@ -33,7 +33,7 @@
  */
 package com.captiveimagination.jgn.test.chat;
 
-import com.captiveimagination.jgn.message.*;
+import com.captiveimagination.jgn.message.ChatMessage;
 
 /**
  * @author Matthew D. Hicks
@@ -47,5 +47,9 @@ public class NamedChatMessage extends ChatMessage {
 
 	public void setPlayerName(String playerName) {
 		this.playerName = playerName;
+	}
+
+	public String toString() {
+		return "NCM id=" + getId() + " player:" + playerName + " playerId:" + getPlayerId() + " destPl:" + getDestinationPlayerId();
 	}
 }

@@ -33,10 +33,10 @@
  */
 package com.captiveimagination.jgn.ro;
 
-import java.io.*;
+import com.captiveimagination.jgn.message.PriorityMessage;
+import com.captiveimagination.jgn.message.type.CertifiedMessage;
 
-import com.captiveimagination.jgn.message.*;
-import com.captiveimagination.jgn.message.type.*;
+import java.io.Serializable;
 
 /**
  * @author Matthew D. Hicks
@@ -44,7 +44,7 @@ import com.captiveimagination.jgn.message.type.*;
 public class RemoteObjectResponseMessage extends PriorityMessage implements CertifiedMessage {
 	private String remoteObjectName;
 	private String methodName;
-	private Serializable response;
+	private Serializable response; // otherwise the check in Conversionhandler will complain!!
 
 	public String getMethodName() {
 		return methodName;
@@ -62,11 +62,11 @@ public class RemoteObjectResponseMessage extends PriorityMessage implements Cert
 		this.remoteObjectName = remoteObjectName;
 	}
 
-	public Serializable getResponse() {
+	public Object getResponse() {
 		return response;
 	}
 
-	public void setResponse(Serializable response) {
-		this.response = response;
+	public void setResponse(Object response) {
+		this.response = (Serializable) response;
 	}
 }

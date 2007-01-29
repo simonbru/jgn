@@ -33,53 +33,67 @@
  */
 package com.captiveimagination.jgn.ro;
 
-import java.io.*;
-import java.lang.reflect.*;
-import java.util.*;
+import com.captiveimagination.jgn.MessageClient;
+import com.captiveimagination.jgn.MessageServer;
 
-import com.captiveimagination.jgn.*;
+import java.io.IOException;
+import java.lang.reflect.Proxy;
+import java.util.HashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * @author Matthew D. Hicks
  */
 public class RemoteObjectManager {
-	private static final HashMap<MessageClient,HashMap<Class<? extends RemoteObject>,RemoteObjectHandler>> remoteProxyMap = new HashMap<MessageClient,HashMap<Class<? extends RemoteObject>,RemoteObjectHandler>>();
-	private static final HashMap<MessageServer,HashMap<Class<? extends RemoteObject>,RemoteInvocationListener>> remoteObjectMap = new HashMap<MessageServer,HashMap<Class<? extends RemoteObject>,RemoteInvocationListener>>();
-	
+	private static Logger LOG = Logger.getLogger("com.captiveimagination.jgn.ro.RemoteObjectManager");
+	private static final HashMap<MessageClient, HashMap<Class<? extends RemoteObject>, RemoteObjectHandler>> remoteProxyMap = new HashMap<MessageClient, HashMap<Class<? extends RemoteObject>, RemoteObjectHandler>>();
+	private static final HashMap<MessageServer, HashMap<Class<? extends RemoteObject>, RemoteInvocationListener>> remoteObjectMap = new HashMap<MessageServer, HashMap<Class<? extends RemoteObject>, RemoteInvocationListener>>();
+
 	public static final void registerRemoteObject(Class<? extends RemoteObject> remoteClass, RemoteObject object, MessageServer server) throws IOException {
-		HashMap<Class<? extends RemoteObject>,RemoteInvocationListener> objectMap = remoteObjectMap.get(server);
+		HashMap<Class<? extends RemoteObject>, RemoteInvocationListener> objectMap = remoteObjectMap.get(server);
 		if (objectMap == null) {
-			objectMap = new HashMap<Class<? extends RemoteObject>,RemoteInvocationListener>();
+			objectMap = new HashMap<Class<? extends RemoteObject>, RemoteInvocationListener>();
 			remoteObjectMap.put(server, objectMap);
 		}
-		if (objectMap.containsKey(remoteClass)) throw new IOException("A RemoteObject has already been registered by this name on this MessageServer: " + object.getClass().getName());
+		if (objectMap.containsKey(remoteClass)) {
+			IOException iOE = new IOException(
+					"A RemoteObject has already been registered by this name on this MessageServer: " + object.getClass().getName());
+			LOG.log(Level.SEVERE, "", iOE);
+			throw iOE;
+		}
 		RemoteInvocationListener ril = new RemoteInvocationListener(remoteClass, object, server);
 		objectMap.put(remoteClass, ril);
 	}
-	
+
 	public static final void unregisterRemoteObject(Class<? extends RemoteObject> remoteClass, MessageServer server) {
-		HashMap<Class<? extends RemoteObject>,RemoteInvocationListener> objectMap = remoteObjectMap.get(server);
+		HashMap<Class<? extends RemoteObject>, RemoteInvocationListener> objectMap = remoteObjectMap.get(server);
 		RemoteInvocationListener ril = objectMap.remove(remoteClass);
 		ril.close();
 	}
-	
-	@SuppressWarnings("all")
+
+	@SuppressWarnings("unchecked")
 	public static final <T extends RemoteObject> T createRemoteObject(Class<? extends T> remoteClass, MessageClient client, long timeout) throws IOException {
 		HashMap<Class<? extends RemoteObject>, RemoteObjectHandler> clientMap = remoteProxyMap.get(client);
 		if (clientMap == null) {
 			clientMap = new HashMap<Class<? extends RemoteObject>, RemoteObjectHandler>();
 			remoteProxyMap.put(client, clientMap);
 		}
-		if (clientMap.containsKey(remoteClass)) throw new IOException("A remote object by this name already exists for this MessageClient: " + remoteClass.getName());
+		if (clientMap.containsKey(remoteClass)) {
+			IOException iOE = new IOException(
+					"A remote object by this name already exists for this MessageClient: " + remoteClass.getName());
+			LOG.log(Level.SEVERE, "", iOE);
+			throw iOE;
+		}
 		RemoteObjectHandler handler = new RemoteObjectHandler(remoteClass, client, timeout);
-		
-		Object o = Proxy.newProxyInstance(Thread.currentThread().getContextClassLoader(), new Class[] {remoteClass}, handler);
-		
+
+		Object o = Proxy.newProxyInstance(Thread.currentThread().getContextClassLoader(), new Class[]{remoteClass}, handler);
+
 		clientMap.put(remoteClass, handler);
-		
-		return (T)o;
+
+		return (T) o;
 	}
-	
+
 	public static final void destroyRemoteObject(Class<? extends RemoteObject> remoteClass, MessageClient client) {
 		HashMap<Class<? extends RemoteObject>, RemoteObjectHandler> clientMap = remoteProxyMap.get(client);
 		RemoteObjectHandler handler = clientMap.remove(remoteClass);

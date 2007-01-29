@@ -38,17 +38,21 @@ package com.captiveimagination.jgn.message;
  * sending machine that the message was successfully received. This
  * is primarily designed for use with CertifiedMessages so that they
  * can be sure the message was successfully delivered.
- * 
+ *
  * @author Matthew D. Hicks
  */
 public class Receipt extends Message {
 	private long certifiedId;
-	
+
 	public long getCertifiedId() {
 		return certifiedId;
 	}
-	
+
 	public void setCertifiedId(long certifiedId) {
 		this.certifiedId = certifiedId;
+	}
+
+	public String toString() {
+		return "Receipt certifying:" + certifiedId;
 	}
 }

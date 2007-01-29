@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2005-2006 JavaGameNetworking
+ * Copyright (c) 2005-2007 JavaGameNetworking
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,14 +33,23 @@
  */
 package com.captiveimagination.jgn.clientserver;
 
-import com.captiveimagination.jgn.message.*;
+import com.captiveimagination.jgn.message.Message;
 
 /**
- * @author Matthew D. Hicks
+ * A RelayConnection simply holds the playerId of another player.
+ * Each time JGNClient wants to send a PlayerMessage to that player,
+ * this object will route the message to the server, and only the server
+ * knows of the correct connection to the other player.
+ * <p/>
+ * Note there is no restriction on the type of message imposed by this object,
+ * though sending any message that isn't a PlayerMessage will result in loosing
+ * the destinationPlayerId as well as the playerID (when de/serializing the message),
+ * which makes it impossible for the server to route the message as desired ...
  *
+ * @author Matthew D. Hicks
  */
 public class JGNRelayConnection implements JGNConnection {
-	private JGNClient client;
+	private JGNClient client; // this is my owner; need this for call back
 	private short playerId;
 	
 	public JGNRelayConnection(JGNClient client, short playerId) {
@@ -52,11 +61,13 @@ public class JGNRelayConnection implements JGNConnection {
 		return playerId;
 	}
 	
+	// send the message to the server, after setting the destinationplayer into the message
 	public void sendMessage(Message message) {
 		message.setDestinationPlayerId(playerId);
 		client.getServerConnection().sendMessage(message);
 	}
 	
+	// this concerns connection to the JGNServer
 	public boolean isConnected() {
 		return client.getServerConnection().isConnected();
 	}

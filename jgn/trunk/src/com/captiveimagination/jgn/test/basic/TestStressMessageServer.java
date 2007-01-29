@@ -33,42 +33,52 @@
  */
 package com.captiveimagination.jgn.test.basic;
 
-import java.net.*;
+import com.captiveimagination.jgn.JGN;
+import com.captiveimagination.jgn.MessageClient;
+import com.captiveimagination.jgn.MessageServer;
+import com.captiveimagination.jgn.TCPMessageServer;
+import com.captiveimagination.jgn.event.ConnectionListener;
+import com.captiveimagination.jgn.event.MessageAdapter;
+import com.captiveimagination.jgn.message.Message;
+import com.captiveimagination.jgn.queue.QueueFullException;
+import com.captiveimagination.jgn.util.ClientMonitor;
 
-
-import com.captiveimagination.jgn.*;
-import com.captiveimagination.jgn.event.*;
-import com.captiveimagination.jgn.message.*;
-import com.captiveimagination.jgn.queue.*;
-import com.captiveimagination.jgn.util.*;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * @author Matthew D. Hicks
  */
 public class TestStressMessageServer {
 	private static final int MAX = 1000000; //2000000000;
-	
+	private static Logger LOG = Logger.getLogger("com.captiveimagination.jgn.test.basic.TestStressMessageSever");
+
 	public static int receiveCount = 0;
 	public static MessageClient client1;
 	public static MessageClient client2;
-	
+
 	public static void main(String[] args) throws Exception {
 		JGN.register(BasicMessage.class);
 		final MessageServer server1 = new TCPMessageServer(new InetSocketAddress(InetAddress.getLocalHost(), 1000));
 		server1.addConnectionListener(new ConnectionListener() {
 			public void connected(MessageClient client) {
-				System.out.println("S1> Connected: " + client);
+//				System.out.println("S1> Connected: " + client);
+				LOG.log(Level.FINE, "S1> Connected: {0}", client);
 				client1 = client;
-				ClientMonitor m1 = new ClientMonitor("Client1", client1, 1000);
+				ClientMonitor m1 = new ClientMonitor("C1>", client1, 1000);
 				JGN.createThread(m1).start();
 			}
 
 			public void negotiationComplete(MessageClient client) {
-				System.out.println("S1> Negotiation completed successfully with: " + client);
+				LOG.log(Level.FINE, "S1> Negotiation completed with: {0}", client);
+//				System.out.println("S1> Negotiation completed successfully with: " + client);
 			}
-			
+
 			public void disconnected(MessageClient client) {
-				System.out.println("S1> Disconnected: " + client);
+				LOG.log(Level.FINE, "S1> Disconnected: {0}", client);
+//				System.out.println("S1> Disconnected: " + client);
 			}
 
 
@@ -77,7 +87,7 @@ public class TestStressMessageServer {
 		});
 		server1.addMessageListener(new MessageAdapter() {
 			private long time;
-			
+
 			public void messageReceived(Message message) {
 				if (message instanceof BasicMessage) {
 					if (receiveCount == 0) time = System.currentTimeMillis();
@@ -85,62 +95,70 @@ public class TestStressMessageServer {
 					//System.out.println("Count: " + receiveCount + ", " + ((BasicMessage)message).getValue());
 					//if (receiveCount > 2000) System.out.println("Receive Count: " + receiveCount);
 					if (receiveCount == MAX) {
-						System.out.println("Completed in: " + (System.currentTimeMillis() - time) + "ms");
+						LOG.log(Level.INFO, "S1> Completed in: {0} ms", (System.currentTimeMillis() - time));
+//						System.out.println("Completed in: " + (System.currentTimeMillis() - time) + "ms");
 						System.exit(0);
 					}
 				}
 			}
 
 			public void messageSent(Message message) {
-				System.out.println("S1> Message Sent: " + message);
+				LOG.log(Level.FINE, "S1> Message sent: {0}", message);
+//				System.out.println("S1> Message Sent: " + message);
 			}
-			
+
 		});
-		
+
 		final MessageServer server2 = new TCPMessageServer(new InetSocketAddress(InetAddress.getLocalHost(), 2000));
-		
+
 		JGN.createThread(server1, server2).start();
-		
+
 		server2.addConnectionListener(new ConnectionListener() {
 			public void connected(MessageClient client) {
-				System.out.println("S2> Connected: " + client);
+				LOG.log(Level.FINE, "S2> Connected: {0}", client);
+//        System.out.println("S2> Connected: " + client);
 				client2 = client;
-				ClientMonitor m2 = new ClientMonitor("Client2", client2, 1000);
+				ClientMonitor m2 = new ClientMonitor("C2>", client2, 1000);
 				JGN.createThread(m2).start();
 			}
 
 			public void negotiationComplete(MessageClient client) {
-				System.out.println("S2> Negotiation completed successfully with: " + client);
-			}
-			
-			public void disconnected(MessageClient client) {
-				System.out.println("S2> Disconnected: " + client);
+				LOG.log(Level.FINE, "S2> Negotiation completed with: {0}", client);
+//				System.out.println("S2> Negotiation completed successfully with: " + client);
 			}
 
-			
+			public void disconnected(MessageClient client) {
+				LOG.log(Level.FINE, "S2> Disconnected: {0}", client);
+//				System.out.println("S2> Disconnected: " + client);
+			}
+
+
 			public void kicked(MessageClient client, String reason) {
 			}
 		});
 		MessageClient client = server2.connectAndWait(new InetSocketAddress(InetAddress.getLocalHost(), 1000), 5000);
 		if (client != null) {
-			System.out.println("Connection established!");
+			LOG.log(Level.INFO, "Connection S2 --> S1 established! using client: {0}", client);
+//			System.out.println("Connection established!");
 			BasicMessage message = new BasicMessage();
 			long time = System.currentTimeMillis();
 			for (int i = 0; i < MAX; i++) {
 				message.setValue(i);
 				try {
 					client.sendMessage(message);
-				} catch(QueueFullException exc) {
+				} catch (QueueFullException exc) {
 					i--;
 					try {
 						Thread.sleep(1);
-					} catch(InterruptedException ie) {//aha
+					} catch (InterruptedException ie) {//aha
 					}
 				}
 			}
-			System.out.println("Enqueued in: " + (System.currentTimeMillis() - time) + "ms");
+			LOG.log(Level.INFO, "S2> Enqueued in: {0} ms", (System.currentTimeMillis() - time));
+//			System.out.println("Enqueued in: " + (System.currentTimeMillis() - time) + "ms");
 		} else {
-			System.out.println("Connection timed out!");
+			LOG.warning("Connection timed out!");
+//      System.out.println("Connection timed out!");
 		}
 	}
 }

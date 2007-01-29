@@ -33,27 +33,37 @@
  */
 package com.captiveimagination.jgn;
 
-import com.captiveimagination.jgn.event.*;
-import com.captiveimagination.jgn.message.*;
-import com.captiveimagination.jgn.message.type.*;
+import com.captiveimagination.jgn.event.ConnectionListener;
+import com.captiveimagination.jgn.event.MessageListener;
+import com.captiveimagination.jgn.message.DisconnectMessage;
+import com.captiveimagination.jgn.message.LocalRegistrationMessage;
+import com.captiveimagination.jgn.message.Message;
+import com.captiveimagination.jgn.message.Receipt;
+import com.captiveimagination.jgn.message.type.CertifiedMessage;
+
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * This listener gets added by default to every new MessageServer as a MessageListener
  * and ConnectionListener and handles internal event handling. Removing the InternalListener
  * from a MessageServer is not a good idea unless you have replicated all functionality
  * contained within this listener.
- *
+ * <p/>
  * Currently only used for handling 'System-level' messages on messageReceived and messageSent
- * 
+ * <p/>
  * This is a singleton object.
- * 
+ *
  * @author Matthew D. Hicks
  */
 class InternalListener implements MessageListener, ConnectionListener {
 
 	private static InternalListener instance;
-	private InternalListener() {} // I'm a singleton
+	private static Logger LOG = Logger.getLogger("com.captiveimagination.jgn.InternalListener");
 
+	private InternalListener() { // I'm a singleton
+	}
+	
 	public static final InternalListener getInstance() {
 		if (instance == null) {
 			instance = new InternalListener();
@@ -66,23 +76,23 @@ class InternalListener implements MessageListener, ConnectionListener {
 	 * -- LocalRegistrationMessage:
 	 *         First checks if a filter condition exists in MessageServer for the given
 	 *         MessageClient. If true the connection will be kicked.
-	 *
+	 * <p/>
 	 *         Else extracts the (user)message id's and names as used on the REMOTE
 	 *         side and stores them into local Registry of MessageClient (they will differ
 	 *         from those used on THIS side of the connection).
-	 *
+	 * <p/>
 	 *         if this MessageClient hasn't sent a LRM, (which means, the negotiation startet
 	 *         from the other side) the ConnectionController of the MessageServer of the
 	 *         current MessageClient will be asked to handle negotiation.
-	 *
+	 * <p/>
 	 * -- DisconnectMessage:
 	 *         Sets the associated MessageClient to DISCONNECTING. That state will eventually
 	 *         be picked up by the MessageServer and transitet into DISCONNECTED. Kickreason and
 	 *         CloseReason are set into MessageClient, before
-	 *
+	 * <p/>
 	 * -- Message instanceof CertifiedMessage:
 	 *         Send back a Receipt with the Receipt-Id set to the Id of the received Message.
-	 *
+	 * <p/>
 	 * -- Receipt:
 	 *         calls MessageClient.certify() to move the certified message to the CertifiedQueue
 	 *         for event handling
@@ -105,24 +115,30 @@ class InternalListener implements MessageListener, ConnectionListener {
 			// Handle incoming negotiation information
 			// this message holds the Message NAMES and their MessageIds
 			// as they are used on the other side of the 'wire'. We have to store
-			// them within the MC, because they will differ from mine!
-			LocalRegistrationMessage m = (LocalRegistrationMessage)message;
+			// them within the MC, because they will differ from mine in JGN.java!
+			LocalRegistrationMessage m = (LocalRegistrationMessage) message;
 			myClient.setId(m.getId());
+			LOG.finest("LRM recvd; setting ClientId @" + Integer.toHexString(myClient.hashCode()) + " to: " + m.getId());
 			String[] messages = m.getMessageClasses();
 			short[] ids = m.getIds();
 
 			int i = 0;
 			try {
 				for (; i < messages.length; i++) {
-					myClient.register(ids[i], (Class<? extends Message>)Class.forName(messages[i]));
+					myClient.register(ids[i], (Class<? extends Message>) Class.forName(messages[i]));
 				}
 				// transfer ok, put client into CONNECTED state, and prepare to notify ConnectionListeners
 				myClient.setStatus(MessageClient.Status.CONNECTED);
 				myClient.getMessageServer().getNegotiatedConnectionQueue().add(myClient);
 			} catch (ClassNotFoundException exc) {
-				myClient.setStatus(MessageClient.Status.DISCONNECTED);
+				// TODO: check if this shouldn't be disconnect-ING, was DISCONNECTED !!
+				//myClient.setStatus(MessageClient.Status.DISCONNECTED);
+				myClient.setStatus(MessageClient.Status.DISCONNECTING);
 				myClient.setCloseReason(MessageClient.CloseReason.ErrMessageWrong);
-				throw new RuntimeException("Message "+messages[i]+" unknown!",exc);
+				// no, could be an attack, don't stop complete system
+				// throw new RuntimeException("Message "+messages[i]+" unknown!",exc);
+				LOG.log(Level.WARNING, " unknown messagetype in LRM received for ", myClient);
+
 			}
 
 			if (!myClient.hasSentRegistration()) {
@@ -130,9 +146,9 @@ class InternalListener implements MessageListener, ConnectionListener {
 			}
 
 		} else if (message instanceof DisconnectMessage) {
-			// Disconnect from the remote client
-			myClient.setKickReason(((DisconnectMessage)message).getReason());
+			// Disconnect me from the remote client
 			myClient.setStatus(MessageClient.Status.DISCONNECTING);
+			myClient.setKickReason(((DisconnectMessage) message).getReason());
 			// this could be a reply to my own disconnect()
 			if (myClient.getCloseReason() == MessageClient.CloseReason.NA)
 			  myClient.setCloseReason(MessageClient.CloseReason.ClosedByRemote);
@@ -146,13 +162,14 @@ class InternalListener implements MessageListener, ConnectionListener {
 
 		} else if (message instanceof Receipt) {
 			// Received confirmation of a CertifiedMessage
-			myClient.certifyMessage(((Receipt)message).getCertifiedId());
+			myClient.certifyMessage(((Receipt) message).getCertifiedId());
 		}
 	}
 
 	/**
 	 * checks if the message that was sent just now is a CertifiedMessage. If so, that
 	 * message will be moved to the Certifiable Queue, where it will await confirmation.
+	 *
 	 * @param message
 	 */
 	public void messageSent(Message message) {

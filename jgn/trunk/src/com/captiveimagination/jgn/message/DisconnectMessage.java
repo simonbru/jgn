@@ -38,10 +38,10 @@ package com.captiveimagination.jgn.message;
  */
 public class DisconnectMessage extends Message {
 	private String reason;
-	
+
 	public DisconnectMessage() {
 	}
-	
+
 	public DisconnectMessage(String reason) {
 		this.reason = reason;
 	}
@@ -52,5 +52,9 @@ public class DisconnectMessage extends Message {
 
 	public void setReason(String reason) {
 		this.reason = reason;
+	}
+
+	public String toString() {
+		return "Disconnect reason(" + reason + ")";
 	}
 }

@@ -39,7 +39,7 @@ import com.captiveimagination.jgn.message.Message;
  * A listener implementing DynamicMessageListener can utilize dynamic introspection
  * features built into JGN to determine the closest matching method to the Message
  * that has been received.
- * 
+ * <p/>
  * For example, if you have two methods in your implementing class:
  * 		messageReceived(Message message)
  * and
@@ -48,10 +48,16 @@ import com.captiveimagination.jgn.message.Message;
  * of the first. However, if you receive a <code>YourMessage</code> (and it does not extend
  * <code>MyMessage</code>) it will be routed to the first method.
  *
- * 
- * 
  * @author Matthew D. Hicks
+ * @author Alfons Seul
  */
 public interface DynamicMessageListener extends MessageListener {
+	/**
+	 * call the handler
+	 *
+	 * @param type		 MessageType: Received, Certified, Sent, Failed
+	 * @param mess		 the message to dispatch
+	 * @param listener at the listener as registered on MessageServer
+	 */
 	void handle(MessageListener.MESSAGE_EVENT type, Message mess, DynamicMessageListener listener);
 }

@@ -33,12 +33,18 @@
  */
 package com.captiveimagination.jgn;
 
-import java.io.*;
-import java.net.*;
-import java.nio.channels.*;
+import static com.captiveimagination.jgn.MessageClient.CloseReason;
+import static com.captiveimagination.jgn.MessageClient.Status;
+import com.captiveimagination.jgn.message.Message;
 
-import com.captiveimagination.jgn.message.*;
-import static com.captiveimagination.jgn.MessageClient.*;
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
+import java.nio.channels.SelectableChannel;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.ServerSocketChannel;
+import java.nio.channels.SocketChannel;
+import java.util.logging.Level;
 
 /**
  * @author Matthew D. Hicks
@@ -51,6 +57,8 @@ public final class TCPMessageServer extends NIOMessageServer {
 
   public TCPMessageServer(SocketAddress address, int maxQueueSize) throws IOException {
     super(address, maxQueueSize);
+		log.log(Level.INFO, " create TCPMessageServer (id=" + serverId + ") at {0}, queuesize= {1}",
+				new Object[]{address, maxQueueSize, serverId});
     setServerType(ServerType.TCP);
   }
 
@@ -63,18 +71,18 @@ public final class TCPMessageServer extends NIOMessageServer {
   }
 
   protected void accept(SelectableChannel channel) throws IOException {
-    SocketChannel connection = ((ServerSocketChannel)channel).accept();
-    InetSocketAddress remoteAdr= (InetSocketAddress)connection.socket().getRemoteSocketAddress();
+		SocketChannel connection = ((ServerSocketChannel) channel).accept();
+		InetSocketAddress remoteAdr = (InetSocketAddress) connection.socket().getRemoteSocketAddress();
     // blacklist handling
     if (blacklist != null) {
       String newHost = remoteAdr.getAddress().getHostAddress();
       if (blacklist.contains(newHost)) {
-        try { connection.close();
+				try {
+					connection.close();
         } catch (IOException e) {
           // ok
         }
-        // TODO: change this to logger
-        System.out.println("TCP-Srv ("+getMessageServerId()+") rejecting access for host: "+newHost);
+				log.log(Level.WARNING, "TCP-Srv (id={0}) rejecting access for host: {1}", new Object[]{serverId, remoteAdr});
         return;
       }
     }
@@ -82,7 +90,7 @@ public final class TCPMessageServer extends NIOMessageServer {
     connection.socket().setTcpNoDelay(true);
     SelectionKey key = connection.register(selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
     MessageClient client = new MessageClient(remoteAdr, this);
-//    System.out.println("   ..accept "+client.getAddress());
+		log.log(Level.FINEST, " accept client {0} from {1}", new Object[]{client, remoteAdr});
     client.setStatus(Status.NEGOTIATING);
     key.attach(client);
     getIncomingConnectionQueue().add(client);
@@ -104,6 +112,7 @@ public final class TCPMessageServer extends NIOMessageServer {
     } catch (IOException e) {
       client.setCloseReason(CloseReason.ErrChannelRead);
       collectTrafficProblem(client);
+			log.log(Level.FINER, " channel.read exception", e);
       return;
     }
 
@@ -115,24 +124,26 @@ public final class TCPMessageServer extends NIOMessageServer {
     } catch (MessageHandlingException exc) {
       client.setCloseReason(CloseReason.ErrMessageWrong);
       collectTrafficProblem(client);
+			log.log(Level.FINER, " channel.read: message corrupt");
+			// throw new RuntimeException("..."); // TODO. is this ok ???
     }
-    // if (mhe != null) throw new RuntimeException(mhe); // TODO. is this ok ???
   }
 
-  protected boolean write(SelectableChannel channel) { //throws IOException {
+	protected boolean write(SelectableChannel channel) {
     SelectionKey key = channel.keyFor(selector);
-    MessageClient client = (MessageClient)key.attachment();
+		MessageClient client = (MessageClient) key.attachment();
     if (client == null) return false; // have seen happening for short intervals around connect
 
     CombinedPacket clientCurWrite = client.getCurrentWrite();
     if (clientCurWrite != null) {
       client.sent();		// Let the system know something has been written
       try {
-        ((SocketChannel)channel).write(clientCurWrite.getBuffer());
+				((SocketChannel) channel).write(clientCurWrite.getBuffer());
       } catch (IOException e) {
         client.setCloseReason(CloseReason.ErrChannelWrite);
         // remember this client for error processing after updateTraffic
         collectTrafficProblem(client);
+				log.log(Level.FINER, " channel.write exception", e);
         return false; // don't try again
       }
       if (!clientCurWrite.getBuffer().hasRemaining()) {
@@ -157,7 +168,7 @@ public final class TCPMessageServer extends NIOMessageServer {
 
       if (combined != null) {
         try {
-          ((SocketChannel)channel).write(combined.getBuffer());
+					((SocketChannel) channel).write(combined.getBuffer());
         } catch (IOException e) {
           client.setCloseReason(CloseReason.ErrChannelWrite);
           // remember this client for error processing after updateTraffic
@@ -190,8 +201,8 @@ public final class TCPMessageServer extends NIOMessageServer {
   }
 
   protected void connect(SelectableChannel channel) throws IOException {
-    if ((((SocketChannel)channel).finishConnect())) {
-      MessageClient client = (MessageClient)channel.keyFor(selector).attachment();
+		if (((SocketChannel) channel).finishConnect()) {
+			MessageClient client = (MessageClient) channel.keyFor(selector).attachment();
       if (client != null && client.getStatus() == MessageClient.Status.NEGOTIATING) {
         getIncomingConnectionQueue().add(client);
         getConnectionController().negotiate(client);
@@ -203,9 +214,10 @@ public final class TCPMessageServer extends NIOMessageServer {
     MessageClient client = getMessageClient(address);
     if ((client != null) &&
         (client.getStatus() != Status.DISCONNECTING) &&
-        (client.getStatus() != Status.DISCONNECTED))
+				(client.getStatus() != Status.DISCONNECTED)) {
+			log.log(Level.FINEST, "return existing client: {0} for: {1}", new Object[]{client, address});
       return client;	// Client already connected, simply return it
-
+		}
     SelectionKey key = null;
     SocketChannel channel = null;
 
@@ -219,11 +231,11 @@ public final class TCPMessageServer extends NIOMessageServer {
       key = channel.register(selector, SelectionKey.OP_CONNECT | SelectionKey.OP_READ | SelectionKey.OP_WRITE);
       key.attach(client);
       channel.connect(address);
+			log.log(Level.FINEST, "finishing connect; client: {0} for: {1}", new Object[]{client, address});
       return client;
     } catch (IOException e) {
-      System.err.println("  *** ioe in connect(adr)");
-      e.printStackTrace();
-      // todo: later log reason
+			log.log(Level.WARNING, "couldn't connect to {0}", address);
+			log.log(Level.WARNING, " -- reason:", e);
       try {
         if (channel != null) channel.close();
       } catch (IOException e1) { // ah, bad luck::

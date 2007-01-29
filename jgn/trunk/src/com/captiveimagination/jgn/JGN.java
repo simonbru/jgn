@@ -33,35 +33,45 @@
  */
 package com.captiveimagination.jgn;
 
-import java.util.*;
-import java.lang.reflect.Constructor;
-
-import com.captiveimagination.jgn.clientserver.message.*;
-import com.captiveimagination.jgn.convert.*;
+import com.captiveimagination.jgn.clientserver.message.PlayerStatusMessage;
+import com.captiveimagination.jgn.convert.ConversionHandler;
 import com.captiveimagination.jgn.message.*;
-import com.captiveimagination.jgn.ro.*;
-import com.captiveimagination.jgn.so.*;
-import com.captiveimagination.jgn.sync.message.*;
-import com.captiveimagination.jgn.translation.*;
+import com.captiveimagination.jgn.ro.RemoteObjectRequestMessage;
+import com.captiveimagination.jgn.ro.RemoteObjectResponseMessage;
+import com.captiveimagination.jgn.so.ObjectCreateMessage;
+import com.captiveimagination.jgn.so.ObjectDeleteMessage;
+import com.captiveimagination.jgn.so.ObjectUpdateMessage;
+import com.captiveimagination.jgn.sync.message.Synchronize2DMessage;
+import com.captiveimagination.jgn.sync.message.Synchronize3DMessage;
+import com.captiveimagination.jgn.sync.message.SynchronizePhysicsMessage;
+import com.captiveimagination.jgn.translation.TranslatedMessage;
+
+import java.lang.reflect.Constructor;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Foundational static class for various functionality that is abstract from any other
  * specific class but is necessary for the JGN project.
- * 
+ *
  * @author Matthew D. Hicks
  * @author Alfons Seul
  */
 public class JGN {
 	// registry maps (short) id --> messageClass
-	private static final HashMap<Short,Class<? extends Message>> registry =
-      new HashMap<Short,Class<? extends Message>>();
+	private static final HashMap<Short, Class<? extends Message>> registry =
+			new HashMap<Short, Class<? extends Message>>();
 	// registryReverse maps messageClass --> (short) id
-	private static final HashMap<Class<? extends Message>,Short> registryReverse =
-      new HashMap<Class<? extends Message>,Short>();
+	private static final HashMap<Class<? extends Message>, Short> registryReverse =
+			new HashMap<Class<? extends Message>, Short>();
 	// hierarchy maps a messageclass --> List of superclasses, interfaces upto Message.class
-	private static final HashMap< Class<? extends Message>, ArrayList<Class<?>> > hierarchy =
+	private static final HashMap<Class<? extends Message>, ArrayList<Class<?>>> hierarchy =
 		  new HashMap<Class<? extends Message>, ArrayList<Class<?>>>();
 	private static final int systemIdCnt; // used in populateLocalRegistryMessage()
+
+	private static final Logger LOG = Logger.getLogger("com.captiveimagination.jgn.JGN");
 
 	static {
 		// Certain messages must be known before negotiation so this is explicitly done here
@@ -90,20 +100,22 @@ public class JGN {
 		register(TranslatedMessage.class, --n);
 
 		systemIdCnt = registry.size();
+
+		// make sure, configuration+logging system is setup
+		JGNConfig.ensureJGNConfigured();
 	}
-	
+
 	/**
 	 * Messages must be registered via this method preferrably before any communication
 	 * occurs for efficiency in the initial connectivity negotiation process.
-	 *
+	 * <p/>
 	 * note, this isn't an option, it is a must.
 	 * the announced class will be registered with registry and reversRegistry, also
 	 * a fitting Conversionhandler will be established
-	 *
+	 * <p/>
 	 * as an implementation detail, note, that all messageclasses registered by this method
 	 * receive a positive id, while system message will have negativ ids.
 	 *
-	 * 
 	 * @param c the message class to be registered
 	 * @throws RuntimeException if class has no parameterless Ctor,
 	 *                          or a single, non-static, non-final, non-transient field isn't
@@ -123,32 +135,36 @@ public class JGN {
 				break;
 			}
 		}
-		if (! hasIt)
+		if (! hasIt) {
       // this message can't be serialized, this is an application error.
       // Stop further processing
-			throw new RuntimeException("Fatal: Message "+c.getName()+" can't be serialized. Check Constructors.");
-
+			LOG.severe("Message " + c.getName() + " can't be serialized; no paramterless constructor.");
+			LOG.severe("Application will terminate");
+			throw new RuntimeException("Fatal: Message " + c.getName() + " can't be serialized. Check Constructors.");
+		}
 		short id = generateId();
 		while (registry.containsKey(id)) {
 			id = generateId();
 		}
 		register(c, id);
 	}
-	
+
 	private static final void register(Class<? extends Message> c, short id) {
 		// check if the message follows rules and register conversionHandler for it
 		if (ConversionHandler.getConversionHandler(c) == null) {
 			// this message can't be serialized, this is an application error.
 			// Stop further processing
-			throw new RuntimeException("Fatal: Message "+c.getName()+" can't be serialized. Check Fields.");
+			LOG.severe("Message " + c.getName() + " can't be serialized. check fields");
+			LOG.severe("Application will terminate");
+			throw new RuntimeException("Fatal: Message " + c.getName() + " can't be serialized. Check Fields.");
 		}
 		registry.put(id, c);
 		registryReverse.put(c, id);
 		hierarchy.put(c, scanMessClassHierarchy(c)); // build up the hierarchy
 	}
-	
+
 	private static final short generateId() {
-		return (short)Math.round(Math.random() * Short.MAX_VALUE);
+		return (short) Math.round(Math.random() * Short.MAX_VALUE);
 	}
 
 //	------- not used anymore since Jan 16, 2007
@@ -174,7 +190,6 @@ public class JGN {
 //	}
 
 
-
 	/**
 	 * request the id associated locally with the messageclass given
 	 * uses the reverseRegistry
@@ -184,15 +199,24 @@ public class JGN {
 	 * @throws MessageHandlingException - if class not registered
 	 */
 	public static final short getMessageTypeId(Class<? extends Message> c) throws MessageHandlingException {
-		try {
-			return registryReverse.get(c);
-		} catch (NullPointerException e) {
-			throw new MessageHandlingException("Messageclass unknown; may be not registered", null, e);
+// not, what is intended ... (NPE would never occur...)
+//		try {
+//			return registryReverse.get(c);
+//		} catch (NullPointerException e) {
+//			throw new MessageHandlingException("Messageclass unknown; may be not registered", null, e);
+//		}
+// instead, do this:
+		Short result = registryReverse.get(c);
+		if (result == null) {
+			LOG.warning("Messageclass " + c.getName() + " not registered");
+			throw new MessageHandlingException("Messageclass " + c.getName() + " registered");
 		}
+		return result; // thanks to unboxing...
 	}
 
 	/**
 	 * requests a class for given id
+	 *
 	 * @param typeId
 	 * @return  the message class or <code>null</code> if no class was registered with that id
 	 */
@@ -205,6 +229,7 @@ public class JGN {
 	 * Interfaces are recursivly included. This hierarchy is used in DynamicMessageListener mimic,
 	 * to find the next fitting method, if there is no method in Listener that deals directly with
 	 * the argument class.
+	 *
 	 * @param c - a 'real' message class to get the hierarchy list for
 	 * @return a list of classes and Interfaces representing the superclass/interface structure of c
 	 *         or null, if c was not scanned before
@@ -241,7 +266,7 @@ public class JGN {
 	 */
 	public static final void populateRegistrationMessage(LocalRegistrationMessage message) {
 		// destination arrays
-		int nonSystem = registry.size() - systemIdCnt; 		// slightly more efficient than old version
+		int nonSystem = registry.size() - systemIdCnt;
 		short[] ids = new short[nonSystem];
 		String[] names = new String[nonSystem];
 		// registered keys
@@ -282,10 +307,10 @@ public class JGN {
 	 * convenience routine for creating a Runnable that wraps a list of Updatables
 	 * each pass through the list will be sperated by 1 ms pause.
 	 *
-	 * @see Updatable
-	 * @see UpdatableRunnable
 	 * @param updatables - one or more "tasks" to be done until they are not any more alive.
 	 * @return Runnable - ready for wrapping into a thread and get started.
+	 * @see Updatable
+	 * @see UpdatableRunnable
 	 */
 	public static final Runnable createRunnable(Updatable... updatables) {
 		return createRunnable(1, updatables);
@@ -325,7 +350,7 @@ public class JGN {
 	 */
 	public static final Thread createThread(long sleep, Updatable... updatables) {
 		Thread res = new Thread(createRunnable(sleep, updatables));
-		res.setName("JGN_Upd");
+		res.setName("JGN_Upd" + res.getId());
 		return res;
 	}
 
@@ -338,9 +363,11 @@ public class JGN {
 class UpdatableRunnable implements Runnable {
 	private long sleep;
 	private Updatable[] updatables;
+	private Logger log;
 
 	/**
 	 * Creates the Runnable
+	 *
 	 * @param sleep      if > 0, will sleep this amount in ms between cycles;
 	 *                   else no delay (but a Thread.yield instead)
 	 *                   NOTE that bigger values may reduce the response time of the system
@@ -351,17 +378,30 @@ class UpdatableRunnable implements Runnable {
 	public UpdatableRunnable(long sleep, Updatable... updatables) {
 		this.sleep = sleep;
 		this.updatables = updatables;
+		// note this logger is per instance (and not based on classname) !
+		log = Logger.getLogger("com.captiveimagination.jgn.UpdRun");
 	}
 
 	/**
 	 * periodically calls the update() method of all Updatables
 	 * The owning thread will terminate, when all Updatables deliver isAlive() == false.
-	 *
+	 * <p/>
 	 * Each Throwable during an update() will be wrapped into a RunTimeException and
 	 * currently terminate ALL tasks and the owning thread.
 	 */
 	public void run() {
  		boolean alive;
+		long threadId = Thread.currentThread().getId(); // this is as of Jdk15!
+
+		// note: use following line, to adjust the real id of the real thread
+		//       with the fake id as of JDK14 logger!!
+		log.info("JGN update thread " + threadId + " started");
+
+		if (log.isLoggable(Level.FINER)) {
+			for (Updatable u : updatables) {
+				log.log(Level.FINER, " -works on: {0}", u);
+			}
+		}
 		do {
       alive = false;
   		for (Updatable u : updatables) {
@@ -369,8 +409,10 @@ class UpdatableRunnable implements Runnable {
 					alive = true;     // if at least one u is alive(), keep running
           try {
 						u.update();
-          } catch(Throwable t) {
+					} catch (Throwable t) {
 						// TODO ase: think again about termination
+						log.severe("Update thread " + threadId + " will die, because..");
+						log.log(Level.SEVERE, "-->", t);
 						throw new RuntimeException(t);
 			    }
         }
@@ -378,13 +420,14 @@ class UpdatableRunnable implements Runnable {
       if (sleep > 0) {
 				try {
 					Thread.sleep(sleep);
-				} catch(InterruptedException exc) {
+				} catch (InterruptedException exc) {
 					// no real need for --> exc.printStackTrace();
-					// therefore t'is space for rent...
+					// therefore this is space for rent...
 				}
 			} else {
 				Thread.yield();
 			}
 		} while (alive);
+		log.info("JGN update thread " + threadId + " terminated");
 	}
 }

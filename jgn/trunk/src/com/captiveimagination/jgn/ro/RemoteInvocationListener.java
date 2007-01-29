@@ -33,31 +33,36 @@
  */
 package com.captiveimagination.jgn.ro;
 
-import java.io.*;
-import java.lang.reflect.*;
+import com.captiveimagination.jgn.MessageServer;
+import com.captiveimagination.jgn.event.MessageAdapter;
+import com.captiveimagination.jgn.message.Message;
 
-import com.captiveimagination.jgn.*;
-import com.captiveimagination.jgn.event.*;
-import com.captiveimagination.jgn.message.*;
+import java.io.Serializable;
+import java.lang.reflect.Method;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * @author Matthew D. Hicks
  */
 public class RemoteInvocationListener extends MessageAdapter {
+
+	private static Logger LOG = Logger.getLogger("com.captiveimagination.jgn.ro.RemoteInvocationListener");
+
 	private Class<? extends RemoteObject> remoteClass;
 	private RemoteObject object;
 	private MessageServer server;
-	
+
 	protected RemoteInvocationListener(Class<? extends RemoteObject> remoteClass, RemoteObject object, MessageServer server) {
 		this.remoteClass = remoteClass;
 		this.object = object;
 		this.server = server;
 		server.addMessageListener(this);
 	}
-	
+
 	public void messageReceived(Message message) {
 		if (message instanceof RemoteObjectRequestMessage) {
-			RemoteObjectRequestMessage m = (RemoteObjectRequestMessage)message;
+			RemoteObjectRequestMessage m = (RemoteObjectRequestMessage) message;
 			if (m.getRemoteObjectName().equals(remoteClass.getName())) {
 				RemoteObjectResponseMessage response = new RemoteObjectResponseMessage();
 				response.setMethodName(m.getMethodName());
@@ -78,7 +83,7 @@ public class RemoteInvocationListener extends MessageAdapter {
 					Method method = null;
 					try {
 						method = remoteClass.getMethod(m.getMethodName(), classes);
-					} catch(NoSuchMethodException exc) {
+					} catch (NoSuchMethodException exc) {
 						for (Method meth : remoteClass.getMethods()) {
 							if ((meth.getName().equals(m.getMethodName())) && (meth.getParameterTypes().length == classes.length)) {
 								method = meth;
@@ -86,24 +91,29 @@ public class RemoteInvocationListener extends MessageAdapter {
 							}
 						}
 					}
-					//ase --
 					if (method == null)
 					  response.setResponse(new NoSuchMethodException());
 					else {
 						method.setAccessible(true); // may produce NPE!
 						Object obj = method.invoke(object, parameters);
-						response.setResponse((Serializable)obj);
+
+						// make _sure_ result is serializable
+						Class objc = obj.getClass();
+						if (! (objc.isPrimitive() || Serializable.class.isAssignableFrom(objc))) {
+							IllegalArgumentException iAE = new IllegalArgumentException("result class is not serializable: " + objc);
+							LOG.log(Level.SEVERE, "", iAE);
+							response.setResponse(iAE);
+						} else response.setResponse(obj);
 					}
-					// -- ase
-				} catch(Exception exc) {
-					exc.printStackTrace();
+				} catch (Exception exc) {
+					LOG.log(Level.SEVERE, "", exc);
 					response.setResponse(exc);
 				}
 				m.getMessageClient().sendMessage(response);
 			}
 		}
 	}
-	
+
 	public void close() {
 		server.removeMessageListener(this);
 	}

@@ -33,16 +33,18 @@
  */
 package com.captiveimagination.jgn.event;
 
-import com.captiveimagination.jgn.message.Message;
 import com.captiveimagination.jgn.JGN;
+import com.captiveimagination.jgn.message.Message;
 
-import java.util.HashMap;
 import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * The base class for DynamicMessageListener (DML) implementations. Note this class is
  * extended by DynamicMessageAdapter, from which a user of this API can further derive.
- *
+ * <p/>
  * Each DML caches all of its message-methods for the 4 handlingclasses RECEIVED, SENT, ...
  * When the handle(MESSAGE_EVENT, Message, DynamicMessageListener) is called the first time,
  * this analysis takes place in collectSubclassMessageMethods(..). Thereafter we can do a
@@ -51,7 +53,7 @@ import java.lang.reflect.Method;
  * During startup registration of messageclasses, JGN analyses and stores the class
  * hierarchy for each messagetype that gets registered. Note this includes all Interfaces
  * implemented on all levels of the superclass hierarchy.
- *
+ * <p/>
  * The target method will be found based on the MATCHing strategy:
  * NORMAL: will first try a direct match, if that fails, will call for baseclass:Message
  * EXACT:  will try a direct match, do nothing, if that fails
@@ -65,8 +67,9 @@ import java.lang.reflect.Method;
  */
 public abstract class BaseDynamicMessageListener implements DynamicMessageListener {
 
-  public static enum MATCH { NORMAL, HIERARCHICAL, EXACT }
+	public static enum MATCH {NORMAL, HIERARCHICAL, EXACT }
 
+	private static Logger LOG = Logger.getLogger("com.captiveimagination.jgn.event.BaseDynamicMessageListener");
   private boolean initialized;
   private MATCH matchKind;
   private HashMap<Class<?>, Method> recvMethods;
@@ -114,6 +117,7 @@ public abstract class BaseDynamicMessageListener implements DynamicMessageListen
 
 	/**
 	 * set the strategy on how to handle non-exactly fitting calls
+	 *
 	 * @param m the new MatchKind, see descriütion of class
 	 */
 	public void setMatchKind(MATCH m) {
@@ -124,7 +128,7 @@ public abstract class BaseDynamicMessageListener implements DynamicMessageListen
    * dynamically invoke the listener method for the given <type>, the given <MessageClass>, on the
    * <DynamicListener> given. If that method doesn't exist, the baseMethod 'message...(Message m)' will
    * be called.
-   *
+	 * <p/>
    * Note this implementation is FINAL !!!
    *
    * @param type     - a MessageListener.MESSAGE_EVENT; eg RECEIVED, SENT, ...
@@ -140,20 +144,21 @@ public abstract class BaseDynamicMessageListener implements DynamicMessageListen
     if (! initialized) collectSubclassMessageMethods(listener);
 
     switch (type) {
-      case CERTIFIED: mm = crtfMethods;   break;
-      case FAILED:    mm = failMethods;   break;
-      case RECEIVED:  mm = recvMethods;   break;
-      case SENT:      mm = sentMethods;   break;
-      default:        return;
-    }
+			case CERTIFIED: mm = crtfMethods; break;
+			case FAILED:	mm = failMethods; break;
+			case RECEIVED:	mm = recvMethods; break;
+			case SENT:		mm = sentMethods; break;
+			default:		return;
+		}
 
-    // see if there is a method that directly matches the parameter class
-    Method m = mm.get(messClass);
+		// see if there is a method that directly matches the parameter class
+		Method m = mm.get(messClass);
 
-    if (m == null) {  // nope, now ...
+		if (m == null) {	// nope, now ...
 
 			switch (matchKind) {
-        case EXACT: return;		// if no nethod found, do nothing
+				case EXACT:
+					return;		// if no nethod found, do nothing
 
         case HIERARCHICAL:		// search through the hierarchy
           for (Class c : JGN.getMessClassHierarchy(messClass)) {
@@ -172,8 +177,7 @@ public abstract class BaseDynamicMessageListener implements DynamicMessageListen
     try {
       m.invoke(listener, mess);
     } catch (Exception e) {
-      System.err.println("couldn't call dynamically at: "+listener+" type="+type+" message="+mess);
-      e.printStackTrace();
+			LOG.log(Level.SEVERE, "couldn't call dynamically at: " + listener + " type=" + type + " message=" + mess);
     }
   }
 }

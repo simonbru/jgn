@@ -36,8 +36,11 @@ package com.captiveimagination.jgn.message;
 /**
  * This message is sent internally to let the remote machine know that
  * the connection is still active and should not be terminated.
- * 
+ *
  * @author Matthew D. Hicks
  */
 public class NoopMessage extends RealtimeMessage {
+	public String toString() {
+		return "Noop";
+	}
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2005-2006 JavaGameNetworking
+ * Copyright (c) 2005-2007 JavaGameNetworking
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,13 +33,26 @@
  */
 package com.captiveimagination.jgn.clientserver;
 
-import java.io.*;
+import com.captiveimagination.jgn.MessageClient;
+import com.captiveimagination.jgn.message.Message;
+import com.captiveimagination.jgn.message.type.CertifiedMessage;
 
-import com.captiveimagination.jgn.*;
-import com.captiveimagination.jgn.message.*;
-import com.captiveimagination.jgn.message.type.*;
+import java.io.IOException;
 
 /**
+ * A JGNDirectConnection binds together the 2 possible MessageClients used for
+ * TCP/UDP and the PlayerID.
+ * It knows how to disconnect from those MessageClients as well as how to send
+ * messages to the server: if there is only one protocol installed, it uses that (aha!)
+ * otherwise it prefers to send messages via UDP, but sends CertifiedMessages via
+ * reliable TCP. BTW, messages are not forced to be PlayerMessages...
+ * <p/>
+ * In contrast to JGNRelayConnections, messages are sent directly via corresponding MC,
+ * therefore you'll find this type of connection at JGNServer, and as the connection
+ * from JGNClient to JGNServer.
+ * <p/>
+ * see JGNRelayConnection for routing 'client-to-client' via JGNServer.
+ *
  * @author Matthew D. Hicks
  */
 public class JGNDirectConnection implements JGNConnection {
@@ -50,7 +63,7 @@ public class JGNDirectConnection implements JGNConnection {
 	public JGNDirectConnection() {
 		playerId = -1;
 	}
-	
+
 	public void setPlayerId(short playerId) {
 		this.playerId = playerId;
 	}
@@ -97,17 +110,13 @@ public class JGNDirectConnection implements JGNConnection {
 	
 	public void sendMessage(Message message) {
 		if (message.getPlayerId() == -1) {
-			message.setPlayerId(getPlayerId());
+			message.setPlayerId(this.playerId);
 		}
 		if ((message instanceof CertifiedMessage) && (reliableClient != null)) {
 			reliableClient.sendMessage(message);
 		} else if (fastClient != null) {
 			fastClient.sendMessage(message);
-		} else {
-			// ase -- this may throw NPE
-			// reliableClient.sendMessage(message);
-			// -- ase
-			if (reliableClient != null)
+		} else if (reliableClient != null) {
 				reliableClient.sendMessage(message);
 		}
 	}

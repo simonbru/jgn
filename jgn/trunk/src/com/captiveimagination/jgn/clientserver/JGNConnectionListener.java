@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2005-2006 JavaGameNetworking
+ * Copyright (c) 2005-2007 JavaGameNetworking
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

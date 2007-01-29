@@ -33,12 +33,16 @@
  */
 package com.captiveimagination.jgn;
 
-import java.io.*;
-import java.net.*;
-import java.nio.*;
-import java.nio.channels.*;
+import com.captiveimagination.jgn.message.Message;
 
-import com.captiveimagination.jgn.message.*;
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
+import java.nio.ByteBuffer;
+import java.nio.channels.DatagramChannel;
+import java.nio.channels.SelectableChannel;
+import java.nio.channels.SelectionKey;
+import java.util.logging.Level;
 
 /**
  * @author Matthew D. Hicks
@@ -47,13 +51,15 @@ import com.captiveimagination.jgn.message.*;
 public final class UDPMessageServer extends NIOMessageServer {
 	private DatagramChannel channel;
 	private ByteBuffer readLookup;
-	
+
 	public UDPMessageServer(SocketAddress address) throws IOException {
 		this(address, 1024);
 	}
-	
+
 	public UDPMessageServer(SocketAddress address, int maxQueueSize) throws IOException {
 		super(address, maxQueueSize);
+		log.log(Level.INFO, " create UDPMessageServer (id=" + serverId + ") at {0}, queuesize= {1}",
+				new Object[]{address, maxQueueSize});
 		setServerType(ServerType.UDP);
 		readLookup = ByteBuffer.allocateDirect(1024 * 5);
 	}
@@ -65,7 +71,7 @@ public final class UDPMessageServer extends NIOMessageServer {
 		channel.register(selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
     return channel;
 	}
-	
+
 	protected void accept(SelectableChannel channel) {
 		// UDP Message Server will never receive an accept event
 	}
@@ -77,7 +83,7 @@ public final class UDPMessageServer extends NIOMessageServer {
 	protected void read(SelectableChannel c) { //throws IOException {
 		MessageClient client = null;
     try {
-			InetSocketAddress address = (InetSocketAddress)channel.receive(readLookup);
+			InetSocketAddress address = (InetSocketAddress) channel.receive(readLookup);
 			if (address == null) {
 				// a message was sent but never reached the host, this seems to be ok
 				return;
@@ -86,7 +92,8 @@ public final class UDPMessageServer extends NIOMessageServer {
       if (blacklist != null) {
         String newHost = address.getAddress().getHostAddress();
         if (blacklist.contains(newHost)) {
-          System.out.println("UDP-Srv ("+getMessageServerId()+") Access denied for host: "+newHost);
+					log.log(Level.WARNING, "UDP-Srv (id={0}) rejecting access for host: {1}", new Object[]{serverId, address});
+					System.out.println("UDP-Srv (" + getMessageServerId() + ") Access denied for host: " + newHost);
           return;
         }
       }
@@ -94,26 +101,28 @@ public final class UDPMessageServer extends NIOMessageServer {
 			readLookup.limit(readLookup.position());
 			readLookup.position(0);
 			client = getMessageClient(address);
-			
+
 			if (client == null) {
 				client = new MessageClient(address, this);
 				client.setStatus(MessageClient.Status.NEGOTIATING);
 				getIncomingConnectionQueue().add(client);
 				getMessageClients().add(client);
+				log.log(Level.FINEST, "'accept' new client {0} from {1}", new Object[]{client, address});
 			}
 			client.getReadBuffer().put(readLookup);
 			readLookup.clear();
-			
+
 			Message message;
 			while ((message = readMessage(client)) != null) {
 				client.receiveMessage(message);
 			}
-		} catch(MessageHandlingException exc) {
+		} catch (MessageHandlingException exc) {
 			client.setCloseReason(MessageClient.CloseReason.ErrMessageWrong);
 			collectTrafficProblem(client);
-		} catch(IOException ioe) {
+		} catch (IOException ioe) {
 			// an error occured while reading, it's bad, we don't know the client
-			// so do nothing
+			// so do nothing, except logging
+			log.log(Level.FINER, " channel.read exception", ioe);
 		}
 	}
 
@@ -126,6 +135,7 @@ public final class UDPMessageServer extends NIOMessageServer {
 				} catch (IOException e) { // closed by remote
 					client.setCloseReason(MessageClient.CloseReason.ErrChannelWrite);
 					collectTrafficProblem(client);
+					log.log(Level.FINER, " channel.write exception", e);
 					continue;
 				}
 				if (!client.getCurrentWrite().getBuffer().hasRemaining()) {
@@ -154,6 +164,7 @@ public final class UDPMessageServer extends NIOMessageServer {
 						client.setCloseReason(MessageClient.CloseReason.ErrChannelWrite);
 						// remember this client for error processing after updateTraffic
 						collectTrafficProblem(client);
+						log.log(Level.FINER, " channel.write exception", e);
 						continue;
 					}
 					if (combined.getBuffer().hasRemaining()) {
@@ -184,12 +195,15 @@ public final class UDPMessageServer extends NIOMessageServer {
 
   /**
    * since UDP is connectionless, we just create a MessageClient and start negotiation
+	 *
    * @param address
    * @return a MessageClient pointing to address
    */
   public MessageClient connect(SocketAddress address) {
 		MessageClient client = getMessageClient(address);
-		if ((client != null) && (client.getStatus() != MessageClient.Status.DISCONNECTING) && (client.getStatus() != MessageClient.Status.DISCONNECTED)) {
+		if ((client != null) && (client.getStatus() != MessageClient.Status.DISCONNECTING) &&
+				(client.getStatus() != MessageClient.Status.DISCONNECTED)) {
+			log.log(Level.FINEST, "return existing client: {0} for: {1}", new Object[]{client, address});
 			return client;		// Client already connected, simply return it
 		}
 		client = new MessageClient(address, this);
@@ -197,6 +211,7 @@ public final class UDPMessageServer extends NIOMessageServer {
 		getMessageClients().add(client);
 		getIncomingConnectionQueue().add(client);
 		getConnectionController().negotiate(client);
+		log.log(Level.FINEST, "created client: {0} for: {1}", new Object[]{client, address});
 		return client;
 	}
 }

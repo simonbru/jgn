@@ -33,10 +33,11 @@
  */
 package com.captiveimagination.jgn;
 
-import com.captiveimagination.jgn.message.*;
+import com.captiveimagination.jgn.message.DisconnectMessage;
+import com.captiveimagination.jgn.message.LocalRegistrationMessage;
 
 /**
- * [ase] the simplest ConnectionController possible [/ase]
+ * the simplest ConnectionController possible
  *
  * @author Matthew D. Hicks
  */
@@ -44,10 +45,9 @@ public class DefaultConnectionController implements ConnectionController {
 
 	/**
 	 * docu copied from ConnectionController
-	 *
+	 * <p/>
 	 * This method is called when a connection is successfully established and is ready to
 	 * send a negotiation message to the remote server.
-	 *
 	 */
 	public void negotiate(MessageClient client) {
 		LocalRegistrationMessage message = new LocalRegistrationMessage();
@@ -55,10 +55,10 @@ public class DefaultConnectionController implements ConnectionController {
 		JGN.populateRegistrationMessage(message);
 		client.sendMessage(message);
 	}
-	
-/**
+
+	/**
  * docu copied from ConnectionController
- *
+	 * <p/>
  * This method is invoked when a MessageClient is manually told to disconnect. This method
  * is responsible for notifying the remote server of the disconnection.
  */
@@ -67,10 +67,10 @@ public class DefaultConnectionController implements ConnectionController {
 			client.sendMessage(new DisconnectMessage());
 	}
 
-	
+
  /**
 	* docu copied from ConnectionController
-	*
+	 * <p/>
 	*	This method is invoked when a MessageClient is manually kicked. This method is responsible
 	* for notifying the remote server of the kick and disconnection.
   */

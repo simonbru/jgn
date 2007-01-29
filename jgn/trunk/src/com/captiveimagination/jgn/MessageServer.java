@@ -33,30 +33,42 @@
  */
 package com.captiveimagination.jgn;
 
-import java.io.*;
-import java.net.*;
-import java.nio.*;
-import java.util.*;
-import java.util.concurrent.*;
+import com.captiveimagination.jgn.convert.ConversionHandler;
+import com.captiveimagination.jgn.event.ConnectionListener;
+import com.captiveimagination.jgn.event.DynamicMessageListener;
+import com.captiveimagination.jgn.event.MessageListener;
+import com.captiveimagination.jgn.message.LocalRegistrationMessage;
+import com.captiveimagination.jgn.message.Message;
+import com.captiveimagination.jgn.message.NoopMessage;
+import com.captiveimagination.jgn.queue.ConnectionQueue;
+import com.captiveimagination.jgn.queue.MessageQueue;
+import com.captiveimagination.jgn.queue.QueueFullException;
+import com.captiveimagination.jgn.ro.RemoteObjectManager;
+import com.captiveimagination.jgn.ro.ping.Ping;
+import com.captiveimagination.jgn.ro.ping.ServerPing;
+import com.captiveimagination.jgn.translation.DataTranslator;
+import com.captiveimagination.jgn.translation.TranslatedMessage;
+import com.captiveimagination.jgn.translation.TranslationManager;
 
-import com.captiveimagination.jgn.convert.*;
-import com.captiveimagination.jgn.event.*;
-import com.captiveimagination.jgn.message.*;
-import com.captiveimagination.jgn.queue.*;
-import com.captiveimagination.jgn.ro.*;
-import com.captiveimagination.jgn.ro.ping.*;
-import com.captiveimagination.jgn.translation.*;
+import java.io.IOException;
+import java.net.SocketAddress;
+import java.nio.ByteBuffer;
+import java.util.AbstractQueue;
+import java.util.ArrayList;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * MessageServer is the abstract foundation from which all sending and receiving
  * of Messages occur.
- *
+ * <p/>
  * Note, that the name Message'Server' doesn't refer to the common Server as in Client/Server sermon.
  * It's name stems from the fact, that it locally serves all connections to the outside world. These
  * connections are realized in (see) MessageClients. While the MessageServer is mainly concerned with
  * Connections, the MessageClients are mainly responsible for data handling, that will go around with
  * 'a little help' from the MessageServer.
- *
+ * <p/>
  * MessageServer implements Updatable which defines a method update(). Normally this method will be
  * called periodically to enable serving all MessageClients and related tasks.
  *
@@ -64,13 +76,18 @@ import com.captiveimagination.jgn.translation.*;
  * @author Alfons Seul
  */
 public abstract class MessageServer implements Updatable {
+	static {
+		// do this FIRST !!
+		JGNConfig.ensureJGNConfigured();
+	}
 
-	public enum ServerType { Unknown, TCP, UDP }     // set by subclasses
+	public enum ServerType {
+		Unknown, TCP, UDP }		 // set by subclasses
 
 	public static long DEFAULT_TIMEOUT = 30 * 1000;
 	public static ConnectionController DEFAULT_CONNECTION_CONTROLLER = new DefaultConnectionController();
 
-	private long serverId;
+	protected long serverId;
 	private SocketAddress address;
 	private ServerType srvType;
 	private int maxQueueSize;
@@ -86,19 +103,22 @@ public abstract class MessageServer implements Updatable {
   protected AbstractQueue<MessageClient> clients;
 	protected boolean keepAlive;
 	protected boolean alive;
-	
+
+	// log per instance, used for subclasses as well
+	protected Logger log = Logger.getLogger("com.captiveimagination.jgn.MessageServer");
+
 	private ConnectionController controller;
-	
+
 	public MessageServer(SocketAddress address, int maxQueueSize) throws IOException {
 		serverId = JGN.generateUniqueId();
 		srvType = ServerType.Unknown;
-		
+
 		this.address = address;
 		this.maxQueueSize = maxQueueSize;
-		
+
 		keepAlive = true;
 		alive = true;
-		
+
 		connectionTimeout = DEFAULT_TIMEOUT;
 		incomingConnections = new ConnectionQueue();
 		negotiatedConnections = new ConnectionQueue();
@@ -108,47 +128,96 @@ public abstract class MessageServer implements Updatable {
 		filters = new ArrayList<ConnectionFilter>();
 		translators = new ArrayList<DataTranslator>();
 		clients = new ConcurrentLinkedQueue<MessageClient>();
-		
+
 		controller = DEFAULT_CONNECTION_CONTROLLER;
-		
+
 		addConnectionListener(InternalListener.getInstance());
 		addMessageListener(InternalListener.getInstance());
-		
+
 		// Default registered RemoteObjects
 		RemoteObjectManager.registerRemoteObject(Ping.class, new ServerPing(), this);
 	}
-	
-	public void setMessageServerId(long serverId) { this.serverId = serverId;}
-	public long getMessageServerId() {return serverId;}
-	
-  public ServerType getServerType() {return srvType; }
-  protected void setServerType(ServerType st) { srvType = st; }
 
-  public SocketAddress getSocketAddress() { return address; }
-  public boolean isAlive() { return alive; }
-	public int getMaxQueueSize() {return maxQueueSize;}
+	public void setMessageServerId(long serverId) {
+		this.serverId = serverId;
+		log.finer("server id set to " + serverId);
+	}
 
-	public void setConnectionTimeout(long connectionTimeout) {this.connectionTimeout = connectionTimeout;}
-  public ConnectionController getConnectionController() {return controller;}
-  public void setConnectionController(ConnectionController controller) {this.controller = controller;}
+	public long getMessageServerId() {
+		return serverId;
+	}
 
-	protected ConnectionQueue getIncomingConnectionQueue() {return incomingConnections;}
-	protected ConnectionQueue getNegotiatedConnectionQueue() {return negotiatedConnections;}
-	protected ConnectionQueue getDisconnectedConnectionQueue() {return disconnectedConnections;}
+	public ServerType getServerType() {
+		return srvType;
+	}
 
-  protected AbstractQueue<MessageClient> getMessageClients() { return clients;}
-	public void setBlacklist(ArrayList<String> blcklst) {blacklist = blcklst;}
-  public ArrayList<String> getBlacklist() {return blacklist;}
+	protected void setServerType(ServerType st) {
+		if (srvType != ServerType.Unknown) {
+			log.severe("Servertype cannot change after being assigned");
+			throw new IllegalArgumentException("Servertype cannot change after being assigned");
+		}
+		srvType = st;
+	}
+
+	public SocketAddress getSocketAddress() {
+		return address;
+	}
+
+	public boolean isAlive() {
+		return alive;
+	}
+
+	public int getMaxQueueSize() {
+		return maxQueueSize;
+	}
+
+	public void setConnectionTimeout(long connectionTimeout) {
+		this.connectionTimeout = connectionTimeout;
+	}
+
+	public ConnectionController getConnectionController() {
+		return controller;
+	}
+
+	public void setConnectionController(ConnectionController controller) {
+		this.controller = controller;
+	}
+
+	protected ConnectionQueue getIncomingConnectionQueue() {
+		return incomingConnections;
+	}
+
+	protected ConnectionQueue getNegotiatedConnectionQueue() {
+		return negotiatedConnections;
+	}
+
+	protected ConnectionQueue getDisconnectedConnectionQueue() {
+		return disconnectedConnections;
+	}
+
+	protected AbstractQueue<MessageClient> getMessageClients() {
+		return clients;
+	}
+
+	public void setBlacklist(ArrayList<String> blcklst) {
+		log.finer("blacklist will be set to " + blcklst);
+		blacklist = blcklst;
+	}
+
+	public ArrayList<String> getBlacklist() {
+		return blacklist;
+	}
 
 
   /**
 	 * Sends <code>message</code> to all connected clients.
-	 * 
+	 *
 	 * @param   message
 	 * @return	total number of clients messages sent to
 	 */
 	public int broadcast(Message message) {
 		int sent = 0;
+		log.finest("starting broadcast message: " + message);
 		for (MessageClient client : getMessageClients()) {
 			try {
 				client.sendMessage(message);
@@ -159,9 +228,10 @@ public abstract class MessageServer implements Updatable {
 				// Ignore when broadcasting
 			}
 		}
+		log.finest("finished broadcasting. Sent: " + sent);
 		return sent;
 	}
-	
+
 
 	public MessageClient getMessageClient(SocketAddress address) {
 		for (MessageClient client : getMessageClients()) {
@@ -169,94 +239,130 @@ public abstract class MessageServer implements Updatable {
 		}
 		return null;
 	}
-	
+
 	/**
 	 * Establishes a connection to the remote host distinguished by
 	 * <code>address</code>. This method is non-blocking.
-	 * 
+	 *
 	 * @param address
-	 * @return
-	 * 		A MessageClient will always be returned that references the connection
+	 * @return A MessageClient will always be returned that references the connection
 	 * 		either in-progress or that has already been established. Only one connection
 	 * 		can exist from one MessageServer to another, so if a second request is made
 	 * 		the original MessageClient will be returned and a new one will not be created.
 	 * @throws IOException
 	 */
 	public abstract MessageClient connect(SocketAddress address) throws IOException;
-	
+
 	/**
 	 * Exactly the same as connect, but blocks for <code>timeout</code> in milliseconds
 	 * for the connection to be established and returned. If the connection is already
 	 * established it will be immediately returned. If the connection is not established
 	 * in the time allotted via timeout the client will be disconnected and will no longer
 	 * attempt the connect.
-	 * 
+	 * <p/>
 	 * <b>WARNING</b>: Do not execute this method in the same thread as is doing the
 	 * update calls or you will end up with a timeout every time.
-	 * 
+	 *
 	 * @param address
 	 * @param timeout
-	 * @return
-	 * 		MessageClient for the connection that is established.
+	 * @return MessageClient for the connection that is established.
 	 * @throws IOException
 	 */
 	public MessageClient connectAndWait(SocketAddress address, int timeout) throws IOException {
     MessageClient client = connect(address);
     if (client == null) return null; // can happen when IOE on channel.connect() see TCPMessageServer.connect
 
+		log.finest("waiting on client to connect: " + client);
     long time = System.currentTimeMillis();
 		while (System.currentTimeMillis() < time + timeout) {
-			if (client.isConnected())	return client;
-      try { Thread.sleep(10);
+			if (client.isConnected()) {
+				log.finest("client connected: " + client);
+				return client;
+			}
+			try {
+				Thread.sleep(10);
       } catch (InterruptedException e) { //
       }
     }
 		// Last attempt before failing
-		if (client.isConnected()) return client;
+		if (client.isConnected()) {
+			log.finest("client connected: " + client);
+			return client;
+		}
     client.setCloseReason(MessageClient.CloseReason.TimeoutConnect);
+		log.finest("timeout: failed connecting client " + client);
     client.disconnect();
 		return null;
 	}
-		
+
 	protected abstract void disconnectInternal(MessageClient client, MessageClient.CloseReason reason);
-	
+
 	/**
-	 * Closes all open connections to remote clients
+	 * Closes all open connections to remote clients by disconnecting local Clients.
+	 * prepares to be shutdown
 	 */
 	public void close() throws IOException {
+		log.finest("close() entered...");
 		synchronized (getMessageClients()) {
 			for (MessageClient client : getMessageClients()) {
-				if (client.isConnected()) client.disconnect();
+				if (client.isConnected()) {
+					client.disconnect();
+					client.setCloseReason(MessageClient.CloseReason.ClosedByServer);
+				}
 			}
 		}
 		keepAlive = false;
+		log.finest("... close() finished");
 	}
-	
-	public void closeAndWait(long timeout) throws IOException, InterruptedException {
+
+	/**
+	 * Exactly the same as close, but blocks for <code>timeout</code> in milliseconds for the
+	 * server to not be 'alive' anymore.
+	 * <p/>
+	 * <b>WARNING</b>: Do not execute this method in the same thread as is doing the
+	 * update calls or you will end up with a timeout every time.
+	 *
+	 * @param timeout in ms
+	 * @throws IOException if no shutdown within allotted time
+	 */
+	public void closeAndWait(long timeout) throws IOException {
+		log.finest("waiting on server to close...");
 		close();
 		long time = System.currentTimeMillis();
 		while (System.currentTimeMillis() <= time + timeout) {
-			if (!isAlive()) return;
-      // TODO: change this is ugly
-			synchronized (getMessageClients()) {
-				if ((getMessageClients().size() > 0) && (getMessageClients().peek().getStatus() == MessageClient.Status.CONNECTED)) {
-					getMessageClients().peek().disconnect();
-				}
+			if (!isAlive()) {
+				log.finest("... done waiting on server to close...");
+				return;
 			}
+			// _TODO: change this is ugly
+			// I THINK, this is neither necessary nor senseful, since clients got 'disconnect() in
+			// the call to close() above. No good, if we do it twice!!
+			// BUT, we should wait until all clients closed(), that will set alive to
+			// false in MessageServer.updateConnections()...
+
+//      synchronized (getMessageClients()) {
+//				if ((getMessageClients().size() > 0) && (getMessageClients().peek().getStatus() == MessageClient.Status.CONNECTED)) {
+//					getMessageClients().peek().disconnect();
+//				}
+//			}
+			try {
 			Thread.sleep(10);
+			} catch (InterruptedException e) {/**/}
 		}
+		log.severe("Server did not shutdown timely, still " +
+				getMessageClients().size() + " MessageClients connected");
 		throw new IOException("MessageServer did not shutdown within the allotted time (" + getMessageClients().size() + ").");
 	}
-	
+
 	/**
 	 * Processing incoming/outgoing traffic for this MessageServer
 	 * implementation. Should handle incoming connections, incoming
 	 * messages, and outgoing messages.
-	 * 
+	 *
 	 * @throws IOException
 	 */
 	public abstract void updateTraffic() throws IOException;
-	
+
 	/**
 	 * Handles processing events for incoming/outgoing messages sending to
 	 * the registered listeners for both the MessageServer and MessageClients
@@ -272,7 +378,7 @@ public abstract class MessageServer implements Updatable {
 				}
 			}
 		}
-		
+
 		// Process incoming Messages to the listeners
 		for (MessageClient client : clients) {
 			notifyIncoming(client);
@@ -282,36 +388,38 @@ public abstract class MessageServer implements Updatable {
 		for (MessageClient client : clients) {
 			notifyOutgoing(client);
 		}
-		
+
 		// Process certified Messages to the listeners
 		for (MessageClient client : clients) {
 			notifyCertified(client);
 		}
-		
+
 		// Process the list of certified messages that have failed
 		for (MessageClient client : clients) {
 			notifyFailed(client);
 		}
-		
+
 		// Process the list of certified messages that still are waiting for certification
 		for (MessageClient client : clients) {
 			MessageQueue messages = client.getCertifiableMessageQueue();
 			while (!messages.isEmpty()) {
 				Message m = messages.poll();
 				if ((m.getTimestamp() != -1) && (m.getTimestamp() + m.getTimeout() < System.currentTimeMillis())) {
-					if ((m.getTries() == m.getMaxTries()) || (!m.getMessageClient().isConnected())) {
+					if (m.getTries() == m.getMaxTries() || !client.isConnected()) {
 						// Message failed
+						log.log(Level.FINER, "couldn't certify message {0} on client {1}", new Object[]{m, client});
 						client.getFailedMessageQueue().add(m);
 						client.getCertifiableMessageQueue().remove(m);
 					} else {
 //						System.out.println("Lets try to resend: " + m.getClass());
+						log.log(Level.FINEST, "retry certify message {0} on client {1}", new Object[]{m, client});
 						m.setTries(m.getTries() + 1);
-						m.setTimestamp(-1);
-
+						m.setTimestamp(-1); // avoid being checked in this loop again! Note, will be overridden
+						// in PacketCombiner, when it will finally be written out to the wire.
 						try {
 							client.getOutgoingQueue().add(m);	// We don't want to clone or reset the unique id
 						} catch (QueueFullException qfe) {
-							client.getCertifiableMessageQueue().add(m); // try next time again
+							client.getCertifiableMessageQueue().add(m); // try again
 						}
 					}
 				}
@@ -327,7 +435,7 @@ public abstract class MessageServer implements Updatable {
 				}
 			}
 		}
-		
+
 		// Process disconnected connections
 		while (!disconnectedConnections.isEmpty()) {
 			MessageClient client = disconnectedConnections.poll();
@@ -341,7 +449,7 @@ public abstract class MessageServer implements Updatable {
 			}
 		}
 	}
-	
+
 	private static void sendToListener(Message message, MessageListener listener,
 																		 MessageListener.MESSAGE_EVENT type) {
 		if (listener instanceof DynamicMessageListener) {
@@ -360,13 +468,15 @@ public abstract class MessageServer implements Updatable {
 			case SENT:
 				listener.messageSent(message);
 				break;
-			default:
-				throw new RuntimeException("Unknown listener type specified: " + type);
+//      will not happen, unless MessageTypes will be changed. That would yield a major rework....
+//			default:
+//				throw new RuntimeException("Unknown listener type specified: " + type);
 		}
 	}
 
 	/**
 	 * Process incoming Messages to the listeners
+	 *
 	 * @param client
 	 */
 	protected void notifyIncoming(MessageClient client) {
@@ -388,6 +498,7 @@ public abstract class MessageServer implements Updatable {
 
 	/**
 	 * Process outgoing Messages to the listeners
+	 *
 	 * @param client
 	 */
 	protected void notifyOutgoing(MessageClient client) {
@@ -409,6 +520,7 @@ public abstract class MessageServer implements Updatable {
 
 	/**
 	 * Process certified Messages to the listeners
+	 *
 	 * @param client
 	 */
 	protected void notifyCertified(MessageClient client) {
@@ -430,6 +542,7 @@ public abstract class MessageServer implements Updatable {
 
 	/**
 	 * Process the list of certified messages that have failed
+	 *
 	 * @param client
 	 */
 	protected void notifyFailed(MessageClient client) {
@@ -453,6 +566,7 @@ public abstract class MessageServer implements Updatable {
 	 * convenience routine that calls messagelisteners on all messageEvents in
 	 * MessageClient.
 	 * Used from DisconnectInternal()
+	 *
 	 * @param c
 	 */
 	protected void notifyClient(MessageClient c) {
@@ -468,63 +582,6 @@ public abstract class MessageServer implements Updatable {
 	 * removes them.
 	 */
 	public synchronized void updateConnections() {
-//		// Cycle through connections and see if any have timed out
-//		for (MessageClient client : clients) {
-//			if ((client.isConnected()) && (client.lastReceived() + connectionTimeout < System.currentTimeMillis())) {
-//				client.disconnect();
-//				client.received();
-//			}
-//		}
-//
-//		// Cycle through connections in a disconnecting state
-//		// disconnect them if possible,
-//		//  -- or if too long in disconnecting state
-//		for (MessageClient client : clients) {
-//			if (client.getStatus() == MessageClient.Status.DISCONNECTING) {
-//			  if (client.isDisconnectable()) {
-//					// we don't know any more what led to this ...
-//					disconnectInternal(client, MessageClient.CloseReason.Ignore);
-//				}
-//				else if (client.lastReceived() + (connectionTimeout / 3) < System.currentTimeMillis()) {
-//					disconnectInternal(client, MessageClient.CloseReason.TimeoutDisconnect);
-//				}
-//			}
-//		}
-//
-//    for (MessageClient client : clients) {
-//      if ((client.getStatus() == MessageClient.Status.NEGOTIATING) &&
-//          (client.lastReceived() + (connectionTimeout / 30) < System.currentTimeMillis())) {
-//          disconnectInternal(client, MessageClient.CloseReason.TimeoutConnect);
-//      }
-//    }
-//
-//		// Send Noops to connections that are still alive
-//		NoopMessage message = null;
-//		for (MessageClient client : clients) {
-//			if ((client.isConnected()) && (client.lastSent() + (connectionTimeout / 3) < System.currentTimeMillis())) {
-//				if (message == null) {
-//					message = new NoopMessage();
-//				}
-//				try {
-//					client.sendMessage(message);
-//					client.sent();
-//				} catch(QueueFullException exc) {
-//					// well, ignore
-//				}
-//			}
-//		}
-//
-//		// If attempting to shutdown make sure all MessageClients are closed before alive = false
-//		if ((!keepAlive) && (alive)) {
-//			synchronized (getMessageClients()) {
-//				for (MessageClient client : getMessageClients()) {
-//					if (client.getStatus() != MessageClient.Status.DISCONNECTED) {
-//						return;
-//					}
-//				}
-//				alive = false;
-//			}
-//		}
     NoopMessage message = null;
 
     // Cycle through connections and see if anything to do
@@ -534,6 +591,7 @@ public abstract class MessageServer implements Updatable {
         case NEGOTIATING:
           // disconnect if negotiating state too long
           if (client.lastReceived() + (connectionTimeout / 3) < System.currentTimeMillis()) {
+						log.log(Level.FINER, "time out negotiating on {0} ", client);
             disconnectInternal(client, MessageClient.CloseReason.TimeoutConnect);
           }
           break;
@@ -544,6 +602,7 @@ public abstract class MessageServer implements Updatable {
             client.setCloseReason(MessageClient.CloseReason.TimeoutRead);
             client.disconnect();
             client.received();
+						log.log(Level.FINER, "timed out while connected: {0}", client);
           }
 
           // send Noop, if needs
@@ -552,7 +611,7 @@ public abstract class MessageServer implements Updatable {
             try {
               client.sendMessage(message);
               client.sent();
-            } catch(QueueFullException exc) {
+						} catch (QueueFullException exc) {
               // well, ignore
             }
           }
@@ -562,10 +621,11 @@ public abstract class MessageServer implements Updatable {
           // disconnect finally, if possible
           if (client.isDisconnectable()) {
             // we don't know any more what led to this ...
-            disconnectInternal(client, MessageClient.CloseReason.Ignore);
+						disconnectInternal(client, client.getCloseReason());
           }
           // staying too long in state
           else if (client.lastReceived() + (connectionTimeout / 3) < System.currentTimeMillis()) {
+						log.log(Level.FINER, "timed out disconnecting: {0}", client);
             disconnectInternal(client, MessageClient.CloseReason.TimeoutDisconnect);
           }
           break;
@@ -586,15 +646,16 @@ public abstract class MessageServer implements Updatable {
           }
         }
         alive = false;
+				log.log(Level.FINE, "Server id=" + serverId + " shutdown: alive = false");
       }
     }
 	}
-	
+
 	/**
 	 * Convenience method to call updateTraffic(), updateEvents() and updateConnections().
 	 * This is only necessary if you aren't explicitly calling these
 	 * methods already.
-	 * 
+	 *
 	 * @throws IOException
 	 */
 	public void update() throws IOException {
@@ -602,110 +663,143 @@ public abstract class MessageServer implements Updatable {
 		updateEvents();
 		updateConnections();
 	}
-	
+
 	/**
 	 * Adds a ConnectionListener to this MessageServer
-	 * 
+	 *
 	 * @param listener
 	 */
 	public void addConnectionListener(ConnectionListener listener) {
 		synchronized (connectionListeners) {
 			connectionListeners.add(listener);
 		}
+		log.finest("added ConnectionListener: " + listener);
 	}
-	
+
 	/**
 	 * Removes a ConnectionListener from this MessageServer
-	 * 
+	 *
 	 * @param listener
-	 * @return
-	 * 		true if the listener was contained in the list
+	 * @return true if the listener was contained in the list
 	 */
 	public boolean removeConnectionListener(ConnectionListener listener) {
+		boolean result;
 		synchronized (connectionListeners) {
-			return connectionListeners.remove(listener);
+			result = connectionListeners.remove(listener);
 		}
+
+		if (result)
+			log.finest("removed ConnectionListener: " + listener);
+		else
+			log.finest("NOT removed ConnectionListener: " + listener);
+		return result;
 	}
-	
+
 	/**
 	 * Adds a MessageListener to this MessageServer
-	 * 
+	 *
 	 * @param listener
 	 */
 	public void addMessageListener(MessageListener listener) {
 		synchronized (messageListeners) {
 			messageListeners.add(listener);
 		}
+		log.finest("added MessageListener: " + listener);
 	}
-	
+
 	/**
 	 * Removes a MessageListener from this MessageServer
-	 * 
+	 *
 	 * @param listener
-	 * @return
-	 * 		true if the listener was contained in the list
+	 * @return true if the listener was contained in the list
 	 */
 	public boolean removeMessageListener(MessageListener listener) {
+		boolean result;
 		synchronized (messageListeners) {
-			return messageListeners.remove(listener);
+			result = messageListeners.remove(listener);
 		}
+		if (result)
+			log.finest("removed MessageListener: " + listener);
+		else
+			log.finest("NOT removed MessageListener: " + listener);
+		return result;
 	}
 
 	/**
 	 * Adds a ConnectionFilter to this MessageServer
-	 * 
+	 *
 	 * @param filter
 	 */
 	public void addConnectionFilter(ConnectionFilter filter) {
 		synchronized (filters) {
 			filters.add(filter);
 		}
+		log.finest("added ConnectionFilter: " + filter);
 	}
-	
+
 	/**
 	 * Removes a ConnectionFilter from this MessageServer
-	 * 
+	 *
 	 * @param filter
-	 * @return
-	 * 	true if the filter was contained in the list
+	 * @return true if the filter was contained in the list
 	 */
 	public boolean removeConnectionFilter(ConnectionFilter filter) {
+		boolean result;
 		synchronized (filters) {
-			return filters.remove(filter);
+			result = filters.remove(filter);
 		}
+		if (result)
+			log.finest("removed ConnectionFilter: " + filter);
+		else
+			log.finest("NOT removed ConnectionFilter: " + filter);
+		return result;
 	}
-	
+
+	/**
+	 * find out if client should be kicked
+	 *
+	 * @param client
+	 * @return String, the reason why we don't like the client, or null if no filtering
+	 */
 	protected String shouldFilterConnection(MessageClient client) {
 		for (ConnectionFilter filter : filters) {
 			String reason = filter.filter(client);
 			if (reason != null) {
+				log.log(Level.FINER, "filtered client {0} with '{1}'", new Object[]{client, reason});
 				return reason;
 			}
 		}
 		return null;
 	}
-	
+
 	/**
 	 * Adds a DataTranslator to this MessageServer
-	 * 
+	 *
 	 * @param translator
 	 */
 	public void addDataTranslator(DataTranslator translator) {
 		translators.add(translator);
+		log.finest("removed Translator: " + translator);
 	}
-	
+
 	/**
 	 * Removes a DataTranslator from this MessageServer
-	 * 
+	 *
 	 * @param translator
-	 * @return
-	 * 	true if the translator was contained in the list
+	 * @return true if the translator was contained in the list
 	 */
 	public boolean removeDataTranslator(DataTranslator translator) {
-		return translators.remove(translator);
+		boolean result;
+		result = translators.remove(translator);
+		if (result)
+			log.finest("removed Translator: " + translator);
+		else
+			log.finest("NOT removed Translator: " + translator);
+		return result;
 	}
-	
-	private void translateMessage(Message message) { // throws MessageHandlingException {
+
+	// note, don't throw MHE anymore, all Exceptions caught within method (and rethrown)
+	private void translateMessage(Message message) {
 		if (translators.size() == 0) {
 			return;
 		}
@@ -721,11 +815,13 @@ public abstract class MessageServer implements Updatable {
 			tm.setTranslated(b);
 			tm.setMessageClient(message.getMessageClient());
 			message.setTranslatedMessage(tm);
-		} catch(Exception exc) {
+		} catch (Exception exc) {
+			// TODO: tis very hard, if we terminate here. Check!!
+			log.log(Level.SEVERE, "outgoing Translation failed: ", exc);
 			throw new MessageException("Exception during translation", exc);
 		}
 	}
-	
+
 	protected Message revertTranslated(TranslatedMessage tm) {//throws MessageHandlingException {
 		try {
 			byte[] b = tm.getTranslated();
@@ -733,7 +829,9 @@ public abstract class MessageServer implements Updatable {
 				b = translator.inbound(b);
 			}
 			return TranslationManager.createMessage(b);
-		} catch(Exception exc) {
+		} catch (Exception exc) {
+			// TODO: tis very hard, if we terminate here. Check!!
+			log.log(Level.SEVERE, "incoming Translation failed: ", exc);
 			throw new MessageException("Exception during translation", exc);
 		}
 	}
@@ -741,15 +839,15 @@ public abstract class MessageServer implements Updatable {
 	// used only by PacketCombiner.combine()
 	protected void convertMessage(Message message, ByteBuffer buffer) throws MessageHandlingException {
 		translateMessage(message);
-		
+
 		Message m = message;
 		if (message.getTranslatedMessage() != null) {
 			m = message.getTranslatedMessage();
 		}
-		
+
 		ConversionHandler handler = ConversionHandler.getConversionHandler(m.getClass());
 		short mid = message.getMessageClient().getMessageTypeId(message.getClass());
 		handler.serializeMessage(m, buffer, mid); // this may through a MHE
 	}
-	
+
 }

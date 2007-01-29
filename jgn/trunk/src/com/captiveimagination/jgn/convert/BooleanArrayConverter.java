@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2005-2006 JavaGameNetworking
+ * Copyright (c) 2005-2007 JavaGameNetworking
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,8 +33,8 @@
  */
 package com.captiveimagination.jgn.convert;
 
-import java.lang.reflect.*;
-import java.nio.*;
+import java.lang.reflect.InvocationTargetException;
+import java.nio.ByteBuffer;
 
 /**
  * @author Matthew D. Hicks

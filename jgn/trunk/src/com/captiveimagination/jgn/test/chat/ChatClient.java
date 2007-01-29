@@ -33,15 +33,17 @@
  */
 package com.captiveimagination.jgn.test.chat;
 
-import java.awt.*;
-import java.awt.event.*;
-import java.net.*;
+import com.captiveimagination.jgn.JGN;
+import com.captiveimagination.jgn.clientserver.JGNClient;
+import com.captiveimagination.jgn.event.DebugListener;
+import com.captiveimagination.jgn.event.DynamicMessageAdapter;
 
 import javax.swing.*;
-
-import com.captiveimagination.jgn.*;
-import com.captiveimagination.jgn.clientserver.*;
-import com.captiveimagination.jgn.event.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 
 /**
  * @author Matthew D. Hicks
@@ -51,24 +53,25 @@ public class ChatClient extends DynamicMessageAdapter implements ActionListener 
 	private String nickname;
 	private JTextPane textPane;
     private JTextField textField;
-	
+
 	public ChatClient() throws Exception {
 		JGN.register(NamedChatMessage.class);
-		
+
 		InetSocketAddress reliableAddress = new InetSocketAddress(InetAddress.getLocalHost(), 0);
 		InetSocketAddress fastAddress = new InetSocketAddress(InetAddress.getLocalHost(), 0);
 		client = new JGNClient(reliableAddress, fastAddress);
 		client.addMessageListener(this);
+		client.addMessageListener(new DebugListener("ChatClient>"));
 		JGN.createThread(client).start();
-		
+
 		InetSocketAddress reliableServerAddress = new InetSocketAddress(InetAddress.getLocalHost(), 1000);
 		InetSocketAddress fastServerAddress = new InetSocketAddress(InetAddress.getLocalHost(), 2000);
-		
+
 		client.connectAndWait(reliableServerAddress, fastServerAddress, 5000);
 		nickname = JOptionPane.showInputDialog("Connection established to server\n\nPlease enter the name you wish to use?");
 		initGUI();
 	}
-	
+
 	private void initGUI() {
 		JFrame frame = new JFrame();
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);	// TODO fix
@@ -83,22 +86,25 @@ public class ChatClient extends DynamicMessageAdapter implements ActionListener 
         textField = new JTextField();
         textField.addActionListener(this);
         c.add(BorderLayout.SOUTH, textField);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setVisible(true);
 	}
-	
+
 	public void actionPerformed(ActionEvent evt) {
-		if (textField.getText().trim().length() > 0) {
+		String txt = textField.getText().trim();
+		if (txt.length() > 0) {
 			NamedChatMessage message = new NamedChatMessage();
 			message.setPlayerName(nickname);
-			message.setText(textField.getText());
-			client.broadcast(message);
+			message.setText(txt);
+
+			if (txt.startsWith("srv")) client.sendToServer(message);
+			else if (txt.startsWith("0")) client.sendToPlayer(message, (short) 0);
+			else client.broadcast(message);
+
 			textField.setText("");
-			
 			writeMessage(client.getPlayerId(), nickname, message.getText());
 		}
 	}
-	
+
 	public void messageReceived(NamedChatMessage message) {
 		writeMessage(message.getPlayerId(), message.getPlayerName(), message.getText());
 	}
@@ -109,7 +115,7 @@ public class ChatClient extends DynamicMessageAdapter implements ActionListener 
 //			writeMessage(message.getPlayerId(), message.getPlayerName(), message.getText());
 //		}
 //	}
-	
+
 	private void writeMessage(short playerId, String playerName, String text) {
 		String message = "[" + playerName + ":" + playerId + "]: " + text;
 		if (textPane.getText().length() == 0) {
@@ -118,7 +124,7 @@ public class ChatClient extends DynamicMessageAdapter implements ActionListener 
             textPane.setText(textPane.getText() + "\r\n" + message);
         }
 	}
-	
+
 	public static void main(String[] args) throws Exception {
 		new ChatClient();
 	}

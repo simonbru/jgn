@@ -33,37 +33,44 @@
  */
 package com.captiveimagination.jgn.convert;
 
-import java.io.*;
-import java.lang.reflect.*;
-import java.nio.*;
-import java.util.*;
-
-import com.captiveimagination.jgn.*;
-import com.captiveimagination.jgn.message.*;
+import com.captiveimagination.jgn.MessageHandlingException;
+import com.captiveimagination.jgn.message.Message;
 import com.captiveimagination.jgn.message.type.*;
+
+import java.io.Serializable;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Modifier;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * ConversionHandlers exist to process incoming and outgoing Messages
- *
+ * <p/>
  * This class knows how to derive and use a De/Serializer for complete Messages.
  * For each Messagetype there exists one ConversionHandler.
- *
+ * <p/>
  * A Message must conform to the ubiquitous Bean conventions, eg. have a no argument
  * constructor and access it's attributes with getter/setters.
- *
+ * <p/>
  * This implementation doesn't look for the getter/setter but instead analyses the
  * fields directly (using reflection).
- *
+ * <p/>
  * All fields from the given Message class, and all Superclasses upto Message.class will
  * be collected for de/serialization, provided, the field is NOT
  * - static    (wouldn't change for a given instance)
  * - final     (cannot change anymore)
  * - transient (the author of the message didn't want to send these over the wire)
- *
+ * <p/>
  * Currently all primitive types and Strings are supported, including their Array variants.
  * enums now are also efficiently converted
  * As a last ressort, a field will be included, if it is a Serializable.
- *
+ * <p/>
  * NOTE: if, according to the rules above, a field can not be converted, it will
  * silently be excluded from the transmission.
  *
@@ -72,9 +79,12 @@ import com.captiveimagination.jgn.message.type.*;
  */
 public class ConversionHandler {
 	private static final FieldsComparator fieldComparator = new FieldsComparator();
-	private static final HashMap<Class<? extends Message>, ConversionHandler> messageToHandler = new HashMap<Class<? extends Message>, ConversionHandler>();
+	private static final HashMap<Class<? extends Message>, ConversionHandler> messageToHandler =
+			new HashMap<Class<? extends Message>, ConversionHandler>();
 	// Defines the mappings of classes to converters.
 	private static final HashMap<Class, Converter> FIELD_CONVERTERS = new HashMap<Class, Converter>();
+
+	private static Logger LOG = Logger.getLogger("com.captiveimagination.jgn.convert.ConversionHandler");
 
 	static {
 		FIELD_CONVERTERS.put(boolean.class, new BooleanConverter());
@@ -111,6 +121,7 @@ public class ConversionHandler {
 	 * messageToHandler map before.
 	 * this is private and will be called from getConversionHandler().
 	 * each <fields> of <messageClass> will be served by one <converters>
+	 *
 	 * @param converters    one of the ./convert/xxxConverter
 	 * @param fields        a java.lang.reflect.Field (that will be handled)
 	 * @param messageClass  the corresponding messageclass
@@ -123,6 +134,7 @@ public class ConversionHandler {
 
 	/**
 	 * deserialize a message representation in the given Bytebuffer into a Message instance
+	 *
 	 * @param buffer the buffer as filled by NIO procedures
 	 * @return       a Message object, setup as in the buffer
 	 * @throws MessageHandlingException when there were on of following problems:
@@ -137,7 +149,10 @@ public class ConversionHandler {
 			try {
 				message = (Message)messageClass.newInstance();
 			} catch(IllegalAccessException exc) { // if the class or its nullary constructor is not accessible.
-				throw new MessageHandlingException("Unable to instantiate message (make sure the constructor is visible).", message, exc);
+				MessageHandlingException mHE = new MessageHandlingException(
+						"Unable to instantiate message (make sure the constructor is visible).", message, exc);
+				LOG.log(Level.SEVERE, "", mHE);
+				throw mHE;
 			}
 			for (int i = 0; i < converters.length; i++) {
 				Object res = converters[i].set(buffer);
@@ -146,24 +161,36 @@ public class ConversionHandler {
 					// defClass.getEnumConstants returns all EnumConstants, get the correct one by using the
 					// serialized index
 					fields[i].set(message, defClass.getEnumConstants()[(Short)res]);
-				}
-				else // not an enum, use directly
+				} else // not an enum, use directly
 					fields[i].set(message, res);
 			}
 			return message;
 		} catch (InstantiationException exc) { // if this Class represents an abstract class etc.
-			throw new MessageHandlingException("Received message-type doesn't have default-constructor", message, exc);
+			MessageHandlingException mHE = new MessageHandlingException(
+					"Received message-type doesn't have default-constructor", message, exc);
+			LOG.log(Level.SEVERE, "", mHE);
+			throw mHE;
 		} catch (IllegalArgumentException exc) {
-			throw new MessageHandlingException("Corrupt message-format", message, exc);
+			MessageHandlingException mHE = new MessageHandlingException(
+					"Corrupt message-format", message, exc);
+			LOG.log(Level.SEVERE, "", mHE);
+			throw mHE;
 		} catch (IllegalAccessException exc) {
-			throw new MessageHandlingException("Corrupt message-format", message, exc);
+			MessageHandlingException mHE = new MessageHandlingException(
+					"Corrupt message-format", message, exc);
+			LOG.log(Level.SEVERE, "", mHE);
+			throw mHE;
 		} catch (InvocationTargetException exc) {
-			throw new MessageHandlingException("Message crashed during initialization", message, exc);
+			MessageHandlingException mHE = new MessageHandlingException(
+					"Message crashed during initialization", message, exc);
+			LOG.log(Level.SEVERE, "", mHE);
+			throw mHE;
 		}
 	}
 
 	/**
 	 * serialize the Message into ByteBuffer
+	 *
 	 * @param message THE Message to be handled
 	 * @param buffer  to be used later on for processing the serialized form
 	 * @param remoteMessId the messageId at the remote receiver
@@ -191,33 +218,44 @@ public class ConversionHandler {
 							break;
 						}
 					}
-				}
-
-				else // normal: tell the appropriate converter to store <content> into the buffer
+				} else // normal: tell the appropriate converter to store <content> into the buffer
 					converters[i].get(content, buffer);
 			}
 		} catch (IllegalArgumentException exc) {
-			throw new MessageHandlingException("Corrupt message-format", message, exc);
+			MessageHandlingException mHE = new MessageHandlingException(
+					"Corrupt message-format", message, exc);
+			LOG.log(Level.SEVERE, "", mHE);
+			throw mHE;
 		} catch (IllegalAccessException exc) {
-			throw new MessageHandlingException("Corrupt message-format", message, exc);
+			MessageHandlingException mHE = new MessageHandlingException(
+					"Corrupt message-format", message, exc);
+			LOG.log(Level.SEVERE, "", mHE);
+			throw mHE;
 		} catch (InvocationTargetException exc) {
-			throw new MessageHandlingException("Message crashed during serialization", message, exc);
+			MessageHandlingException mHE = new MessageHandlingException(
+					"Message crashed during initialization", message, exc);
+			LOG.log(Level.SEVERE, "", mHE);
+			throw mHE;
 		}
 	}
 
-	// TODO ase: check if synchronized is really necessary
 	/**
 	 * create an instance of this class, that knows how to de/serialize the given message
 	 * but only, if we didn't hear from this message before. Otherwise we'll take it from cache ...
+	 *
 	 * @param messageClass we are interested in
 	 * @return a MessageConversionHandler
 	 */
-	public static final synchronized ConversionHandler getConversionHandler(Class<? extends Message> messageClass) {
+	public static final ConversionHandler getConversionHandler(Class<? extends Message> messageClass) {
+		ConversionHandler handler;
 
-		ConversionHandler handler = messageToHandler.get(messageClass);
+		// in cache already ??
+		synchronized (messageToHandler) {
+			handler = messageToHandler.get(messageClass);
 		if (handler != null) return handler;
+		}
 
-		// Introspect Class
+		// otherwise try to make a new handler: Introspect Class
 		ArrayList<Converter> converters = new ArrayList<Converter>();
 		ArrayList<Field> fields = new ArrayList<Field>();
 		ArrayList<Field> allFields = new ArrayList<Field>();
@@ -257,7 +295,7 @@ public class ConversionHandler {
 			if (Modifier.isTransient(field.getModifiers())) continue;	// Make sure it's not transient
 			if (Modifier.isFinal(field.getModifiers())) continue;		// If it's final we can't change it
 			if (Modifier.isStatic(field.getModifiers())) continue;		// We don't want to touch static fields
-			if (field.isSynthetic()) continue;		      // We don't like fields we didn't write srv code for
+			if (field.isSynthetic()) continue;					// We don't like fields we didn't write src code for
 
 			// we deny to handle a message class that has non-serializable fields
 			Class fldClass = field.getType();
@@ -274,10 +312,16 @@ public class ConversionHandler {
 						fields.toArray(new Field[fields.size()]),
 						messageClass);
 		// and store it for later reference
+		synchronized (messageToHandler) {
+			if (! messageToHandler.containsKey(messageClass))
 		messageToHandler.put(messageClass, handler);
+		}
 		return handler;
 	}
 	
+	// add a field to the list of messagefields that must be de/serialized
+	// ... and the resp. field converter to it's list
+	// return false, if not convertible, security or so error
 	private static final boolean addField(Class messageClass, ArrayList<Converter> converters,
 																		 ArrayList<Field> fields, String fieldName, Class fieldClass) {
 		try {
@@ -292,11 +336,10 @@ public class ConversionHandler {
 			return true;
 
 		} catch(SecurityException exc) {
-			exc.printStackTrace();
+			LOG.log(Level.WARNING, "not allowed to add field", exc);
       return false;
     } catch(NoSuchFieldException exc) {
-			System.err.println("No such field \"" + fieldName + "\" on \"" + messageClass.getName() + "\".");
-			exc.printStackTrace();
+			LOG.log(Level.WARNING, "No such field {0} on class {1}.", new Object[]{fieldName, messageClass.getName()});
       return false;
     }
 	}

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2005-2006 JavaGameNetworking
+ * Copyright (c) 2005-2007 JavaGameNetworking
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,8 +33,8 @@
  */
 package com.captiveimagination.jgn.clientserver;
 
-import com.captiveimagination.jgn.*;
-import com.captiveimagination.jgn.message.*;
+import com.captiveimagination.jgn.MessageSender;
+import com.captiveimagination.jgn.message.Message;
 
 /**
  * @author Matthew D. Hicks

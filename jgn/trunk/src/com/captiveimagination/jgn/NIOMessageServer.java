@@ -33,19 +33,23 @@
  */
 package com.captiveimagination.jgn;
 
-import java.io.*;
-import java.net.*;
-import java.nio.channels.*;
-import java.nio.ByteBuffer;
-import java.util.*;
-
-import com.captiveimagination.jgn.message.*;
-import com.captiveimagination.jgn.translation.*;
 import com.captiveimagination.jgn.convert.ConversionHandler;
+import com.captiveimagination.jgn.message.Message;
+import com.captiveimagination.jgn.translation.TranslatedMessage;
+
+import java.io.IOException;
+import java.net.SocketAddress;
+import java.nio.ByteBuffer;
+import java.nio.channels.SelectableChannel;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.Selector;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.logging.Level;
 
 /**
  * the workhorse for the non blocking servertype.
- *
+ * <p/>
  * provides important functions:
  * disconnectInternal : close a channel, cleanup a MessageClient
  * updateTraffic: cycle through all available selected keys (NIO) and dispatch to
@@ -76,10 +80,13 @@ public abstract class NIOMessageServer extends MessageServer {
 	protected abstract boolean write(SelectableChannel channel) throws IOException;
 
 	protected void disconnectInternal(MessageClient client, MessageClient.CloseReason reason) {
+		String rsn = reason.toString();
+		log.log(Level.FINEST, " disconnecting internally client {0} because {1}", new Object[]{client, rsn});
 		// close NIO's channel, remove key
 		for (SelectionKey key : selector.keys()) {
 			if (key.attachment() == client) {
-				try { key.channel().close();
+				try {
+					key.channel().close();
 				} catch (IOException e) { // ah, bad luck
 				}
 				key.cancel();
@@ -115,10 +122,10 @@ public abstract class NIOMessageServer extends MessageServer {
 				key.cancel();
 			}
 			selector.close();
+			log.log(Level.INFO, "shutting down server id=" + serverId);
 			alive = false;
 			return;
 		}
-
 
 		// Handle Accept, Read, and Write
 		if (selector.selectNow() > 0) {
@@ -135,24 +142,28 @@ public abstract class NIOMessageServer extends MessageServer {
             read(activeKey.channel());
 				}
 				if ((activeKey.isValid()) && (activeKey.isWritable())) {
-  					while (write(activeKey.channel())) {}
+					while (write(activeKey.channel())) {
+					}
 				}
 				if ((activeKey.isValid()) && (activeKey.isConnectable())) {
           try {
             connect(activeKey.channel());
           } catch (IOException e) {
-            System.err.println("  ** connect(channel) error:");
-            e.printStackTrace();
-            if ((activeKey.attachment() != null) && (activeKey.attachment() instanceof MessageClient)) {
-              MessageClient mc = (MessageClient)activeKey.attachment();
+//            System.err.println("  ** connect(channel) error:");
+//            e.printStackTrace();
+						log.log(Level.FINER, " error in connect(channel):", e);
+						Object attchmnt = activeKey.attachment();
+						if ((attchmnt != null) && (attchmnt instanceof MessageClient)) {
+							MessageClient mc = (MessageClient) attchmnt;
+							mc.setCloseReason(MessageClient.CloseReason.ErrChannelConnect);
               collectTrafficProblem(mc);
             }
           }
         }
 			}
 			// handle all cases where one of the above handler methods reported an error
-			for (MessageClient client : problems ) {
-        System.out.println("  ** problem: client "+client);
+			for (MessageClient client : problems) {
+				log.log(Level.FINEST, " -- problems with {0}", client);
         disconnectInternal(client, client.getCloseReason());
 			}
 		}
@@ -178,6 +189,7 @@ public abstract class NIOMessageServer extends MessageServer {
 			if (c == null) {
 				if (client.isConnected()) {
 					clientBuffer.position(client.getReadPosition());
+					log.log(Level.WARNING, " unknown message: " + typeId + " received for ", client);
 					throw new MessageHandlingException("Message received from unknown messageTypeId: " + typeId);
 				}
 				clientBuffer.position(position);
@@ -185,7 +197,7 @@ public abstract class NIOMessageServer extends MessageServer {
 			}
 			Message message = ConversionHandler.getConversionHandler(c).deserializeMessage(clientBuffer);
 			if (message instanceof TranslatedMessage) {
-				message = revertTranslated((TranslatedMessage)message);
+				message = revertTranslated((TranslatedMessage) message);
 			}
 			if (messageLength < position - 4 - client.getReadPosition()) {
 				// Still has content

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2005-2006 JavaGameNetworking
+ * Copyright (c) 2005-2007 JavaGameNetworking
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,8 +33,9 @@
  */
 package com.captiveimagination.jgn.clientserver.message;
 
-import com.captiveimagination.jgn.message.*;
-import com.captiveimagination.jgn.message.type.*;
+import com.captiveimagination.jgn.message.Message;
+import com.captiveimagination.jgn.message.type.CertifiedMessage;
+import com.captiveimagination.jgn.message.type.PlayerMessage;
 
 /**
  * Used internally, not necessary to use directly.
@@ -44,14 +45,18 @@ import com.captiveimagination.jgn.message.type.*;
 public class PlayerStatusMessage extends Message implements PlayerMessage, CertifiedMessage {
 	public static final int STATUS_CONNECTED = 1;
 	public static final int STATUS_DISCONNECTED = 2;
-	
+
 	private int playerStatus;
-	
+
 	public int getPlayerStatus() {
 		return playerStatus;
 	}
-	
+
 	public void setPlayerStatus(int status) {
 		this.playerStatus = status;
+	}
+
+	public String toString() {
+		return "PSM: player " + getPlayerId() + ((playerStatus == 1) ? " connected" : " disconnected");
 	}
 }

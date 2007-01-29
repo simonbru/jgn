@@ -33,9 +33,8 @@
  */
 package com.captiveimagination.jgn.convert;
 
-import java.lang.reflect.*;
-import java.nio.*;
-import java.util.*;
+import java.lang.reflect.InvocationTargetException;
+import java.nio.ByteBuffer;
 
 /**
  * Converter defines the methods necessary to convert from a ByteBuffer

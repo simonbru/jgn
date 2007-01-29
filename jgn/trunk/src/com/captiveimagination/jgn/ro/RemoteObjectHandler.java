@@ -33,67 +33,83 @@
  */
 package com.captiveimagination.jgn.ro;
 
-import java.io.*;
-import java.lang.reflect.*;
+import com.captiveimagination.jgn.MessageClient;
+import com.captiveimagination.jgn.event.MessageAdapter;
+import com.captiveimagination.jgn.message.Message;
 
-import com.captiveimagination.jgn.*;
-import com.captiveimagination.jgn.event.*;
-import com.captiveimagination.jgn.message.*;
+import java.io.IOException;
+import java.io.Serializable;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * @author Matthew D. Hicks
  */
 public class RemoteObjectHandler extends MessageAdapter implements InvocationHandler {
+	private static Logger LOG = Logger.getLogger("com.captiveimagination.jgn.ro.RemoteObjectHandler");
+
 	private Class<? extends RemoteObject> remoteClass;
 	private MessageClient client;
 	private long timeout;
-	
+
 	private boolean received;
 	private Object response;
-	
+
 	protected RemoteObjectHandler(Class<? extends RemoteObject> remoteClass, MessageClient client, long timeout) {
 		this.remoteClass = remoteClass;
 		this.client = client;
 		this.timeout = timeout;
-		
+
 		client.addMessageListener(this);
 	}
-	
+
 	public synchronized Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 		received = false;
 		RemoteObjectRequestMessage request = new RemoteObjectRequestMessage();
 		request.setRemoteObjectName(remoteClass.getName());
 		request.setMethodName(method.getName());
-		// todo: make _sure_ args are serializable
-		Serializable[] sargs = (Serializable[])args;
-		request.setParameters(sargs);
+		// make _sure_ args are serializable
+		for (Object a : args) {
+			Class ac = a.getClass();
+			if (! (ac.isPrimitive() || Serializable.class.isAssignableFrom(ac))) {
+				LOG.log(Level.SEVERE, "Argument class is not serializable: ", ac);
+				throw new IllegalArgumentException("Argument class is not serializable: " + ac);
+			}
+		}
+
+		request.setParameters(args);
 		client.sendMessage(request);
-		
+
 		long time = System.currentTimeMillis();
 		while (System.currentTimeMillis() < time + timeout) {
 			if (received) break;
 			Thread.sleep(1);
 		}
-		if (!received) throw new IOException("Timeout waiting for response from remote machine.");
-		
+		if (!received) {
+			LOG.log(Level.WARNING, "Timeout waiting for response from remote machine.");
+			throw new IOException("Timeout waiting for response from remote machine.");
+		}
+
 		Object obj = response;
 		response = null;
-		
-		if (obj instanceof Throwable) throw (Throwable)obj;
-		
+
+		if (obj instanceof Throwable) throw (Throwable) obj;
+
 		return obj;
 	}
-	
+
 	public void messageReceived(Message message) {
 		if (message instanceof RemoteObjectResponseMessage) {
-			RemoteObjectResponseMessage m = (RemoteObjectResponseMessage)message;
+			RemoteObjectResponseMessage m = (RemoteObjectResponseMessage) message;
 			if (m.getRemoteObjectName().equals(remoteClass.getName())) {
 				response = m.getResponse();
 				received = true;
 			}
 		}
 	}
-	
+
 	public void close() {
 		client.removeMessageListener(this);
 	}

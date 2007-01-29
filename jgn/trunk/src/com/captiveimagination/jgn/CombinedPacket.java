@@ -33,15 +33,17 @@
  */
 package com.captiveimagination.jgn;
 
-import java.nio.*;
-import java.util.*;
+import com.captiveimagination.jgn.message.Message;
+import com.captiveimagination.jgn.queue.QueueFullException;
 
-import com.captiveimagination.jgn.message.*;
+import java.nio.ByteBuffer;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Handles the combination of packets, the messages associated with them,
  * and the location that distinguishes the end of the message.
- * 
+ *
  * @author Matthew CTR Hicks
  */
 public class CombinedPacket {
@@ -49,42 +51,42 @@ public class CombinedPacket {
 	private ByteBuffer buffer;
 	private List<Message> messages;
 	private List<Integer> ends;
-	
+
 	public CombinedPacket(MessageClient client) {
 		this.client = client;
 		messages = new LinkedList<Message>();
 		ends = new LinkedList<Integer>();
 	}
-	
+
 	public ByteBuffer getBuffer() {
 		return buffer;
 	}
-	
+
 	public void setBuffer(ByteBuffer buffer) {
 		this.buffer = buffer;
 	}
-	
+
 	public void add(Message message, int end) {
 		messages.add(message);
 		ends.add(end);
 	}
-	
+
 	private Message getMessage() {
 		if (messages.size() > 0) {
 			return messages.get(0);
 		}
 		return null;
 	}
-	
+
 	private int getEnd() {
 		return ends.get(0);
 	}
-	
+
 	private void remove() {
 		messages.remove(0);
 		ends.remove(0);
 	}
-	
+
 	private boolean hasMore() {
 		return messages.size() > 0;
 	}
@@ -95,8 +97,13 @@ public class CombinedPacket {
 			if (getEnd() > position) {
 				break;
 			}
+			try {
 			client.getOutgoingMessageQueue().add(getMessage());
 			remove();
+			} catch (QueueFullException e) {
+				// try again next time
+				break;
+			}
 		}
 	}
 

@@ -33,11 +33,15 @@
  */
 package com.captiveimagination.jgn.util;
 
-import com.captiveimagination.jgn.*;
+import com.captiveimagination.jgn.MessageClient;
+import com.captiveimagination.jgn.Updatable;
+
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Receives a MessageClient and monitors the status of that client.
- * 
+ *
  * @author Matthew D. Hicks
  */
 public class ClientMonitor implements Updatable {
@@ -46,7 +50,8 @@ public class ClientMonitor implements Updatable {
 	private long frequency;
 	private boolean alive;
 	private long lastUpdate;
-	
+	private static Logger LOG = Logger.getLogger("com.captiveimagination.jgn.util.ClientMonitor");
+
 	public ClientMonitor(String name, MessageClient client, long frequency) {
 		this.name = name;
 		this.client = client;
@@ -59,17 +64,30 @@ public class ClientMonitor implements Updatable {
 	}
 
 	public void update() throws Exception {
+		if (lastUpdate == 0) { // don't output nothing on first call
+			lastUpdate = System.currentTimeMillis();
+			return;
+		}
 		if (System.currentTimeMillis() - lastUpdate > frequency) {
-			System.out.println(name + ": Received: " + client.getReceivedCount() +
-							 ", Sent: " + client.getSentCount() +
-							 ", " + client.getIncomingMessageQueue().getTotal() + "(" + client.getIncomingMessageQueue().getSize() + ")" +
-							 ", " + client.getOutgoingMessageQueue().getTotal() + "(" + client.getOutgoingMessageQueue().getSize() + ")" +
-							 ", " + client.getOutgoingQueue().getTotal() + "(" + client.getOutgoingQueue().getSize() + ")");
+			if (LOG.isLoggable(Level.INFO)) {
+				LOG.log(Level.INFO, "{0}: received: {1}, sent: {2}, queues: {3}({4}), {5}({6}), {7}({8})",
+						new Object[]{name, client.getReceivedCount(), client.getSentCount(),
+								client.getIncomingMessageQueue().getTotal(), client.getIncomingMessageQueue().getSize(),
+								client.getOutgoingMessageQueue().getTotal(), client.getOutgoingMessageQueue().getSize(),
+								client.getOutgoingQueue().getTotal(), client.getOutgoingQueue().getSize()
+						}
+				);
+			}
+//      System.out.println(name + ": Received: " + client.getReceivedCount() +
+//               ", Sent: " + client.getSentCount() +
+//               ", " + client.getIncomingMessageQueue().getTotal() + "(" + client.getIncomingMessageQueue().getSize() + ")" +
+//               ", " + client.getOutgoingMessageQueue().getTotal() + "(" + client.getOutgoingMessageQueue().getSize() + ")" +
+//               ", " + client.getOutgoingQueue().getTotal() + "(" + client.getOutgoingQueue().getSize() + ")");
 			lastUpdate = System.currentTimeMillis();
 		}
 	}
-	
-	public void shutdown() {
+
+	public void close() {
 		alive = false;
 	}
 }

@@ -77,17 +77,17 @@ public class JGNConfig {
 	 * if not initialized, this will set up the Logging system of JGN.
 	 * <p/>
 	 * Strategy:
-	 * check the existence of following files in order:
-	 * 1. com/captiveimagination/jgn/resources/test-log.properties
-	 * 2. com/captiveimagination/jgn/resources/log.properties
-	 * 3. <user.home>/jgn/log.properties
-	 * 4. <user.dir>/bin/jgnlog.properties
-	 * Then, the LogManager's readConfiguration(inputStream) will be called to
-	 * install the properties.
+	 * 	check the existence of following files in order:
+	 * 		1. com/captiveimagination/jgn/resources/test-log.properties
+	 * 		2. com/captiveimagination/jgn/resources/log.properties
+	 * 		3. <user.home>/jgn/log.properties
+	 * 		4. <user.dir>/lib/jgnlog.properties
+	 * 	Then, the LogManager's readConfiguration(inputStream) will be called to
+	 * 		install the properties.
 	 * <p/>
-	 * if none of these files exist, the <jre>/lib/logging.properties will be used by default
+	 * 	if none of these files exist, the <jre>/lib/logging.properties will be used by default
 	 * <p/>
-	 * set JGN_LOGGING as initialized.
+	 * 	set LOG_READY as initialized.
 	 * <p/>
 	 * Note: searching first for test-log.properties makes it possible to have a special configuration
 	 * for testing purposes that can coexist with normal, production, config. (log.properties).
@@ -95,7 +95,6 @@ public class JGNConfig {
 	 * <p/>
 	 * If there are errors during initialize, an error report will be given to
 	 * System.err. No exception should be thrown, that is NOT application specific...
-	 * <p/>
 	 * this.initialized will be set however, so that the error will at most happen once.
 	 * <p/>
 	 * This method should (and will) be called from all major entry points within JGN

@@ -33,14 +33,13 @@
  */
 package com.captiveimagination.jgn.convert;
 
-import java.lang.reflect.*;
 import java.nio.*;
 
 /**
  * @author Matthew D. Hicks
  */
 public class FloatArrayConverter implements Converter {
-	public Object set(ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
+	public Object set(ByteBuffer buffer) {
 		int length = buffer.getInt();
 		float[] array = null;
 		if (length != -1) {
@@ -52,7 +51,7 @@ public class FloatArrayConverter implements Converter {
 		return array;
 	}
 
-	public void get(Object obj, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
+	public void get(Object obj, ByteBuffer buffer) {
 		float[] array = (float[])obj;
 		if (array == null) {
 			buffer.putInt(-1);

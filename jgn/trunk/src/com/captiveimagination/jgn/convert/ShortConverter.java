@@ -33,18 +33,17 @@
  */
 package com.captiveimagination.jgn.convert;
 
-import java.lang.reflect.*;
 import java.nio.*;
 
 /**
  * @author Matthew D. Hicks
  */
 public class ShortConverter implements Converter {
-	public Object set(ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
+	public Object set(ByteBuffer buffer) {
 		return buffer.getShort();
 	}
 
-	public void get(Object obj, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
+	public void get(Object obj, ByteBuffer buffer) {
 		buffer.putShort((Short) obj);
 	}
 }

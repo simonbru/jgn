@@ -33,14 +33,13 @@
  */
 package com.captiveimagination.jgn.convert;
 
-import java.lang.reflect.InvocationTargetException;
 import java.nio.ByteBuffer;
 
 /**
  * @author Matthew D. Hicks
  */
 public class BooleanArrayConverter implements Converter {
-	public Object set(ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
+	public Object set(ByteBuffer buffer) {
 		int length = buffer.getInt();
 		boolean[] array = null;
 		if (length != -1) {
@@ -52,7 +51,7 @@ public class BooleanArrayConverter implements Converter {
 		return array;
 	}
 
-	public void get(Object obj, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
+	public void get(Object obj, ByteBuffer buffer) {
 		boolean[] array = (boolean[])obj;
 		if (array == null) {
 			buffer.putInt(-1);

@@ -34,53 +34,60 @@
 package com.captiveimagination.jgn.convert;
 
 import java.io.*;
-import java.lang.reflect.*;
 import java.nio.*;
+import java.util.logging.Logger;
+import java.util.logging.Level;
 
 /**
  * @author Matthew D. Hicks
  */
 public class SerializableConverter implements Converter {
-    public Object set(ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
-        int length = buffer.getInt();
-        byte[] array;
-        Object obj = null;
-        if (length != -1) {
-            array = new byte[length];
-            for (int i = 0; i < length; i++) {
-                array[i] = buffer.get();
-            }
-            
-            try {
-                ByteArrayInputStream bais = new ByteArrayInputStream(array);
-                ObjectInputStream ois = new ObjectInputStream(bais);
-                obj = ois.readObject();
-            } catch(IOException exc) {
-                exc.printStackTrace();
-            } catch(ClassNotFoundException exc) {
-                exc.printStackTrace();
-            }
-        }
-        return obj;
-    }
 
-    public void get(Object obj, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
-        if (obj == null) {
-            buffer.putInt(-1);
-        } else {
-            try {
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                ObjectOutputStream oos = new ObjectOutputStream(baos);
-                oos.writeObject(obj);
-                byte[] array = baos.toByteArray();
-                
-                buffer.putInt(array.length);
-                for (byte b : array) {
-                    buffer.put(b);
-                }
-            } catch(IOException exc) {
-                exc.printStackTrace();
-            }
-        }
-    }
+	static Logger LOG = Logger.getLogger("com.captiveimagination.jgn.convert.SerializableConverter");
+
+		public Object set(ByteBuffer buffer) {
+				int length = buffer.getInt();
+				byte[] array;
+				Object obj = null;
+				if (length != -1) {
+						array = new byte[length];
+						for (int i = 0; i < length; i++) {
+								array[i] = buffer.get();
+						}
+
+						try {
+								ByteArrayInputStream bais = new ByteArrayInputStream(array);
+								ObjectInputStream ois = new ObjectInputStream(bais);
+								obj = ois.readObject();
+						} catch(IOException exc) {
+							LOG.log(Level.FINE, exc.getMessage(),exc);
+//								exc.printStackTrace();
+						} catch(ClassNotFoundException exc) {
+							LOG.log(Level.FINE, exc.getMessage(),exc);
+//								exc.printStackTrace();
+						}
+				}
+				return obj;
+		}
+
+		public void get(Object obj, ByteBuffer buffer) {
+				if (obj == null) {
+						buffer.putInt(-1);
+				} else {
+						try {
+								ByteArrayOutputStream baos = new ByteArrayOutputStream();
+								ObjectOutputStream oos = new ObjectOutputStream(baos);
+								oos.writeObject(obj);
+								byte[] array = baos.toByteArray();
+
+								buffer.putInt(array.length);
+								for (byte b : array) {
+										buffer.put(b);
+								}
+						} catch(IOException exc) {
+							LOG.log(Level.FINE, exc.getMessage(),exc);
+//							exc.printStackTrace();
+						}
+				}
+		}
 }

@@ -34,14 +34,13 @@
 package com.captiveimagination.jgn.convert;
 
 import java.io.*;
-import java.lang.reflect.*;
 import java.nio.*;
 
 /**
  * @author Matthew D. Hicks
  */
 public class StringConverter implements Converter {
-	public Object set(ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
+	public Object set(ByteBuffer buffer) {
 		int l = buffer.getInt();
 		String s;
 		if (l == -1) {
@@ -61,8 +60,7 @@ public class StringConverter implements Converter {
 		return s;
 	}
 
-	public void get(Object obj, ByteBuffer buffer) throws IllegalArgumentException,
-					IllegalAccessException, InvocationTargetException {
+	public void get(Object obj, ByteBuffer buffer) {
 		String s = (String)obj;
 		if (s == null) {
 			buffer.putInt(-1);

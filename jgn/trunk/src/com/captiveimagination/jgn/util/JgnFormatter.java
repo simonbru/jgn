@@ -72,7 +72,7 @@ public class JgnFormatter extends Formatter {
 	 * @return a formatted log record as String
 	 */
 	public synchronized String format(LogRecord record) {
-		final int maxClassLength = 20;
+		final int maxClassLength = 35;
 		StringBuffer sb = new StringBuffer();
 
 		// millis since start
@@ -126,15 +126,24 @@ public class JgnFormatter extends Formatter {
 		sb.append(record.getThreadID()).append(fieldSeparator);
 
 		// classname or [loggername]
-		String cn = record.getSourceClassName();
-		if (cn == null) cn = "[" + cutStartOfString(record.getLoggerName(), maxClassLength - 2) + "]";
-		else cn = cutStartOfString(record.getLoggerName(), maxClassLength);
-		sb.append(cn);
+//		String cn = record.getSourceClassName();
+//		if (cn == null) cn = "[" + cutStartOfString(record.getLoggerName(), maxClassLength - 2) + "]";
+//		else cn = cutStartOfString(record.getLoggerName(), maxClassLength);
+//		sb.append(cn);
 
 		// .methodname()
-		if (record.getSourceMethodName() != null) {
-			sb.append(".").append(record.getSourceMethodName()).append("()");
-		}
+//		if (record.getSourceMethodName() != null) {
+//			sb.append(".").append(record.getSourceMethodName()).append("()");
+//		}
+
+		String cn = record.getSourceClassName();
+		if (cn == null) cn = "[" + record.getLoggerName() + "]";
+		if (record.getSourceMethodName() != null)
+			cn = cn + "." + record.getSourceMethodName() + "()";
+		else
+		  cn = cn + ".[unknown]()";
+		sb.append(cutStartOfString(cn, maxClassLength));
+
 
 		// message
 		String message = formatMessage(record);

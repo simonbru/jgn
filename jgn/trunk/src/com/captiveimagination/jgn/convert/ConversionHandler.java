@@ -39,7 +39,7 @@ import com.captiveimagination.jgn.message.type.*;
 
 import java.io.Serializable;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
+//import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -141,7 +141,6 @@ public class ConversionHandler {
 	 *         IllegalAccess on newInstance()
 	 *         Instantiation no default-constructor
 	 *         IllegalArgument message format corrupt
-	 *         InvocationTarget init of Message failed
 	 */
 	public Message deserializeMessage(ByteBuffer buffer) throws MessageHandlingException {
 		Message message = null;
@@ -180,11 +179,11 @@ public class ConversionHandler {
 					"Corrupt message-format", message, exc);
 			LOG.log(Level.SEVERE, "", mHE);
 			throw mHE;
-		} catch (InvocationTargetException exc) {
-			MessageHandlingException mHE = new MessageHandlingException(
-					"Message crashed during initialization", message, exc);
-			LOG.log(Level.SEVERE, "", mHE);
-			throw mHE;
+//		} catch (InvocationTargetException exc) {
+//			MessageHandlingException mHE = new MessageHandlingException(
+//					"Message crashed during initialization", message, exc);
+//			LOG.log(Level.SEVERE, "", mHE);
+//			throw mHE;
 		}
 	}
 
@@ -197,7 +196,6 @@ public class ConversionHandler {
 	 * @throws MessageHandlingException when there are problems:
 	 *         IllegalArgumentException: corrupt message-format
 	 *         IllegalAccessException: corrupt message-format
-	 * 		     InvocationTargetException: message crashed during serialization
 	 */
 	public void serializeMessage(Message message, ByteBuffer buffer, short remoteMessId) throws MessageHandlingException {
 		try {// Write the message type
@@ -231,11 +229,11 @@ public class ConversionHandler {
 					"Corrupt message-format", message, exc);
 			LOG.log(Level.SEVERE, "", mHE);
 			throw mHE;
-		} catch (InvocationTargetException exc) {
-			MessageHandlingException mHE = new MessageHandlingException(
-					"Message crashed during initialization", message, exc);
-			LOG.log(Level.SEVERE, "", mHE);
-			throw mHE;
+//		} catch (InvocationTargetException exc) {
+//			MessageHandlingException mHE = new MessageHandlingException(
+//					"Message crashed during initialization", message, exc);
+//			LOG.log(Level.SEVERE, "", mHE);
+//			throw mHE;
 		}
 	}
 

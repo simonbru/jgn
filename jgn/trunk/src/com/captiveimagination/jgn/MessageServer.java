@@ -55,6 +55,7 @@ import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.util.AbstractQueue;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -401,21 +402,21 @@ public abstract class MessageServer implements Updatable {
 
 		// Process the list of certified messages that still are waiting for certification
 		for (MessageClient client : clients) {
-			MessageQueue messages = client.getCertifiableMessageQueue();
-			while (!messages.isEmpty()) {
-				Message m = messages.poll();
+			List<Message> messages = client.getCertifiableMessageQueue().clonedList();
+			for (Message m : messages) {
 				if ((m.getTimestamp() != -1) && (m.getTimestamp() + m.getTimeout() < System.currentTimeMillis())) {
 					if (m.getTries() == m.getMaxTries() || !client.isConnected()) {
 						// Message failed
-						log.log(Level.FINER, "couldn't certify message {0} on client {1}", new Object[]{m, client});
+						log.log(Level.FINER, "couldn't certify message {0} on client {1}",
+								new Object[]{m.toString(), client.toString()});
 						client.getFailedMessageQueue().add(m);
 						client.getCertifiableMessageQueue().remove(m);
 					} else {
-//						System.out.println("Lets try to resend: " + m.getClass());
-						log.log(Level.FINEST, "retry certify message {0} on client {1}", new Object[]{m, client});
+						log.log(Level.FINEST, "retry certifying message {0} on client {1}",
+								new Object[]{m.toString(), client.toString()});
 						m.setTries(m.getTries() + 1);
 						m.setTimestamp(-1); // avoid being checked in this loop again! Note, will be overridden
-						// in PacketCombiner, when it will finally be written out to the wire.
+					  		// in PacketCombiner, when it will finally be written out to the wire.
 						try {
 							client.getOutgoingQueue().add(m);	// We don't want to clone or reset the unique id
 						} catch (QueueFullException qfe) {

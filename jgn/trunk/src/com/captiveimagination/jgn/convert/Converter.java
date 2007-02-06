@@ -50,20 +50,14 @@ public interface Converter {
 	 * 
 	 * @param buffer
 	 * @return value retrieved from <code>buffer</code>
-	 * @throws IllegalArgumentException
-	 * @throws IllegalAccessException
-	 * @throws InvocationTargetException
 	 */
-	public Object set(ByteBuffer buffer) throws IllegalArgumentException,IllegalAccessException, InvocationTargetException;
+	public Object set(ByteBuffer buffer);
 
 	/**
 	 * Applies contents of <code>obj</code> to <code>buffer</code>.
 	 * 
 	 * @param obj
 	 * @param buffer
-	 * @throws IllegalArgumentException
-	 * @throws IllegalAccessException
-	 * @throws InvocationTargetException
 	 */
-	public void get(Object obj, ByteBuffer buffer) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException;
+	public void get(Object obj, ByteBuffer buffer);
 }

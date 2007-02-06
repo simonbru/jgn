@@ -33,7 +33,7 @@ public class DebugLogListener implements MessageListener, ConnectionListener {
 	private Object[] extractClient(MessageClient client, String rsn) {
 		return new Object[]{id,
 				client.getAddress(),
-				client.getId(),
+				String.valueOf(client.getId()),
 				rsn == null ? client.getCloseReason() : rsn};
 	}
 

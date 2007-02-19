@@ -35,15 +35,21 @@ package com.captiveimagination.jgn.convert;
 
 import java.nio.*;
 
+import com.captiveimagination.jgn.MessageClient;
+
 /**
  * @author Matthew D. Hicks
  */
-public class FloatConverter implements Converter {
-	public Object set(ByteBuffer buffer) {
+public class FloatConverter extends Converter {
+	public FloatConverter (boolean isPrimitive) {
+		this.isPrimitive = isPrimitive;
+	}
+
+	public Object readObjectData (ByteBuffer buffer, Class c) throws ConversionException {
 		return buffer.getFloat();
 	}
 
-	public void get(Object obj, ByteBuffer buffer) {
-		buffer.putFloat((Float) obj);
+	public void writeObjectData (MessageClient client, Object object, ByteBuffer buffer) throws ConversionException {
+		buffer.putFloat((Float) object);
 	}
 }

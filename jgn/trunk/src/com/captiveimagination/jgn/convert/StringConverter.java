@@ -33,46 +33,42 @@
  */
 package com.captiveimagination.jgn.convert;
 
-import java.io.*;
-import java.nio.*;
+import java.io.UnsupportedEncodingException;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.CharacterCodingException;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CharsetEncoder;
+import java.nio.charset.CoderResult;
+
+import com.captiveimagination.jgn.MessageClient;
 
 /**
  * @author Matthew D. Hicks
  */
-public class StringConverter implements Converter {
-	public Object set(ByteBuffer buffer) {
-		int l = buffer.getInt();
-		String s;
-		if (l == -1) {
-			s = null;
-		} else {
-			byte[] b = new byte[l];
-			buffer.get(b);
-			try {
-				s = new String(b, "UTF-8");
-			} catch (UnsupportedEncodingException exc) {
-				// never happens
-				exc.printStackTrace(); // just be paranoid
-				// move on
-				s = null;
-			}
+public class StringConverter extends Converter {
+	public Object readObjectData (ByteBuffer buffer, Class type) throws ConversionException {
+		byte[] b = new byte[BufferUtil.readInt(buffer)];
+		buffer.get(b);
+		try {
+			return new String(b, "UTF-8");
+		} catch (UnsupportedEncodingException exc) {
+			// never happens
+			exc.printStackTrace(); // just be paranoid
+			return null;
 		}
-		return s;
 	}
 
-	public void get(Object obj, ByteBuffer buffer) {
-		String s = (String)obj;
-		if (s == null) {
-			buffer.putInt(-1);
-		} else {
-			try {
-				byte[] b = s.getBytes("UTF-8");
-				buffer.putInt(b.length);
-				buffer.put(b);
-			} catch (UnsupportedEncodingException exc) {
-				// never happens
-				exc.printStackTrace(); // just be paranoid
-			}
+	public void writeObjectData (MessageClient client, Object object, ByteBuffer buffer) throws ConversionException {
+		String s = (String)object;
+		try {
+			byte[] b = s.getBytes("UTF-8");
+			BufferUtil.writeInt(buffer, b.length);
+			buffer.put(b);
+		} catch (UnsupportedEncodingException exc) {
+			// never happens
+			exc.printStackTrace(); // just be paranoid
 		}
 	}
 }

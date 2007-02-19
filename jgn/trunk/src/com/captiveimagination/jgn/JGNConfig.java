@@ -133,7 +133,9 @@ public class JGNConfig {
 						else fname = f.getCanonicalPath();
 					}
 				}
-			} else fname = myUrl.getPath();
+			} else {
+				fname = new File(myUrl.toURI()).getAbsolutePath();
+			}
 
 			if (fname == null) {
 				// no success at all, let LogManager use it's global config
@@ -150,8 +152,8 @@ public class JGNConfig {
 //      System.out.println(xxx);
 
 		} catch (Exception e) {
-			// don't stop a running system, when only the logging system doesn't work!
-			System.err.println("WARNING: can't read any configuration for JGN-logging");
+			// Don't stop a running system, when only the logging system doesn't work!
+			System.err.println("WARNING: Error reading configuration for JGN logging.");
 			System.err.println(e.getMessage());
 		} finally {
 			if (in != null) try {

@@ -34,8 +34,10 @@
 package com.captiveimagination.jgn.event;
 
 import com.captiveimagination.jgn.JGN;
+import com.captiveimagination.jgn.MessageException;
 import com.captiveimagination.jgn.message.Message;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.logging.Level;
@@ -161,7 +163,7 @@ public abstract class BaseDynamicMessageListener implements DynamicMessageListen
 					return;		// if no nethod found, do nothing
 
         case HIERARCHICAL:		// search through the hierarchy
-          for (Class c : JGN.getMessClassHierarchy(messClass)) {
+          for (Class c : JGN.getMessageClassHierarchy(messClass)) {
             if ((m = mm.get(c)) != null)
               break; // found a super something method
           }
@@ -176,8 +178,9 @@ public abstract class BaseDynamicMessageListener implements DynamicMessageListen
     if (m == null) return;
     try {
       m.invoke(listener, mess);
-    } catch (Exception e) {
-			LOG.log(Level.SEVERE, "couldn't call dynamically at: " + listener + " type=" + type + " message=" + mess);
+    } catch (Exception ex) {
+   	 throw new MessageException("Error invoking dynamic message listener: " + listener.getClass().getName() + ", type="
+				+ type + ", message=" + mess.getClass().getName(), ex);
     }
   }
 }

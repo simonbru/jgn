@@ -1,14 +1,14 @@
 /**
  * Copyright (c) 2005-2006 JavaGameNetworking
  * All rights reserved.
- *
+ * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
  * met:
- *
+ * 
  * * Redistributions of source code must retain the above copyright
  *   notice, this list of conditions and the following disclaimer.
- *
+ * 
  * * Redistributions in binary form must reproduce the above copyright
  *   notice, this list of conditions and the following disclaimer in the
  *   documentation and/or other materials provided with the distribution.
@@ -31,6 +31,7 @@
  *
  * Created: Oct 1, 2006
  */
+
 package com.captiveimagination.jgn.so;
 
 import java.lang.reflect.*;
@@ -47,7 +48,7 @@ import com.captiveimagination.magicbeans.*;
  */
 public class SharedObject {
 	private static final Object[] EMPTY_ARGS = new Object[0];
-	
+
 	private String name;
 	private Object object;
 	private Class interfaceClass;
@@ -68,19 +69,19 @@ public class SharedObject {
 		clients = new ConcurrentLinkedQueue<MessageClient>();
 	}
 
-	protected String getName() {
+	protected String getName () {
 		return name;
 	}
 
-	protected Object getObject() {
+	protected Object getObject () {
 		return object;
 	}
 
-	protected boolean isLocal() {
+	protected boolean isLocal () {
 		return localObject;
 	}
-	
-	protected void add(MessageServer server, ObjectCreateMessage message, ByteBuffer buffer) {
+
+	protected void add (MessageServer server, ObjectCreateMessage message, ByteBuffer buffer) {
 		if (!servers.contains(server)) {
 			servers.add(server);
 			message.setName(name);
@@ -90,27 +91,27 @@ public class SharedObject {
 		}
 	}
 
-	protected boolean remove(MessageServer server, ObjectDeleteMessage message) {
+	protected boolean remove (MessageServer server, ObjectDeleteMessage message) {
 		message.setName(name);
 		server.broadcast(message);
 		return servers.remove(server);
 	}
 
-	protected void add(MessageClient client, ObjectCreateMessage message, ByteBuffer buffer) {
+	protected void add (MessageClient client, ObjectCreateMessage message, ByteBuffer buffer) {
 		addInternal(client);
 		message.setName(name);
 		message.setInterfaceClass(interfaceClass.getName());
 		client.sendMessage(message);
 		updateClientOrServer(client, null, buffer);
 	}
-	
-	protected void addInternal(MessageClient client) {
+
+	protected void addInternal (MessageClient client) {
 		if (!clients.contains(client)) {
 			clients.add(client);
 		}
 	}
-	
-	protected void broadcast(MessageClient client, ByteBuffer buffer) {
+
+	protected void broadcast (MessageClient client, ByteBuffer buffer) {
 		// Create the object
 		ObjectCreateMessage message = new ObjectCreateMessage();
 		message.setName(name);
@@ -119,37 +120,37 @@ public class SharedObject {
 		// Send all values for object
 		updateClientOrServer(client, null, buffer);
 	}
-	
-	protected void updateClientOrServer(MessageClient client, MessageServer server, ByteBuffer buffer) {
+
+	protected void updateClientOrServer (MessageClient client, MessageServer server, ByteBuffer buffer) {
 		ObjectUpdateMessage update = new ObjectUpdateMessage();
 		String[] fields = converters.keySet().toArray(new String[converters.size()]);
 		update(buffer, update, fields, client, server);
 	}
 
-	protected boolean remove(MessageClient client, ObjectDeleteMessage message) {
+	protected boolean remove (MessageClient client, ObjectDeleteMessage message) {
 		message.setName(name);
 		client.sendMessage(message);
 		return clients.remove(client);
 	}
 
-	protected boolean contains(MessageServer server) {
+	protected boolean contains (MessageServer server) {
 		return servers.contains(server);
 	}
 
-	protected boolean contains(MessageClient client) {
+	protected boolean contains (MessageClient client) {
 		return clients.contains(client);
 	}
 
-	protected void updated(String field) {
+	protected void updated (String field) {
 		if (!updates.contains(field)) updates.add(field);
 	}
 
-	protected void update(ByteBuffer buffer, ObjectUpdateMessage message) {
+	protected void update (ByteBuffer buffer, ObjectUpdateMessage message) {
 		if (updates.size() == 0) return;
 		String[] fields = updates.toArray(new String[updates.size()]);
 		update(buffer, message, fields, null, null);
 	}
-	
+
 	protected void update(ByteBuffer buffer, ObjectUpdateMessage message, String[] fields, MessageClient client, MessageServer server) {
 		message.setName(name);
 		Converter converter;
@@ -159,9 +160,9 @@ public class SharedObject {
 			converter = converters.get(field);
 			getter = SharedObjectManager.getInstance().getMethod(interfaceClass.getName() + ".get." + field);
 			try {
-				converter.get(getter.invoke(object, EMPTY_ARGS), buffer);
+				converter.writeObject(client, getter.invoke(object, EMPTY_ARGS), buffer);
 			} catch (Exception exc) {
-				exc.printStackTrace();	// TODO remove this
+				exc.printStackTrace(); // TODO remove this
 			}
 		}
 		message.setFields(fields);
@@ -179,7 +180,7 @@ public class SharedObject {
 			for (MessageServer server1 : servers) {
 				server1.broadcast(message);
 			}
-	
+
 			// Send to MessageClients
 			for (MessageClient client1 : clients) {
 				client = client1;
@@ -192,7 +193,7 @@ public class SharedObject {
 		}
 	}
 
-	protected void apply(ObjectUpdateMessage message, ByteBuffer buffer) {
+	protected void apply (ObjectUpdateMessage message, ByteBuffer buffer) {
 		buffer.put(message.getData());
 		buffer.rewind();
 		try {
@@ -200,15 +201,17 @@ public class SharedObject {
 				Converter converter = converters.get(field);
 				MagicBeanHandler handler = MagicBeanManager.getInstance().getMagicBeanHandler(object);
 				Method setter = handler.getClass().getMethod("setValue", String.class, Object.class);
-				Object value = converter.set(buffer);
+				Object value = converter.readObject(buffer, null);
 				setter.invoke(handler, field, value);
 			}
-		} catch (IllegalAccessException exc) {
-			exc.printStackTrace();
-		} catch (NoSuchMethodException exc) {
-			exc.printStackTrace();
-		} catch (InvocationTargetException exc) {
-			exc.printStackTrace();
+		} catch (ConversionException ex) {
+			ex.printStackTrace();
+		} catch (NoSuchMethodException ex) {
+			ex.printStackTrace();
+		} catch (IllegalAccessException ex) {
+			ex.printStackTrace();
+		} catch (InvocationTargetException ex) {
+			ex.printStackTrace();
 		}
 	}
 }

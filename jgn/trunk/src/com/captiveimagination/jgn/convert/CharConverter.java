@@ -29,60 +29,27 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Created: Jun 7, 2006
+ * Created: Jun 3, 2006
  */
 package com.captiveimagination.jgn.convert;
 
-import java.io.*;
 import java.nio.*;
+
+import com.captiveimagination.jgn.MessageClient;
 
 /**
  * @author Matthew D. Hicks
  */
-public class StringArrayConverter implements Converter {
-	public Object set(ByteBuffer buffer) {
-		int length = buffer.getInt();
-		String[] array = null;
-		if (length != -1) {
-			array = new String[length];
-			byte[] b;
-			for (int i = 0; i < length; i++) {
-				int l = buffer.getInt();
-				if (l == -1) continue;
-				b = new byte[l];
-				buffer.get(b);
-				try {
-					array[i] = new String(b, "UTF-8");
-				} catch (UnsupportedEncodingException exc) {
-					// never happens
-					exc.printStackTrace(); // just be paranoid
-				}
-			}
-		}
-		return array;
+public class CharConverter extends Converter {
+	public CharConverter (boolean isPrimitive) {
+		this.isPrimitive = isPrimitive;
 	}
 
-	public void get(Object obj, ByteBuffer buffer) {
-		String[] array = (String[])obj;
-		if (array == null) {
-			buffer.putInt(-1);
-		} else {
-			buffer.putInt(array.length);
-			for (String s : array) {
-				//buffer.put(b);
-				if (s == null) {
-					buffer.putInt(-1);
-				} else {
-					try {
-						byte[] b = s.getBytes("UTF-8");
-						buffer.putInt(b.length);
-						buffer.put(b);
-					} catch (UnsupportedEncodingException exc) {
-						// never happens
-						exc.printStackTrace(); // just be paranoid
-					}
-				}
-			}
-		}
+	public Object readObjectData (ByteBuffer buffer, Class c) throws ConversionException {
+		return buffer.getChar();
+	}
+
+	public void writeObjectData (MessageClient client, Object object, ByteBuffer buffer) throws ConversionException {
+		buffer.putChar((Character) object);
 	}
 }

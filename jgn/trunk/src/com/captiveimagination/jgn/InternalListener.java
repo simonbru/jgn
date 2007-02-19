@@ -119,13 +119,13 @@ class InternalListener implements MessageListener, ConnectionListener {
 			LocalRegistrationMessage m = (LocalRegistrationMessage) message;
 			myClient.setId(m.getId());
 			LOG.finest("LRM recvd; setting ClientId @" + Integer.toHexString(myClient.hashCode()) + " to: " + m.getId());
-			String[] messages = m.getMessageClasses();
+			String[] messages = m.getRegisteredClasses();
 			short[] ids = m.getIds();
 
 			int i = 0;
 			try {
 				for (; i < messages.length; i++) {
-					myClient.register(ids[i], (Class<? extends Message>) Class.forName(messages[i]));
+					myClient.register(ids[i], Class.forName(messages[i]));
 				}
 				// transfer ok, put client into CONNECTED state, and prepare to notify ConnectionListeners
 				myClient.setStatus(MessageClient.Status.CONNECTED);
@@ -137,8 +137,7 @@ class InternalListener implements MessageListener, ConnectionListener {
 				myClient.setCloseReason(MessageClient.CloseReason.ErrMessageWrong);
 				// no, could be an attack, don't stop complete system
 				// throw new RuntimeException("Message "+messages[i]+" unknown!",exc);
-				LOG.log(Level.WARNING, " unknown messagetype in LRM received for ", myClient);
-
+				LOG.log(Level.WARNING, " unknown messagetype in LRM received for " + myClient, exc);
 			}
 
 			if (!myClient.hasSentRegistration()) {

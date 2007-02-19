@@ -35,15 +35,21 @@ package com.captiveimagination.jgn.convert;
 
 import java.nio.*;
 
+import com.captiveimagination.jgn.MessageClient;
+
 /**
  * @author Matthew D. Hicks
  */
-public class ShortConverter implements Converter {
-	public Object set(ByteBuffer buffer) {
+public class ShortConverter extends Converter {
+	public ShortConverter (boolean isPrimitive) {
+		this.isPrimitive = isPrimitive;
+	}
+
+	public final Object readObjectData (ByteBuffer buffer, Class c) throws ConversionException {
 		return buffer.getShort();
 	}
 
-	public void get(Object obj, ByteBuffer buffer) {
-		buffer.putShort((Short) obj);
+	public final void writeObjectData (MessageClient client, Object object, ByteBuffer buffer) throws ConversionException {
+		buffer.putShort((Short) object);
 	}
 }

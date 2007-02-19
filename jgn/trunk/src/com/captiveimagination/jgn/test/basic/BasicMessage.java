@@ -33,12 +33,14 @@
  */
 package com.captiveimagination.jgn.test.basic;
 
+import java.io.Serializable;
+
 import com.captiveimagination.jgn.message.*;
 
 /**
  * @author Matthew D. Hicks
  */
-public class BasicMessage extends Message {
+public class BasicMessage extends Message implements Serializable {
 	private int value;
 
 	public int getValue() {

@@ -160,6 +160,7 @@ public final class TCPMessageServer extends NIOMessageServer {
       try {
         combined = PacketCombiner.combine(client);
       } catch (MessageHandlingException exc) {
+      	exc.printStackTrace();
         client.setCloseReason(CloseReason.ErrMessageWrong);
         // remember this client for error processing after updateTraffic
         collectTrafficProblem(client);

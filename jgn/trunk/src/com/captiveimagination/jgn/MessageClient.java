@@ -140,8 +140,8 @@ public final class MessageClient implements MessageSender {
 	private volatile long receivedCount;		// statistics only
 	private volatile long sentCount;				// same
 
-  private HashMap<Short, Class<? extends Message>> registry;
-	private HashMap<Class<? extends Message>, Short> registryReverse;
+  private HashMap<Short, Class<?>> idToClass;
+	private HashMap<Class<?>, Short> classToId;
 
 	public MessageClient(SocketAddress address, MessageServer server) {
 		this.address = address;
@@ -162,8 +162,8 @@ public final class MessageClient implements MessageSender {
 		readPosition = 0;
 		readBuffer = ByteBuffer.allocateDirect(1024 * 10);
 
-		registry = new HashMap<Short, Class<? extends Message>>();
-		registryReverse = new HashMap<Class<? extends Message>, Short>();
+		idToClass = new HashMap<Short, Class<?>>();
+		classToId = new HashMap<Class<?>, Short>();
 
 		received();	// initialize watch-clocks, to be used by my MessageServer
 		sent();			// same.
@@ -195,10 +195,10 @@ public final class MessageClient implements MessageSender {
 			// although this shouldn't happen, I've seen it ... please report if sighted!!!
 			Exception e = new Exception(
 					"MC " + getId() + " state equal. PLEASE SEND LOG to JGN, if this appears ...(" +
-							status + "-->" + newState + ").Thanks");
+							status + "-->" + newState + "). Thanks");
 			LOG.log(Level.WARNING, "", e);
 		}
-    status = newState;
+		status = newState;
     }
 
 	public CloseReason getCloseReason() {
@@ -435,28 +435,22 @@ public final class MessageClient implements MessageSender {
 	 * Note, we store the messagetype numbers from my partner at the other side of the wire!
 	 *
 	 * @param c the class to be looked up
-	 * @return short - the id
-	 * @throws MessageHandlingException - when Messageclass was not registered before
+	 * @return short - the id, or null if the class is not registered.
 	 */
-	public short getMessageTypeId(Class<? extends Message> c) throws MessageHandlingException {
-		if (!registryReverse.containsKey(c)) {
-			short id = JGN.getMessageTypeId(c);
-			if (id < 0) return id;		// if it's a system id we return the internal value
-			MessageHandlingException mHE = new MessageHandlingException(
-					"The Message " + c.getName() + " is not registered, make sure to register with JGN.register() before using.");
-			LOG.log(Level.WARNING, "", mHE);
-			throw mHE;
-		}
-		return registryReverse.get(c);
+	public Short getRegisteredClassId(Class<?> c) {
+		Short id = JGN.getRegisteredClassId(c);
+		if (id != null && id < 0) return id;		// if it's a system id we return the internal value
+		// TODO - It would be more efficient to just store all the system IDs in the client registry.
+		return classToId.get(c);
 	}
 
-	public Class<? extends Message> getMessageClass(short typeId) {
-		return registry.get(typeId);
+	public Class<?> getRegisteredClass(short typeId) {
+		return idToClass.get(typeId);
 	}
 
-	public void register(short typeId, Class<? extends Message> c) {
-		registry.put(typeId, c);
-		registryReverse.put(c, typeId);
+	public void register(short typeId, Class<?> c) {
+		idToClass.put(typeId, c);
+		classToId.put(c, typeId);
 	}
 
 	//**************************** CONNECTION RELATED ************************/

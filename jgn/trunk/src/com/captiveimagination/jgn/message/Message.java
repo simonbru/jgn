@@ -33,7 +33,16 @@
  */
 package com.captiveimagination.jgn.message;
 
+import java.nio.ByteBuffer;
+
 import com.captiveimagination.jgn.*;
+import com.captiveimagination.jgn.convert.ConversionException;
+import com.captiveimagination.jgn.convert.type.FieldExternalizable;
+import com.captiveimagination.jgn.message.type.GroupMessage;
+import com.captiveimagination.jgn.message.type.IdentityMessage;
+import com.captiveimagination.jgn.message.type.PlayerMessage;
+import com.captiveimagination.jgn.message.type.TimestampedMessage;
+import com.captiveimagination.jgn.message.type.UniqueMessage;
 import com.captiveimagination.jgn.translation.*;
 
 /**
@@ -45,7 +54,7 @@ import com.captiveimagination.jgn.translation.*;
  * @author Skip M. B. Balk
  * @author Matthew D. Hicks
  */
-public abstract class Message implements Cloneable {
+public abstract class Message implements Cloneable, FieldExternalizable {
 	private static int UNIQUE_ID = 0;
 	
 	private transient long id;
@@ -235,6 +244,26 @@ public abstract class Message implements Cloneable {
 		this.translated = translated;
 	}
 	
+	public void writeObjectData (ByteBuffer buffer) throws ConversionException {
+		if (this instanceof UniqueMessage || this instanceof IdentityMessage) buffer.putLong(id);
+		if (this instanceof PlayerMessage) {
+			buffer.putShort(playerId);
+			buffer.putShort(destinationPlayerId);
+		}
+		if (this instanceof GroupMessage) buffer.putShort(groupId);
+		if (this instanceof TimestampedMessage) buffer.putLong(timestamp);
+	}
+	
+	public void readObjectData (ByteBuffer buffer) throws ConversionException {
+		if (this instanceof UniqueMessage || this instanceof IdentityMessage) id = buffer.getLong();
+		if (this instanceof PlayerMessage) {
+			playerId = buffer.getShort();
+			destinationPlayerId = buffer.getShort();
+		}
+		if (this instanceof GroupMessage) groupId = buffer.getShort();
+		if (this instanceof TimestampedMessage) timestamp = buffer.getLong();
+	}
+
 	public static synchronized int nextUniqueId() {
 		if (UNIQUE_ID == Integer.MAX_VALUE - 1) UNIQUE_ID = 0;
 		return ++UNIQUE_ID;

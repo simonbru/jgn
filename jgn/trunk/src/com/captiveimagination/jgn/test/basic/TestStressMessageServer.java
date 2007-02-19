@@ -94,7 +94,7 @@ public class TestStressMessageServer {
 					receiveCount++;
 					//System.out.println("Count: " + receiveCount + ", " + ((BasicMessage)message).getValue());
 					//if (receiveCount > 2000) System.out.println("Receive Count: " + receiveCount);
-					if (receiveCount == MAX) {
+					if (receiveCount >= MAX) {
 						LOG.log(Level.INFO, "S1> Completed in: {0} ms", (System.currentTimeMillis() - time));
 //						System.out.println("Completed in: " + (System.currentTimeMillis() - time) + "ms");
 						System.exit(0);

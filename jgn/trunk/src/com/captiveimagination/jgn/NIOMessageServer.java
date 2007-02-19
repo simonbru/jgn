@@ -33,7 +33,8 @@
  */
 package com.captiveimagination.jgn;
 
-import com.captiveimagination.jgn.convert.ConversionHandler;
+import com.captiveimagination.jgn.convert.ConversionException;
+import com.captiveimagination.jgn.convert.Converter;
 import com.captiveimagination.jgn.message.Message;
 import com.captiveimagination.jgn.translation.TranslatedMessage;
 
@@ -184,18 +185,13 @@ public abstract class NIOMessageServer extends MessageServer {
 //		System.out.println("***** There is a message to read: " + messageLength + " received data: " + (position - 4 - client.getReadPosition()));
 		if (messageLength <= position - 4 - client.getReadPosition()) {
 			// Read message
-			short typeId = clientBuffer.getShort();
-			Class<? extends Message> c = JGN.getMessageTypeClass(typeId);
-			if (c == null) {
-				if (client.isConnected()) {
-					clientBuffer.position(client.getReadPosition());
-					log.log(Level.WARNING, " unknown message: " + typeId + " received for ", client);
-					throw new MessageHandlingException("Message received from unknown messageTypeId: " + typeId);
-				}
-				clientBuffer.position(position);
-				return null;
+			Message message;
+			try {
+				message = (Message)Converter.readClassAndObject(clientBuffer);
+			} catch (ConversionException ex) {
+				ex.printStackTrace();
+				throw new MessageHandlingException("", null, ex);
 			}
-			Message message = ConversionHandler.getConversionHandler(c).deserializeMessage(clientBuffer);
 			if (message instanceof TranslatedMessage) {
 				message = revertTranslated((TranslatedMessage) message);
 			}

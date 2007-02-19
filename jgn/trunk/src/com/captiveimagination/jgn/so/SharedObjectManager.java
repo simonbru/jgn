@@ -37,6 +37,8 @@ import java.lang.reflect.*;
 import java.nio.*;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.io.Serializable;
 
 import com.captiveimagination.jgn.*;
@@ -50,6 +52,7 @@ import com.captiveimagination.magicbeans.*;
  *
  */
 public class SharedObjectManager extends MessageAdapter implements BeanChangeListener, Updatable, ConnectionListener {
+	private static Logger LOG = Logger.getLogger("com.captiveimagination.jgn.so.SharedObjectManager");
 	private static SharedObjectManager instance;
 	
 	private boolean alive;
@@ -90,6 +93,7 @@ public class SharedObjectManager extends MessageAdapter implements BeanChangeLis
 		return t;
 	}
 	
+	// Method named "internal" should be private?
 	public <T> T createSharedBeanInternal(String name, Class<? extends T> beanInterface, boolean localObject) {
 		// Create Magic Bean
 		MagicBeanManager manager = MagicBeanManager.getInstance();
@@ -109,11 +113,13 @@ public class SharedObjectManager extends MessageAdapter implements BeanChangeLis
 																	(fld.substring(3,4).toLowerCase() + fld.substring(4)) :
 																	 fld.substring(3,4).toLowerCase();								
 							Class retType = m.getReturnType();
-							Converter cvt = ConversionHandler.getConverter(retType);
-							// TODO ase:: enum: may be this workaround helps at the moment
-							map.put(fldName, (cvt instanceof EnumConverter) ?
-								                 ConversionHandler.getConverter(Serializable.class) :
-										             cvt); // restores old behaviour on enums!!
+							try {
+								map.put(fldName, Converter.getConverter(retType));
+							} catch (ConversionException ex) {
+								// TODO - How to handle failure here? Maybe method should throw ConversionException?
+								LOG.log(Level.SEVERE, "Unable to create shared object.", ex);
+								continue;
+							}
 							m.setAccessible(true);
 							setter.setAccessible(true);
 							methodMap.put(beanInterface.getName() + ".get." + fldName, m);

@@ -33,7 +33,8 @@
  */
 package com.captiveimagination.jgn;
 
-import com.captiveimagination.jgn.convert.ConversionHandler;
+import com.captiveimagination.jgn.convert.ConversionException;
+import com.captiveimagination.jgn.convert.Converter;
 import com.captiveimagination.jgn.event.ConnectionListener;
 import com.captiveimagination.jgn.event.DynamicMessageListener;
 import com.captiveimagination.jgn.event.MessageListener;
@@ -96,8 +97,8 @@ public abstract class MessageServer implements Updatable {
 	private ConnectionQueue incomingConnections;			// Waiting for ConnectionListener handling
 	private ConnectionQueue negotiatedConnections;		// Waiting for ConnectionListener handling
 	private ConnectionQueue disconnectedConnections;	// Waiting for ConnectionListener handling
-	private final ArrayList<ConnectionListener> connectionListeners;
-	private final ArrayList<MessageListener> messageListeners;
+	private final ConcurrentLinkedQueue<ConnectionListener> connectionListeners;
+	private final ConcurrentLinkedQueue<MessageListener> messageListeners;
 	private final ArrayList<ConnectionFilter> filters;
 	private ArrayList<DataTranslator> translators;
   protected ArrayList<String> blacklist;            // list of blocked IP-adresses; null = no blocks at all
@@ -124,8 +125,8 @@ public abstract class MessageServer implements Updatable {
 		incomingConnections = new ConnectionQueue();
 		negotiatedConnections = new ConnectionQueue();
 		disconnectedConnections = new ConnectionQueue();
-		connectionListeners = new ArrayList<ConnectionListener>();
-		messageListeners = new ArrayList<MessageListener>();
+		connectionListeners = new ConcurrentLinkedQueue<ConnectionListener>();
+		messageListeners = new ConcurrentLinkedQueue<MessageListener>();
 		filters = new ArrayList<ConnectionFilter>();
 		translators = new ArrayList<DataTranslator>();
 		clients = new ConcurrentLinkedQueue<MessageClient>();
@@ -845,10 +846,11 @@ public abstract class MessageServer implements Updatable {
 		if (message.getTranslatedMessage() != null) {
 			m = message.getTranslatedMessage();
 		}
-
-		ConversionHandler handler = ConversionHandler.getConversionHandler(m.getClass());
-		short mid = message.getMessageClient().getMessageTypeId(message.getClass());
-		handler.serializeMessage(m, buffer, mid); // this may through a MHE
+		try {
+			Converter.writeClassAndObject(message.getMessageClient(), m, buffer);
+		} catch (ConversionException ex) {
+			throw new MessageHandlingException("", null, ex);
+		}
 	}
 
 }

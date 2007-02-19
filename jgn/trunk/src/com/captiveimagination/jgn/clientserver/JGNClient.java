@@ -286,7 +286,7 @@ public class JGNClient implements Updatable {
 	 */
 	public void connect(SocketAddress reliableRemoteAddress, SocketAddress fastRemoteAddress) throws IOException {
 		LOG.log(Level.FINER, "connecting to tcp: {0}; udp: {1}",
-				new Object[]{reliableRemoteAddress.toString(), fastRemoteAddress.toString()});
+				new Object[]{reliableRemoteAddress, fastRemoteAddress});
 		if (serverConnection != null) {
 			LOG.severe("Server connection already exists, while trying to connect");
 			throw new IOException("A connection already exists. Only one connection to a server may exist.");

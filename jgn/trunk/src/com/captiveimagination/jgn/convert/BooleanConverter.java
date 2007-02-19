@@ -33,17 +33,23 @@
  */
 package com.captiveimagination.jgn.convert;
 
-import java.nio.*;
+import java.nio.ByteBuffer;
+
+import com.captiveimagination.jgn.MessageClient;
 
 /**
  * @author Matthew D. Hicks
  */
-public class BooleanConverter implements Converter {
-	public Object set(ByteBuffer buffer) {
+public class BooleanConverter extends Converter {
+	public BooleanConverter (boolean isPrimitive) {
+		this.isPrimitive = isPrimitive;
+	}
+
+	public Object readObjectData (ByteBuffer buffer, Class c) throws ConversionException {
 		return buffer.get() == 1;
 	}
 
-	public void get(Object obj, ByteBuffer buffer) {
-		buffer.put((Boolean) obj ? (byte)1 : (byte)0);
+	public void writeObjectData (MessageClient client, Object object, ByteBuffer buffer) throws ConversionException {
+		buffer.put((Boolean) object ? (byte)1 : (byte)0);
 	}
 }

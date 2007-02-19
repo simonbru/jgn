@@ -39,7 +39,8 @@ import java.nio.*;
 import junit.framework.*;
 
 import com.captiveimagination.jgn.*;
-import com.captiveimagination.jgn.convert.ConversionHandler;
+import com.captiveimagination.jgn.convert.ConversionException;
+import com.captiveimagination.jgn.convert.Converter;
 import com.captiveimagination.jgn.message.*;
 import com.captiveimagination.jgn.queue.*;
 import com.captiveimagination.jgn.test.basic.*;
@@ -62,7 +63,7 @@ public class TestPacketCombiner extends TestCase{
 					MessageServer server = new TCPMessageServer(null);
 					MessageClient client = new MessageClient(null, server);
 					client.setStatus(MessageClient.Status.CONNECTED);
-					client.register(JGN.getMessageTypeId(message.getClass()), message.getClass());
+					client.register(JGN.getRegisteredClassId(message.getClass()), message.getClass());
 					int count = 0;
 					while (count < totalMessages) {
 						for (int i = 0; i < messageCount; i++) {
@@ -83,9 +84,7 @@ public class TestPacketCombiner extends TestCase{
 								packet = PacketCombiner.combine(client);
 								buffer = packet.getBuffer();
 							}
-							short typeId = buffer.getShort();
-							Class<? extends Message> c = client.getMessageClass(typeId);
-							Message m = ConversionHandler.getConversionHandler(c).deserializeMessage(buffer);
+							Message m = (Message)Converter.readClassAndObject(buffer);
 							if (m.getClass() == message.getClass()) {
 								j++;
 							}
@@ -99,6 +98,8 @@ public class TestPacketCombiner extends TestCase{
 				} catch(MessageHandlingException exc) {
 					exc.printStackTrace();
 				} catch(IOException exc) {
+					exc.printStackTrace();
+				} catch (ConversionException exc) {
 					exc.printStackTrace();
 				}
 			}

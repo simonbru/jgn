@@ -31,14 +31,28 @@
  *
  * Created: Jan 3, 2007
  */
+
 package com.captiveimagination.jgn.convert;
 
+import java.nio.ByteBuffer;
+
+import com.captiveimagination.jgn.MessageClient;
+
 /**
- * A dummy converter used for enums. Just marks a short, such that it will not
- * be taken literally, but indirectly as index into enumConstants.
- *
- * @see ConversionHandler
  * @author Alfons Seul
+ * @author Nathan Sweet <misc@n4te.com>
  */
-public class EnumConverter extends ShortConverter {
+public class EnumConverter extends Converter {
+	public void writeObjectData (MessageClient client, Object object, ByteBuffer buffer) throws ConversionException {
+		buffer.putInt(((Enum)object).ordinal());
+	}
+
+	public Object readObjectData (ByteBuffer buffer, Class c) throws ConversionException {
+		Object[] enumConstants = c.getEnumConstants();
+		if (enumConstants == null) throw new ConversionException("Class is not an enum: " + c.getName());
+		int ordinal = buffer.getInt();
+		if (ordinal < 0 || ordinal > enumConstants.length - 1)
+			throw new ConversionException("Invalid ordinal for enum \"" + c.getName() + "\": " + ordinal);
+		return enumConstants[ordinal];
+	}
 }

@@ -39,15 +39,15 @@ import com.captiveimagination.jgn.message.type.IdentityMessage;
 /**
  * This is an internal message utilized during the initial
  * negotiation of a connection to let the remote machine know
- * all of the message registrations and their ids to allow for
- * proper message communication.
+ * all of the object registrations and their ids to allow for
+ * efficient communication.
  *
  * @author Matthew D. Hicks
  */
 public class LocalRegistrationMessage extends PriorityMessage implements CertifiedMessage, IdentityMessage {
 	private short[] ids;
-	private String[] messageClasses;
-
+	private String[] classes;
+	
 	public short[] getIds() {
 		return ids;
 	}
@@ -56,12 +56,12 @@ public class LocalRegistrationMessage extends PriorityMessage implements Certifi
 		this.ids = ids;
 	}
 
-	public String[] getMessageClasses() {
-		return messageClasses;
+	public String[] getRegisteredClasses() {
+		return classes;
 	}
 
-	public void setMessageClasses(String[] messageClasses) {
-		this.messageClasses = messageClasses;
+	public void setRegisteredClasses(String[] classes) {
+		this.classes = classes;
 	}
 
 	public String toString() {

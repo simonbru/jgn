@@ -34,15 +34,11 @@
 package com.captiveimagination.jgn.clientserver;
 
 import com.captiveimagination.jgn.MessageSender;
-import com.captiveimagination.jgn.message.Message;
 
 /**
  * @author Matthew D. Hicks
  */
 public interface JGNConnection extends MessageSender {
-
-	public void sendMessage(Message message);
-	
 	public short getPlayerId();
 	
 	public boolean isConnected();

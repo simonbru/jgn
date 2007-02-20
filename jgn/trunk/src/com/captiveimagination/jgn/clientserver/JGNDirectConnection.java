@@ -59,7 +59,7 @@ public class JGNDirectConnection implements JGNConnection {
 	private short playerId;
 	private MessageClient reliableClient;
 	private MessageClient fastClient;
-	
+
 	public JGNDirectConnection() {
 		playerId = -1;
 	}
@@ -67,7 +67,7 @@ public class JGNDirectConnection implements JGNConnection {
 	public void setPlayerId(short playerId) {
 		this.playerId = playerId;
 	}
-	
+
 	public short getPlayerId() {
 		return playerId;
 	}
@@ -87,7 +87,7 @@ public class JGNDirectConnection implements JGNConnection {
 	public void setReliableClient(MessageClient reliableClient) {
 		this.reliableClient = reliableClient;
 	}
-	
+
 	public boolean isConnected() {
 		if ((reliableClient != null) && (!reliableClient.isConnected())) {
 			return false;
@@ -107,17 +107,18 @@ public class JGNDirectConnection implements JGNConnection {
 			fastClient.disconnect();
 		}
 	}
-	
-	public void sendMessage(Message message) {
+
+	public long sendMessage(Message message) {
 		if (message.getPlayerId() == -1) {
 			message.setPlayerId(this.playerId);
 		}
 		if ((message instanceof CertifiedMessage) && (reliableClient != null)) {
-			reliableClient.sendMessage(message);
+			return reliableClient.sendMessage(message);
 		} else if (fastClient != null) {
-			fastClient.sendMessage(message);
+			return fastClient.sendMessage(message);
 		} else if (reliableClient != null) {
-				reliableClient.sendMessage(message);
+			return reliableClient.sendMessage(message);
 		}
+		return -1;
 	}
 }

@@ -39,5 +39,5 @@ import com.captiveimagination.jgn.message.*;
  * @author Matthew D. Hicks
  */
 public interface MessageSender {
-	public void sendMessage(Message message);
+	public long sendMessage(Message message);
 }

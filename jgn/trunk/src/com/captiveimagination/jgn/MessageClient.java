@@ -34,10 +34,7 @@
 package com.captiveimagination.jgn;
 
 import com.captiveimagination.jgn.event.MessageListener;
-import com.captiveimagination.jgn.message.DisconnectMessage;
-import com.captiveimagination.jgn.message.LocalRegistrationMessage;
-import com.captiveimagination.jgn.message.Message;
-import com.captiveimagination.jgn.message.Receipt;
+import com.captiveimagination.jgn.message.*;
 import com.captiveimagination.jgn.message.type.IdentityMessage;
 import com.captiveimagination.jgn.message.type.UniqueMessage;
 import com.captiveimagination.jgn.queue.BasicMessageQueue;
@@ -73,27 +70,21 @@ public final class MessageClient implements MessageSender {
 	 * the connection status of this client (positions in the lifecycle)
 	 */
 	public static enum Status {
-		NOT_CONNECTED, NEGOTIATING, CONNECTED, DISCONNECTING,	DISCONNECTED }
+		NOT_CONNECTED, NEGOTIATING, CONNECTED, DISCONNECTING, DISCONNECTED
+	}
 
 	/**
 	 * when a client is status DISCONNECTED, this enum describes what event led to that
 	 */
 	public enum CloseReason {
-		ErrChannelRead("channel had read error", false),
-		ErrChannelWrite("channel had write error", false),
-		ErrChannelClosed("channel was closed on remote", false),
-		ErrChannelConnect("channel had connect error", false),
-		ErrMessageWrong("received unknown message", false),
-		ClosedByUser("gracefully closed by user", true),
-		ClosedByRemote("remote host sent disconnect", true),
-		ClosedByServer("local server closed", true),
+		ErrChannelRead("channel had read error", false), ErrChannelWrite("channel had write error", false),
+		ErrChannelClosed("channel was closed on remote", false), ErrChannelConnect("channel had connect error", false),
+		ErrMessageWrong("received unknown message", false), ClosedByUser("gracefully closed by user", true),
+		ClosedByRemote("remote host sent disconnect", true), ClosedByServer("local server closed", true),
 		TimeoutConnect("timeout while connecting", true),
 		TimeoutDisconnect("timeout while disconnecting", true), // ???
-		TimeoutRead("no receive within allotted time", true),
-		KickedFromRemote("remote host kicked me", true),
-		Filtered("connection filtered", true),
-		NA("doesn't apply", true),
-		Ignore("", true); // this state is used for letting the old state persist. see disconnectInternal
+		TimeoutRead("no receive within allotted time", true), KickedFromRemote("remote host kicked me", true),
+		Filtered("connection filtered", true), NA("doesn't apply", true), Ignore("", true); // this state is used for letting the old state persist. see disconnectInternal
 
 		private String desc;
 		private boolean graceful;
@@ -105,49 +96,51 @@ public final class MessageClient implements MessageSender {
 
 		public String toString() {
 			return desc;
-	}
+		}
 
 		public boolean isGraceful() {
 			return graceful;
 		}
 	} // end enum
 
-  private long id;
+	private long id;
 	private SocketAddress address;
 	private MessageServer server;
-	private String myId;										// (serverid) for <address>
+	private String myId; // (serverid) for <address>
 	private Status status;
 	private CloseReason closeReason;
-	private MessageQueue outgoingQueue;					// Waiting to be sent (eg written to socket) via updateTraffic()
-	private MessageQueue incomingMessages;			// Waiting for MessageListener handling
-	private MessageQueue outgoingMessages;			// Waiting for MessageListener handling
-	private final BasicMessageQueue certifiableMessages;	// Waiting for a Receipt message to certify the message was received
-	private MessageQueue certifiedMessages;			// Waiting for MessageListener handling
-	private MessageQueue failedMessages;				// Waiting for MessageListener handling
+	private MessageQueue outgoingQueue; // Waiting to be sent (eg written to socket) via updateTraffic()
+	private MessageQueue incomingMessages; // Waiting for MessageListener handling
+	private MessageQueue outgoingMessages; // Waiting for MessageListener handling
+	private final BasicMessageQueue certifiableMessages; // Waiting for a Receipt message to certify the message was received
+	private MessageQueue certifiedMessages; // Waiting for MessageListener handling
+	private MessageQueue failedMessages; // Waiting for MessageListener handling
 	private final ArrayList<MessageListener> messageListeners;
 	private HashMap<Short, JGNInputStream> inputStreams;
 	private HashMap<Short, JGNOutputStream> outputStreams;
 	private CombinedPacket currentWrite;
-	private boolean sentRegistration;				// Refers to if registration message has been sent
-	private long lastReceived;							// last time I got a message
-	private long lastSent;									// last time I published a message
+	private boolean sentRegistration; // Refers to if registration message has been sent
+	private long lastReceived; // last time I got a message
+	private long lastSent; // last time I published a message
+	private long timeConversion;
 
 	private int readPosition;
 	private ByteBuffer readBuffer;
-	private Message overhangMessage;				// holds overflow from PacketCombiner
-	private String kickReason;							// why I wasn't accepted by remote
+	private Message overhangMessage; // holds overflow from PacketCombiner
+	private String kickReason; // why I wasn't accepted by remote
 
-	private volatile long receivedCount;		// statistics only
-	private volatile long sentCount;				// same
+	private volatile long receivedCount; // statistics only
+	private volatile long sentCount; // same
 
-  private HashMap<Short, Class<?>> idToClass;
+	private HashMap<Short, Class<?>> idToClass;
 	private HashMap<Class<?>, Short> classToId;
 
 	public MessageClient(SocketAddress address, MessageServer server) {
 		this.address = address;
 		this.server = server;
 		status = Status.NOT_CONNECTED;
-    closeReason = CloseReason.NA;
+		closeReason = CloseReason.NA;
+		timeConversion = -1;
 
 		outgoingQueue = new MultiMessageQueue(server.getMaxQueueSize());
 		incomingMessages = new MultiMessageQueue(-1);
@@ -165,12 +158,12 @@ public final class MessageClient implements MessageSender {
 		idToClass = new HashMap<Short, Class<?>>();
 		classToId = new HashMap<Class<?>, Short>();
 
-		received();	// initialize watch-clocks, to be used by my MessageServer
-		sent();			// same.
+		received(); // initialize watch-clocks, to be used by my MessageServer
+		sent(); // same.
 
 		myId = "(id=" + server.getMessageServerId() + ") for " + address;
-		LOG.log(Level.FINE, " {1} created for server: {0}", new Object[]{myId,
-				this.getClass().getSimpleName() + "@" + Integer.toHexString(hashCode())});
+		LOG.log(Level.FINE, " {1} created for server: {0}", new Object[] {myId,
+						this.getClass().getSimpleName() + "@" + Integer.toHexString(hashCode())});
 
 	}
 
@@ -178,7 +171,7 @@ public final class MessageClient implements MessageSender {
 
 	public void setId(long id) {
 		this.id = id;
-//    LOG.log(Level.INFO," MC: id set to "+id, new Exception("setting Mc id"));
+		//    LOG.log(Level.INFO," MC: id set to "+id, new Exception("setting Mc id"));
 	}
 
 	public long getId() {
@@ -190,23 +183,22 @@ public final class MessageClient implements MessageSender {
 	}
 
 	public void setStatus(Status newState) {
-		LOG.log(Level.FINEST, "State changed on MC {0} from {1} to {2}", new Object[]{myId, status, newState});
+		LOG.log(Level.FINEST, "State changed on MC {0} from {1} to {2}", new Object[] {myId, status, newState});
 		if (newState == status) {
 			// although this shouldn't happen, I've seen it ... please report if sighted!!!
-			Exception e = new Exception(
-					"MC " + getId() + " state equal. PLEASE SEND LOG to JGN, if this appears ...(" +
-							status + "-->" + newState + "). Thanks");
+			Exception e = new Exception("MC " + getId() + " state equal. PLEASE SEND LOG to JGN, if this appears ...("
+							+ status + "-->" + newState + "). Thanks");
 			LOG.log(Level.WARNING, "", e);
 		}
 		status = newState;
-    }
+	}
 
 	public CloseReason getCloseReason() {
 		return closeReason;
 	}
 
 	public void setCloseReason(CloseReason cs) {
-		LOG.log(Level.FINEST, "MC {0} closing because {1}", new Object[]{myId, cs});
+		LOG.log(Level.FINEST, "MC {0} closing because {1}", new Object[] {myId, cs});
 		closeReason = cs;
 	}
 
@@ -242,9 +234,35 @@ public final class MessageClient implements MessageSender {
 		return sentCount;
 	}
 
+	public void synchronizeTime() {
+		timeConversion = -1;
+		TimeSynchronizationMessage m = new TimeSynchronizationMessage();
+		m.setLocalTime(System.currentTimeMillis());
+		m.setRemoteTime(-1);
+		m.setResponseDesired(true);
+		sendMessage(m);
+	}
+	
+	public long synchronizeTimeAndWait(long timeout) throws InterruptedException {
+		synchronizeTime();
+		long time = System.currentTimeMillis();
+		while (timeConversion == -1) {
+			Thread.sleep(10);
+			if (System.currentTimeMillis() > time + timeout) break;
+		}
+		return timeConversion;
+	}
+	
+	public long getRemoteTime() {
+		if (timeConversion != -1) {
+			return System.currentTimeMillis() + timeConversion;
+		}
+		return -1;
+	}
+	
 	protected ByteBuffer getReadBuffer() {
 		return readBuffer;
-  }
+	}
 
 	protected int getReadPosition() {
 		return readPosition;
@@ -283,6 +301,14 @@ public final class MessageClient implements MessageSender {
 		return kickReason;
 	}
 
+	protected long getTimeConversion() {
+		return timeConversion;
+	}
+	
+	protected void setTimeConversion(long timeConversion) {
+		this.timeConversion = timeConversion;
+	}
+	
 	//************************ MESSAGEQUEUES *****************************/
 
 	/**
@@ -351,12 +377,13 @@ public final class MessageClient implements MessageSender {
 	//****************************** STREAMS *************************/
 
 	public JGNInputStream getInputStream() throws IOException {
-		return getInputStream((short) 0);
+		return getInputStream((short)0);
 	}
 
 	public JGNInputStream getInputStream(short streamId) throws IOException {
 		if (inputStreams.containsKey(streamId)) {
-			StreamInUseException sIUE = new StreamInUseException("The stream " + streamId + " is currently in use and must be closed before another session can be established.");
+			StreamInUseException sIUE = new StreamInUseException("The stream " + streamId
+							+ " is currently in use and must be closed before another session can be established.");
 			LOG.log(Level.WARNING, "", sIUE);
 			throw sIUE;
 		}
@@ -373,12 +400,13 @@ public final class MessageClient implements MessageSender {
 	}
 
 	public JGNOutputStream getOutputStream() throws IOException {
-		return getOutputStream((short) 0);
+		return getOutputStream((short)0);
 	}
 
 	public JGNOutputStream getOutputStream(short streamId) throws IOException {
 		if (outputStreams.containsKey(streamId)) {
-			StreamInUseException sIUE = new StreamInUseException("The stream " + streamId + " is currently in use and must be closed before another session can be established.");
+			StreamInUseException sIUE = new StreamInUseException("The stream " + streamId
+							+ " is currently in use and must be closed before another session can be established.");
 			LOG.log(Level.WARNING, "", sIUE);
 			throw sIUE;
 		}
@@ -415,10 +443,8 @@ public final class MessageClient implements MessageSender {
 		synchronized (messageListeners) {
 			result = messageListeners.remove(listener);
 		}
-		if (result)
-			LOG.finest("removed MessageListener: " + listener);
-		else
-			LOG.finest("NOT removed MessageListener: " + listener);
+		if (result) LOG.finest("removed MessageListener: " + listener);
+		else LOG.finest("NOT removed MessageListener: " + listener);
 		return result;
 	}
 
@@ -439,7 +465,7 @@ public final class MessageClient implements MessageSender {
 	 */
 	public Short getRegisteredClassId(Class<?> c) {
 		Short id = JGN.getRegisteredClassId(c);
-		if (id != null && id < 0) return id;		// if it's a system id we return the internal value
+		if (id != null && id < 0) return id; // if it's a system id we return the internal value
 		// TODO - It would be more efficient to just store all the system IDs in the client registry.
 		return classToId.get(c);
 	}
@@ -478,12 +504,11 @@ public final class MessageClient implements MessageSender {
 	 */
 	public void disconnect() {
 		if (status == Status.CONNECTED || status == Status.NEGOTIATING) {
-      getMessageServer().getConnectionController().disconnect(this);
-      setStatus(Status.DISCONNECTING);
-			if (closeReason == CloseReason.NA)
-        setCloseReason(CloseReason.ClosedByUser);
-    }
-  }
+			getMessageServer().getConnectionController().disconnect(this);
+			setStatus(Status.DISCONNECTING);
+			if (closeReason == CloseReason.NA) setCloseReason(CloseReason.ClosedByUser);
+		}
+	}
 
 	public void disconnectAndWait(long timeout) throws IOException, InterruptedException {
 		disconnect();
@@ -528,27 +553,26 @@ public final class MessageClient implements MessageSender {
 	 *                             <p/>
 	 *         QueueFullException if output queue filled up. (May work later on)
 	 */
-	public void sendMessage(Message message) throws ConnectionException {
+	public long sendMessage(Message message) throws ConnectionException {
 		Message m = null;
 
-    if (getStatus() == Status.DISCONNECTED) {
+		if (getStatus() == Status.DISCONNECTED) {
 			ConnectionException ce = new ConnectionException("Connection is closed, no more messages being accepted.");
 			LOG.log(Level.WARNING, "", ce);
 			throw ce;
-    } else if (message instanceof DisconnectMessage) {
-      // This is a possible occurrence under valid circumstances
-    } else if (message instanceof Receipt) {
-      // If it hasn't finished disconnecting we can try to send a receipt
-    } else if (getStatus() == Status.DISCONNECTING) {
+		} else if (message instanceof DisconnectMessage) {
+			// This is a possible occurrence under valid circumstances
+		} else if (message instanceof Receipt) {
+			// If it hasn't finished disconnecting we can try to send a receipt
+		} else if (getStatus() == Status.DISCONNECTING) {
 			ConnectionException ce = new ConnectionException("Connection is closing, no more messages being accepted.");
 			LOG.log(Level.WARNING, "", ce);
 			throw ce;
-    }
+		}
 
 		try {
 			m = message.clone();
-		}
-		catch (CloneNotSupportedException cnse) {// cannot happen, since Message is cloneable}
+		} catch (CloneNotSupportedException cnse) {// cannot happen, since Message is cloneable}
 		}
 		assert m != null; // just to make javac happy
 
@@ -563,12 +587,14 @@ public final class MessageClient implements MessageSender {
 		} else
 
 		// Assign unique id if this is a UniqueMessage
-    if (m instanceof UniqueMessage) {
+		if (m instanceof UniqueMessage) {
 			m.setId(Message.nextUniqueId());
 		}
 
 		outgoingQueue.add(m); // could throw QueueFullException
 		sentCount++;
+		
+		return m.getId();
 	}
 
 	/**
@@ -578,7 +604,7 @@ public final class MessageClient implements MessageSender {
 	 *
 	 * @param message
 	 */
-	protected void receiveMessage(Message	message) {
+	protected void receiveMessage(Message message) {
 		getIncomingMessageQueue().add(message);
 		receivedCount++;
 	}
@@ -588,7 +614,7 @@ public final class MessageClient implements MessageSender {
 	protected void certifyMessage(long messageId) {
 		Message firstMessage = certifiableMessages.poll();
 		if (firstMessage == null) {
-//			System.out.println("It should have a message!");
+			//			System.out.println("It should have a message!");
 			return;
 		}
 		if (firstMessage.getId() == messageId) {

@@ -34,18 +34,8 @@
 package com.captiveimagination.jgn;
 
 import com.captiveimagination.jgn.clientserver.message.PlayerStatusMessage;
-import com.captiveimagination.jgn.convert.BooleanConverter;
-import com.captiveimagination.jgn.convert.ByteConverter;
-import com.captiveimagination.jgn.convert.CharConverter;
 import com.captiveimagination.jgn.convert.ConversionException;
 import com.captiveimagination.jgn.convert.Converter;
-import com.captiveimagination.jgn.convert.DoubleConverter;
-import com.captiveimagination.jgn.convert.FieldConverter;
-import com.captiveimagination.jgn.convert.FloatConverter;
-import com.captiveimagination.jgn.convert.IntConverter;
-import com.captiveimagination.jgn.convert.LongConverter;
-import com.captiveimagination.jgn.convert.ShortConverter;
-import com.captiveimagination.jgn.convert.StringConverter;
 import com.captiveimagination.jgn.message.*;
 import com.captiveimagination.jgn.ro.RemoteObjectRequestMessage;
 import com.captiveimagination.jgn.ro.RemoteObjectResponseMessage;
@@ -62,11 +52,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
-import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -84,16 +70,15 @@ public class JGN {
 	private static final Map<Short, Class<?>> idToClass = new HashMap<Short, Class<?>>();
 	private static final Map<Class<?>, Short> classToId = new HashMap<Class<?>, Short>();
 	// hierarchy maps a messageclass --> List of superclasses, interfaces upto Message.class
-	private static final Map<Class<? extends Message>, ArrayList<Class<?>>> hierarchy = new HashMap();
+	private static final Map<Class<? extends Message>, ArrayList<Class<?>>> hierarchy = new HashMap<Class<? extends Message>, ArrayList<Class<?>>>();
 	private static final int systemIdCnt; // used in populateLocalRegistryMessage()
-
-	private static final Logger LOG = Logger.getLogger("com.captiveimagination.jgn.JGN");
 
 	static {
 		// Certain messages must be known before negotiation so this is explicitly done here
 		short n = -2;
 		// foundation
 		register(LocalRegistrationMessage.class, n--);
+		register(TimeSynchronizationMessage.class, n--);
 		register(StreamMessage.class, n--);
 		register(NoopMessage.class, n--);
 		register(Receipt.class, n--);

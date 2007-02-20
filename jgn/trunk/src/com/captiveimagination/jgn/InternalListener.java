@@ -35,10 +35,7 @@ package com.captiveimagination.jgn;
 
 import com.captiveimagination.jgn.event.ConnectionListener;
 import com.captiveimagination.jgn.event.MessageListener;
-import com.captiveimagination.jgn.message.DisconnectMessage;
-import com.captiveimagination.jgn.message.LocalRegistrationMessage;
-import com.captiveimagination.jgn.message.Message;
-import com.captiveimagination.jgn.message.Receipt;
+import com.captiveimagination.jgn.message.*;
 import com.captiveimagination.jgn.message.type.CertifiedMessage;
 
 import java.util.logging.Level;
@@ -143,14 +140,28 @@ class InternalListener implements MessageListener, ConnectionListener {
 			if (!myClient.hasSentRegistration()) {
 				myClient.getMessageServer().getConnectionController().negotiate(myClient);
 			}
-
+		} else if (message instanceof TimeSynchronizationMessage) {
+			TimeSynchronizationMessage m = (TimeSynchronizationMessage)message;
+			boolean responseDesired = true;
+			if (m.getRemoteTime() != -1) {
+				m.getMessageClient().setTimeConversion(m.getRemoteTime() - System.currentTimeMillis());
+				responseDesired = false;
+			}
+			if (m.isResponseDesired()) {
+				m.setRemoteTime(m.getLocalTime());
+				m.setLocalTime(System.currentTimeMillis());
+				m.setResponseDesired(responseDesired);
+				m.getMessageClient().sendMessage(m);
+			}
 		} else if (message instanceof DisconnectMessage) {
 			// Disconnect me from the remote client
-			myClient.setStatus(MessageClient.Status.DISCONNECTING);
-			myClient.setKickReason(((DisconnectMessage) message).getReason());
-			// this could be a reply to my own disconnect()
-			if (myClient.getCloseReason() == MessageClient.CloseReason.NA)
-			  myClient.setCloseReason(MessageClient.CloseReason.ClosedByRemote);
+			if ((myClient.getStatus() == MessageClient.Status.CONNECTED) || (myClient.getStatus() == MessageClient.Status.NEGOTIATING)) {
+				myClient.setStatus(MessageClient.Status.DISCONNECTING);
+				myClient.setKickReason(((DisconnectMessage) message).getReason());
+				// this could be a reply to my own disconnect()
+				if (myClient.getCloseReason() == MessageClient.CloseReason.NA)
+					myClient.setCloseReason(MessageClient.CloseReason.ClosedByRemote);
+			}
 		}
 
 		if (message instanceof CertifiedMessage) {

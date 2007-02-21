@@ -42,9 +42,7 @@ import com.captiveimagination.jgn.ro.RemoteObjectResponseMessage;
 import com.captiveimagination.jgn.so.ObjectCreateMessage;
 import com.captiveimagination.jgn.so.ObjectDeleteMessage;
 import com.captiveimagination.jgn.so.ObjectUpdateMessage;
-import com.captiveimagination.jgn.sync.message.Synchronize2DMessage;
-import com.captiveimagination.jgn.sync.message.Synchronize3DMessage;
-import com.captiveimagination.jgn.sync.message.SynchronizePhysicsMessage;
+import com.captiveimagination.jgn.sync.message.*;
 import com.captiveimagination.jgn.translation.TranslatedMessage;
 
 import java.lang.reflect.Constructor;
@@ -93,6 +91,8 @@ public class JGN {
 		register(Synchronize2DMessage.class, n--);
 		register(Synchronize3DMessage.class, n--);
 		register(SynchronizePhysicsMessage.class, n--);
+		register(SynchronizeDead2DMessage.class, n--);
+		register(SynchronizeDead3DMessage.class, n--);
 		// SharedObject Messages
 		register(ObjectCreateMessage.class, n--);
 		register(ObjectUpdateMessage.class, n--);

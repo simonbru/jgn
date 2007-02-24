@@ -411,7 +411,6 @@ public class JGNClient implements Updatable {
 	public void sendToServer(Message message) {
 		if (! (message instanceof PlayerMessage)) {
 			LOG.log(Level.WARNING, "message is not a playermessage: {0}", message);
-			return;
 		}
 		message.setPlayerId(playerId);
 		message.setDestinationPlayerId((short) -1);

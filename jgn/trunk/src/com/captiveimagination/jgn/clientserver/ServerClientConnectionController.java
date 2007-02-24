@@ -57,10 +57,11 @@ import java.util.logging.Logger;
  *
  * @author Matthew D. Hicks
  */
-public class ServerClientConnectionController extends DefaultConnectionController
-		implements ConnectionListener, MessageListener {
+public class ServerClientConnectionController extends DefaultConnectionController implements ConnectionListener,
+				MessageListener {
 
-	private static Logger LOG = Logger.getLogger("com.captiveimagination.jgn.clientserver.ServerClientConnectionController");
+	private static Logger LOG = Logger
+					.getLogger("com.captiveimagination.jgn.clientserver.ServerClientConnectionController");
 
 	private JGNServer server;
 	private boolean[] playerIds;
@@ -106,9 +107,8 @@ public class ServerClientConnectionController extends DefaultConnectionControlle
 		JGN.populateRegistrationMessage(message);
 		client.sendMessage(message);
 
-		if (((server.hasBoth()) && (connection.getReliableClient() != null) && (connection.getFastClient() != null)) ||
-				(!server.hasBoth()))
-		{ // here, if only single protocol - or both MCs exist; fall through, if conn not 'complete'
+		if (((server.hasBoth()) && (connection.getReliableClient() != null) && (connection.getFastClient() != null))
+						|| (!server.hasBoth())) { // here, if only single protocol - or both MCs exist; fall through, if conn not 'complete'
 
 			// Throw event to listeners of connection if complete
 			ConcurrentLinkedQueue<JGNConnectionListener> listeners = server.getListeners();
@@ -120,7 +120,7 @@ public class ServerClientConnectionController extends DefaultConnectionControlle
 			PlayerStatusMessage psm = new PlayerStatusMessage();
 			psm.setPlayerId(playerId);
 			psm.setPlayerStatus(PlayerStatusMessage.STATUS_CONNECTED);
-			server.sendToAllExcept(psm, playerId);	// spare the newby
+			server.sendToAllExcept(psm, playerId); // spare the newby
 
 			// Send messages to the newby client for all established (old) connections
 			JGNConnection[] connections = server.getConnections();
@@ -142,7 +142,7 @@ public class ServerClientConnectionController extends DefaultConnectionControlle
 		JGNConnection[] all = server.getConnections();
 		LOG.finest("Current Connections:");
 		for (JGNConnection a : all) {
-			JGNDirectConnection da = (JGNDirectConnection) a;
+			JGNDirectConnection da = (JGNDirectConnection)a;
 			String fast = (da.getFastClient() == null) ? "none" : da.getFastClient().getAddress().toString();
 			String reli = (da.getReliableClient() == null) ? "none" : da.getReliableClient().getAddress().toString();
 			LOG.finest("  " + a.getPlayerId() + ": tcp to " + reli + "; udp to " + fast);
@@ -162,8 +162,7 @@ public class ServerClientConnectionController extends DefaultConnectionControlle
 	}
 
 	private synchronized void restorePlayerId(short id) {
-		if (id >= 0 && id < playerIds.length)
-		  playerIds[id] = false;
+		if (id >= 0 && id < playerIds.length) playerIds[id] = false;
 	}
 
 	/**
@@ -181,9 +180,8 @@ public class ServerClientConnectionController extends DefaultConnectionControlle
 		JGNDirectConnection c = (JGNDirectConnection)server.unregister(client);
 		if ((c.getFastClient() == null) && (c.getReliableClient() == null)) {
 			restorePlayerId(c.getPlayerId());
+		}
 	}
-	}
-
 
 	/**
 	 * ********************* implements MessageListener ********************
@@ -217,10 +215,10 @@ public class ServerClientConnectionController extends DefaultConnectionControlle
 				for (JGNConnection connection : connections) {
 					if (connection.getPlayerId() != message.getPlayerId()) { // not sender
 						if (connection.isConnected()) {
-				connection.sendMessage(message);
-			}
-		}
-	}
+							connection.sendMessage(message);
+						}
+					}
+				}
 			} else if (dp == -1) {
 			} // that's a message for me (THE server), let another MessageListener handle that
 			else { // send message to explicit dp
@@ -229,7 +227,7 @@ public class ServerClientConnectionController extends DefaultConnectionControlle
 				if (connection != null && connection.isConnected()) { // route message to destination
 					connection.sendMessage(message);
 				}
-	}
+			}
 		} // end of PlayerMessage handling. All other types fall through
 	}
 }

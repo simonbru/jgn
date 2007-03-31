@@ -40,12 +40,6 @@ package com.captiveimagination.jgn.sync.message;
  * @author Matthew D. Hicks
  */
 public class SynchronizePhysicsMessage extends Synchronize3DMessage {
-	private float forceX;
-	private float forceY;
-	private float forceZ;
-	private float torqueX;
-	private float torqueY;
-	private float torqueZ;
 	private float linearVelocityX;
 	private float linearVelocityY;
 	private float linearVelocityZ;
@@ -77,30 +71,6 @@ public class SynchronizePhysicsMessage extends Synchronize3DMessage {
 		this.angularVelocityZ = angularVelocityZ;
 	}
 
-	public float getForceX() {
-		return forceX;
-	}
-
-	public void setForceX(float forceX) {
-		this.forceX = forceX;
-	}
-
-	public float getForceY() {
-		return forceY;
-	}
-
-	public void setForceY(float forceY) {
-		this.forceY = forceY;
-	}
-
-	public float getForceZ() {
-		return forceZ;
-	}
-
-	public void setForceZ(float forceZ) {
-		this.forceZ = forceZ;
-	}
-
 	public float getLinearVelocityX() {
 		return linearVelocityX;
 	}
@@ -123,29 +93,5 @@ public class SynchronizePhysicsMessage extends Synchronize3DMessage {
 
 	public void setLinearVelocityZ(float linearVelocityZ) {
 		this.linearVelocityZ = linearVelocityZ;
-	}
-
-	public float getTorqueX() {
-		return torqueX;
-	}
-
-	public void setTorqueX(float torqueX) {
-		this.torqueX = torqueX;
-	}
-
-	public float getTorqueY() {
-		return torqueY;
-	}
-
-	public void setTorqueY(float torqueY) {
-		this.torqueY = torqueY;
-	}
-
-	public float getTorqueZ() {
-		return torqueZ;
-	}
-
-	public void setTorqueZ(float torqueZ) {
-		this.torqueZ = torqueZ;
 	}
 }

@@ -140,7 +140,7 @@ public abstract class NIOMessageServer extends MessageServer {
 					accept(activeKey.channel());
 				}
 				if ((activeKey.isValid()) && (activeKey.isReadable())) {
-            read(activeKey.channel());
+					read(activeKey.channel());
 				}
 				if ((activeKey.isValid()) && (activeKey.isWritable())) {
 					while (write(activeKey.channel())) {

@@ -63,7 +63,6 @@ import java.util.logging.Logger;
  * @author Alfons Seul
  */
 public final class MessageClient implements MessageSender {
-
 	private static Logger LOG = Logger.getLogger("com.captiveimagination.jgn.MessageClient");
 
 	/**

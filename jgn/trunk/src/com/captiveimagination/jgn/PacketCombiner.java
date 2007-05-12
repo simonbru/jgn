@@ -69,7 +69,9 @@ public class PacketCombiner {
 			if (message instanceof OrderedMessage) {
 				OrderedMessage.assignOrderId((OrderedMessage) message);
 			}
-			message.setTimestamp(client.getRemoteTime());
+			if (message.getTimestamp() == -1) {
+				message.setTimestamp(client.getRemoteTime());
+			}
 
 			int messageStart = buffer.position();
 			try {

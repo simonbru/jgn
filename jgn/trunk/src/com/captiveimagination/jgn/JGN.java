@@ -328,7 +328,7 @@ public class JGN {
 	 * @return Thread
 	 */
 	public static final Thread createThread(Updatable... updatables) {
-		return createThread(1, updatables);
+		return createThread(10, updatables);
 	}
 
 	/**

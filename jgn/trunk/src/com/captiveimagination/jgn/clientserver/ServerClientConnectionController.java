@@ -204,6 +204,10 @@ public class ServerClientConnectionController extends DefaultConnectionControlle
 	public void messageReceived(Message message) {
 		if (message instanceof PlayerMessage) {
 			short dp = message.getDestinationPlayerId();
+			if (message.getPlayerId() != server.getConnection(message.getMessageClient()).getPlayerId()) {
+				System.err.println("MessageClient tried to send a message with the wrong playerId, ignoring!");
+				return;
+			}
 			if (dp == -2) { // broadcast to all
 				// it's a pitty we can't use following:
 				// server.sendToAllExcept((PlayerMessage)message, message.getPlayerId());

@@ -305,7 +305,7 @@ public class JGN {
 	 * @see UpdatableRunnable
 	 */
 	public static final Runnable createRunnable(Updatable... updatables) {
-		return createRunnable(1, updatables);
+		return createRunnable(2, updatables);
 	}
 
 	/**
@@ -328,7 +328,7 @@ public class JGN {
 	 * @return Thread
 	 */
 	public static final Thread createThread(Updatable... updatables) {
-		return createThread(10, updatables);
+		return createThread(2, updatables);
 	}
 
 	/**

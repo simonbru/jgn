@@ -204,8 +204,9 @@ public class ServerClientConnectionController extends DefaultConnectionControlle
 	public void messageReceived(Message message) {
 		if (message instanceof PlayerMessage) {
 			short dp = message.getDestinationPlayerId();
-			if (message.getPlayerId() != server.getConnection(message.getMessageClient()).getPlayerId()) {
-				LOG.log(Level.WARNING, "MessageClient tried to send a message with the wrong playerId, ignoring!");
+			if ((message.getPlayerId() != -1) && (message.getPlayerId() != server.getConnection(message.getMessageClient()).getPlayerId())) {
+				LOG.log(Level.WARNING, "MessageClient tried to send a message with the wrong playerId, ignoring (Received: " + message.getPlayerId() + ", Expected: " + server.getConnection(message.getMessageClient()).getPlayerId() + ")!");
+				// TODO send something to cheat handler
 				return;
 			}
 			if (dp == -2) { // broadcast to all

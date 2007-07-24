@@ -22,7 +22,8 @@ import java.util.logging.Logger;
  * @author Matthew D. Hicks
  */
 public class PacketCombiner {
-	private static final int bigBufferSize = 512 * 1024;
+	public static int BUFFER_SIZE = 512 * 1024;
+	
 	private static volatile ByteBuffer buffer;
 	private static Logger LOG = Logger.getLogger("com.captiveimagination.jgn.PacketCombiner");
 
@@ -122,7 +123,7 @@ public class PacketCombiner {
 	}
 
 	private static final void replaceBackingBuffer() {
-		buffer = ByteBuffer.allocateDirect(bigBufferSize);
+		buffer = ByteBuffer.allocateDirect(BUFFER_SIZE);
 		LOG.fine("allocated (another) 512K for buffer");
 	}
 }

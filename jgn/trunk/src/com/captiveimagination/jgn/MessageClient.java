@@ -63,6 +63,8 @@ import java.util.logging.Logger;
  * @author Alfons Seul
  */
 public final class MessageClient implements MessageSender {
+	public static int CLIENT_BUFFER_LENGTH = 1024 * 10;
+	
 	private static Logger LOG = Logger.getLogger("com.captiveimagination.jgn.MessageClient");
 
 	/**
@@ -152,7 +154,7 @@ public final class MessageClient implements MessageSender {
 		outputStreams = new HashMap<Short, JGNOutputStream>();
 
 		readPosition = 0;
-		readBuffer = ByteBuffer.allocateDirect(1024 * 10);
+		readBuffer = ByteBuffer.allocateDirect(CLIENT_BUFFER_LENGTH);
 
 		idToClass = new HashMap<Short, Class<?>>();
 		classToId = new HashMap<Class<?>, Short>();

@@ -206,6 +206,8 @@ public abstract class NIOMessageServer extends MessageServer {
 			}
 			message.setMessageClient(client);
 			return message;
+		} else if (messageLength > clientBuffer.capacity()) {
+			throw new MessageHandlingException("Message length (" + messageLength + ") is larger than client buffer (" + clientBuffer.capacity() + ") capacity");
 		} else {
 			// If the capacity of the buffer has been reached
 			// we must compact it

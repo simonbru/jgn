@@ -54,10 +54,8 @@ public class SynchronizationListener extends MessageAdapter {
 		if (message instanceof SynchronizeMessage) {
 			SynchronizeMessage m = (SynchronizeMessage)message;
 			SyncObject syncObject = synchronizer.getObject(m.getSyncObjectId());
-			if ((validate) && (syncObject != null)) {
-				if (!synchronizer.getController().validateMessage(m, syncObject.getObject())) return;
-				synchronizer.getController().applySynchronizationMessage(m, syncObject.getObject());
-			}
+			if ((validate) && (syncObject != null) && (!synchronizer.getController().validateMessage(m, syncObject.getObject()))) return;
+			synchronizer.getController().applySynchronizationMessage(m, syncObject.getObject());
 		}
 	}
 }

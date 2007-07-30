@@ -33,6 +33,7 @@
  */
 package com.captiveimagination.jgn.test.clientserver.vm;
 
+import java.io.IOException;
 import java.net.*;
 
 import com.captiveimagination.jgn.*;
@@ -46,7 +47,7 @@ public class BasicClient implements JGNConnectionListener {
 	
 	public void init(){
 		try {
-			client = new JGNClient(new InetSocketAddress(InetAddress.getLocalHost(), 1200), new InetSocketAddress(InetAddress.getLocalHost(), 1201));
+			client = new JGNClient(new InetSocketAddress(InetAddress.getLocalHost(), 0), new InetSocketAddress(InetAddress.getLocalHost(), 0));
 			client.addServerConnectionListener(this);
 			JGN.createThread(client).start();
 			
@@ -59,8 +60,9 @@ public class BasicClient implements JGNConnectionListener {
 		}
 	}
 	
-	public void stop(){
-		
+	public void close() throws IOException{
+		System.out.println("Disconnecting!");
+		client.close();
 	}
 
 	public void connected(JGNConnection connection) {
@@ -74,6 +76,9 @@ public class BasicClient implements JGNConnectionListener {
 	public static void main(String[] args) throws Exception {
 		BasicClient client = new BasicClient();
 		client.init();
+		System.out.println("**** Sleeping");
+		Thread.sleep(5000);
+		client.close();
 	}
 }
 

@@ -53,7 +53,11 @@ public class ServerSynchronizationListener extends SynchronizationListener {
 		if (message instanceof SynchronizeMessage) {
 			SynchronizeMessage m = (SynchronizeMessage)message;
 			SyncObject syncObject = synchronizer.getObject(m.getSyncObjectId());
-			if ((validate) && (!synchronizer.getController().validateMessage(m, syncObject.getObject()))) {
+			
+			boolean valid = true;
+			if (validate) valid = synchronizer.getController().validateMessage(m, syncObject.getObject());
+			
+			if (!valid) {
 				// Validation failed - correct the sender
 				SynchronizeMessage correction = synchronizer.getController().createSynchronizationMessage(syncObject.getObject());
 				correction.setSyncObjectId(m.getSyncObjectId());

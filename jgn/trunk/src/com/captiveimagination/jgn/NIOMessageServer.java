@@ -104,8 +104,8 @@ public abstract class NIOMessageServer extends MessageServer {
 
 		// Execute events to invoke any events left for this client's messages
 		notifyClient(client);
-
-  	client.setStatus(MessageClient.Status.DISCONNECTED);
+		
+		client.setStatus(MessageClient.Status.DISCONNECTED);
 		if (reason != MessageClient.CloseReason.Ignore)
 			client.setCloseReason(reason);
 		clients.remove(client);

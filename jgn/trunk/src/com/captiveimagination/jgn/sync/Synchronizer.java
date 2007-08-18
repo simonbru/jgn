@@ -49,7 +49,7 @@ public abstract class Synchronizer implements Updatable {
 	}
 	private GraphicalController controller;
 	private ConcurrentLinkedQueue<SyncObject> syncList;
-	private ConcurrentHashMap<Short,SyncObject> passiveList;
+	private ConcurrentHashMap<Short, SyncObject> passiveList;
 	private boolean keepAlive;
 	
 	public Synchronizer(GraphicalController controller) {
@@ -88,6 +88,15 @@ public abstract class Synchronizer implements Updatable {
 			syncList.add(syncObject);
 		}
 		passiveList.put(objectId, syncObject);
+	}
+	
+	public boolean unregister(short objectId) {
+		SyncObject so = passiveList.remove(objectId);
+		if (so != null) {
+			syncList.remove(so);
+			return true;
+		}
+		return false;
 	}
 
 	protected GraphicalController getController() {

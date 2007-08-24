@@ -51,7 +51,11 @@ public class SynchronizationListener extends MessageAdapter {
 	
 	@SuppressWarnings("all")
 	public void messageReceived(Message message) {
-		if (message instanceof SynchronizeMessage) {
+		if (message instanceof SynchronizeCreateMessage) {
+			synchronizer.create((SynchronizeCreateMessage)message);
+		} else if (message instanceof SynchronizeRemoveMessage) {
+			synchronizer.remove((SynchronizeRemoveMessage)message);
+		} else if (message instanceof SynchronizeMessage) {
 			SynchronizeMessage m = (SynchronizeMessage)message;
 			SyncObject syncObject = synchronizer.getObject(m.getSyncObjectId());
 			if ((validate) && (syncObject != null) && (!synchronizer.getController().validateMessage(m, syncObject.getObject()))) return;

@@ -87,4 +87,24 @@ public interface GraphicalController<E> {
 	 * 		boolean
 	 */
 	public boolean validateMessage(SynchronizeMessage message, E object);
+
+	/**
+	 * This method is called in order to validate a creation message received
+	 * before applied to the scene.
+	 * 
+	 * @param message
+	 * @return
+	 * 		boolean
+	 */
+	public boolean validateCreate(SynchronizeCreateMessage message);
+	
+	/**
+	 * This method is called in order to validate a removal message received
+	 * before applied to the scene.
+	 * 
+	 * @param message
+	 * @return
+	 * 		boolean
+	 */
+	public boolean validateRemove(SynchronizeRemoveMessage message);
 }

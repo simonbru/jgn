@@ -50,7 +50,25 @@ public class ServerSynchronizationListener extends SynchronizationListener {
 	
 	@SuppressWarnings("all")
 	public void messageReceived(Message message) {
-		if (message instanceof SynchronizeMessage) {
+		if (message instanceof SynchronizeCreateMessage) {
+			SynchronizeCreateMessage m = (SynchronizeCreateMessage)message;
+			boolean valid = true;
+			if (validate) valid = synchronizer.getController().validateCreate(m);
+			
+			if (valid) {
+				synchronizer.create(m);
+				server.sendToAllExcept(m, m.getPlayerId());
+			}
+		} else if (message instanceof SynchronizeRemoveMessage) {
+			SynchronizeRemoveMessage m = (SynchronizeRemoveMessage)message;
+			boolean valid = true;
+			if (validate) valid = synchronizer.getController().validateRemove(m);
+			
+			if (valid) {
+				synchronizer.remove((SynchronizeRemoveMessage)message);
+				server.sendToAllExcept(m, m.getPlayerId());
+			}
+		} else if (message instanceof SynchronizeMessage) {
 			SynchronizeMessage m = (SynchronizeMessage)message;
 			SyncObject syncObject = synchronizer.getObject(m.getSyncObjectId());
 			

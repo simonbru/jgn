@@ -33,20 +33,33 @@
  */
 package com.captiveimagination.jgn.sync;
 
+import java.io.IOException;
+
 import com.captiveimagination.jgn.clientserver.*;
+import com.captiveimagination.jgn.ro.RemoteObjectManager;
 
 /**
  * @author Matthew D. Hicks
  */
 public class ClientSynchronizer extends Synchronizer {
 	private JGNClient client;
+	private SyncObjectIDManager idManager;
 	
-	public ClientSynchronizer(GraphicalController controller, JGNClient client) {
+	public ClientSynchronizer(GraphicalController controller, JGNClient client) throws IOException {
 		super(controller);
 		this.client = client;
+		idManager = RemoteObjectManager.createRemoteObject(SyncObjectIDManager.class, client.getServerConnection().getReliableClient(), 2000);
 	}
 	
 	public void update() {
 		update(client.getPlayerId(), client.getServerConnection());
+	}
+	
+	public short nextId() {
+		return idManager.next();
+	}
+	
+	public void releaseId(short id) {
+		idManager.release(id);
 	}
 }

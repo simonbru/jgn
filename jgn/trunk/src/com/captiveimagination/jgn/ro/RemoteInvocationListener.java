@@ -49,11 +49,11 @@ public class RemoteInvocationListener extends MessageAdapter {
 
 	private static Logger LOG = Logger.getLogger("com.captiveimagination.jgn.ro.RemoteInvocationListener");
 
-	private Class<? extends RemoteObject> remoteClass;
+	private Class<?> remoteClass;
 	private RemoteObject object;
 	private MessageServer server;
 
-	protected RemoteInvocationListener(Class<? extends RemoteObject> remoteClass, RemoteObject object, MessageServer server) {
+	protected RemoteInvocationListener(Class<?> remoteClass, RemoteObject object, MessageServer server) {
 		this.remoteClass = remoteClass;
 		this.object = object;
 		this.server = server;

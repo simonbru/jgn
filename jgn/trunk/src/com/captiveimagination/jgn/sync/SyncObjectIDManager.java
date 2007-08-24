@@ -29,64 +29,18 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Created: Jul 29, 2006
+ * Created: Aug 24, 2007
  */
 package com.captiveimagination.jgn.sync;
 
-import java.io.IOException;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
-
-import com.captiveimagination.jgn.clientserver.*;
-import com.captiveimagination.jgn.ro.RemoteObjectManager;
+import com.captiveimagination.jgn.ro.RemoteObject;
 
 /**
  * @author Matthew D. Hicks
  *
  */
-public class ServerSynchronizer extends Synchronizer {
-	private JGNServer server;
-	private SyncObjectIDManager idManager;
+public interface SyncObjectIDManager extends RemoteObject {
+	public short next();
 	
-	public ServerSynchronizer(GraphicalController controller, JGNServer server) throws IOException {
-		super(controller);
-		this.server = server;
-		idManager = new SyncObjectIDManagerImpl();
-		RemoteObjectManager.registerRemoteObject(null, idManager, server.getReliableServer());
-	}
-	
-	public short nextId() {
-		return idManager.next();
-	}
-	
-	public void releaseId(short id) {
-		idManager.release(id);
-	}
-	
-	public void update() {
-		JGNConnection[] connections = server.getConnections();
-		for (JGNConnection connection : connections) {
-			update(connection.getPlayerId(), connection);
-		}
-	}
-}
-
-class SyncObjectIDManagerImpl implements SyncObjectIDManager {
-	private Queue<Short> used;
-	
-	public SyncObjectIDManagerImpl() {
-		used = new ConcurrentLinkedQueue<Short>();
-	}
-	
-	public final synchronized short next() {
-		short id = (short)1;
-		while (used.contains(id)) {
-			id++;
-		}
-		return id;
-	}
-	
-	public final void release(short id) {
-		used.remove(id);
-	}
+	public void release(short id);
 }

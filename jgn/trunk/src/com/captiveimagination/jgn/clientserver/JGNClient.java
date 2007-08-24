@@ -496,7 +496,7 @@ public class JGNClient implements Updatable {
 	 *
 	 * @return conn to my Server
 	 */
-	public JGNConnection getServerConnection() {
+	public JGNDirectConnection getServerConnection() {
 		return serverConnection;
 	}
 	

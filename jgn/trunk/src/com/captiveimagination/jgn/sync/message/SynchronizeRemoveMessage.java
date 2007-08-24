@@ -29,47 +29,32 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Created: Jul 29, 2006
+ * Created: Aug 23, 2007
  */
-package com.captiveimagination.jgn.sync.swing;
+package com.captiveimagination.jgn.sync.message;
 
-import java.awt.*;
-
-import com.captiveimagination.jgn.sync.*;
-import com.captiveimagination.jgn.sync.message.*;
+import com.captiveimagination.jgn.message.Message;
+import com.captiveimagination.jgn.message.type.CertifiedMessage;
+import com.captiveimagination.jgn.message.type.PlayerMessage;
 
 /**
- * This is an example implementation of the GraphicalController for use
- * with Swing. The objects specified are JPanels.
+ * The converse of the purpose of the CreateMessage this is responsible for removing
+ * a synchronized object from the synchronization system.
  * 
  * @author Matthew D. Hicks
  */
-public class SwingGraphicalController implements GraphicalController<Component> {
-	public void applySynchronizationMessage(SynchronizeMessage message, Component component) {
-		Synchronize2DMessage m = (Synchronize2DMessage)message;
-		component.setBounds((int)m.getPositionX(), (int)m.getPositionY(), 50, 50);
+public class SynchronizeRemoveMessage extends Message  implements CertifiedMessage, PlayerMessage {
+	private short syncObjectId;
+
+	public SynchronizeRemoveMessage() {
+		syncObjectId = -1;
+	}
+	
+	public short getSyncObjectId() {
+		return syncObjectId;
 	}
 
-	public SynchronizeMessage createSynchronizationMessage(Component component) {
-		Synchronize2DMessage message = new Synchronize2DMessage();
-		message.setPositionX(component.getX());
-		message.setPositionY(component.getY());
-		return message;
-	}
-
-	public float proximity(Component component, short playerId) {
-		return 1.0f;
-	}
-
-	public boolean validateMessage(SynchronizeMessage message, Component component) {
-		return true;
-	}
-
-	public boolean validateCreate(SynchronizeCreateMessage message) {
-		return true;
-	}
-
-	public boolean validateRemove(SynchronizeRemoveMessage message) {
-		return true;
+	public void setSyncObjectId(short syncObjectId) {
+		this.syncObjectId = syncObjectId;
 	}
 }

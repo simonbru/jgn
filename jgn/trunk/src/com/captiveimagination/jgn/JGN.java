@@ -88,6 +88,8 @@ public class JGN {
 		register(PlayerStatusMessage.class, n--);
 		register(ChatMessage.class, n--);
 		// sync
+		register(SynchronizeCreateMessage.class, n--);
+		register(SynchronizeRemoveMessage.class, n--);
 		register(Synchronize2DMessage.class, n--);
 		register(Synchronize3DMessage.class, n--);
 		register(SynchronizePhysicsMessage.class, n--);

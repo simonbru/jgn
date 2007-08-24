@@ -50,12 +50,14 @@ public abstract class Synchronizer implements Updatable {
 	private GraphicalController controller;
 	private ConcurrentLinkedQueue<SyncObject> syncList;
 	private ConcurrentHashMap<Short, SyncObject> passiveList;
+	private Queue<SyncObjectManager> managers;
 	private boolean keepAlive;
 	
 	public Synchronizer(GraphicalController controller) {
 		this.controller = controller;
 		syncList = new ConcurrentLinkedQueue<SyncObject>();
 		passiveList = new ConcurrentHashMap<Short,SyncObject>();
+		managers = new ConcurrentLinkedQueue<SyncObjectManager>();
 		keepAlive = true;
 	}
 	
@@ -113,5 +115,42 @@ public abstract class Synchronizer implements Updatable {
 	
 	public boolean isAlive() {
 		return keepAlive;
+	}
+	
+	public void addSyncObjectManager(SyncObjectManager som) {
+		managers.add(som);
+	}
+	
+	public boolean removeSyncObjectManager(SyncObjectManager som) {
+		return managers.remove(som);
+	}
+	
+	/**
+	 * Called internally when a SynchronizeCreateMessage is received
+	 * 
+	 * @param message
+	 */
+	public void create(SynchronizeCreateMessage message) {
+		for (SyncObjectManager manager : managers) {
+			Object obj = manager.create(message);
+			if (obj != null) {
+				register(message.getSyncObjectId(), obj);
+				return;
+			}
+		}
+	}
+	
+	/**
+	 * Called internally when a SynchronizeRemoveMessage is received
+	 * 
+	 * @param message
+	 */
+	public void remove(SynchronizeRemoveMessage message) {
+		for (SyncObjectManager manager : managers) {
+			if (manager.remove(message)) {
+				unregister(message.getSyncObjectId());
+				return;
+			}
+		}
 	}
 }

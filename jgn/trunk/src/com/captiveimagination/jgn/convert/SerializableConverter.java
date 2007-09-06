@@ -24,6 +24,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.util.logging.Logger;
 
@@ -67,6 +68,8 @@ public class SerializableConverter extends Converter {
 			for (byte b : array) {
 				buffer.put(b);
 			}
+		} catch(BufferOverflowException exc) {
+			throw exc;
 		} catch (Exception exc) {
 			throw new ConversionException("Error during Java serialization.", exc);
 		}

@@ -29,47 +29,69 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Created: Jul 29, 2006
+ * Created: Jul 27, 2006
  */
-package com.captiveimagination.jgn.sync.swing;
-
-import java.awt.*;
-
-import com.captiveimagination.jgn.sync.*;
-import com.captiveimagination.jgn.sync.message.*;
+package com.captiveimagination.jgn.synchronization.message;
 
 /**
- * This is an example implementation of the GraphicalController for use
- * with Swing. The objects specified are JPanels.
+ * An extension of Synchronize3DMessage that adds physics information in addition
+ * to the position and rotational synchronization information.
  * 
  * @author Matthew D. Hicks
  */
-public class SwingGraphicalController implements GraphicalController<Component> {
-	public void applySynchronizationMessage(SynchronizeMessage message, Component component) {
-		Synchronize2DMessage m = (Synchronize2DMessage)message;
-		component.setBounds((int)m.getPositionX(), (int)m.getPositionY(), 50, 50);
+public class SynchronizePhysicsMessage extends Synchronize3DMessage {
+	private float linearVelocityX;
+	private float linearVelocityY;
+	private float linearVelocityZ;
+	private float angularVelocityX;
+	private float angularVelocityY;
+	private float angularVelocityZ;
+
+	public float getAngularVelocityX() {
+		return angularVelocityX;
 	}
 
-	public SynchronizeMessage createSynchronizationMessage(Component component) {
-		Synchronize2DMessage message = new Synchronize2DMessage();
-		message.setPositionX(component.getX());
-		message.setPositionY(component.getY());
-		return message;
+	public void setAngularVelocityX(float angularVelocityX) {
+		this.angularVelocityX = angularVelocityX;
 	}
 
-	public float proximity(Component component, short playerId) {
-		return 1.0f;
+	public float getAngularVelocityY() {
+		return angularVelocityY;
 	}
 
-	public boolean validateMessage(SynchronizeMessage message, Component component) {
-		return true;
+	public void setAngularVelocityY(float angularVelocityY) {
+		this.angularVelocityY = angularVelocityY;
 	}
 
-	public boolean validateCreate(SynchronizeCreateMessage message) {
-		return true;
+	public float getAngularVelocityZ() {
+		return angularVelocityZ;
 	}
 
-	public boolean validateRemove(SynchronizeRemoveMessage message) {
-		return true;
+	public void setAngularVelocityZ(float angularVelocityZ) {
+		this.angularVelocityZ = angularVelocityZ;
+	}
+
+	public float getLinearVelocityX() {
+		return linearVelocityX;
+	}
+
+	public void setLinearVelocityX(float linearVelocityX) {
+		this.linearVelocityX = linearVelocityX;
+	}
+
+	public float getLinearVelocityY() {
+		return linearVelocityY;
+	}
+
+	public void setLinearVelocityY(float linearVelocityY) {
+		this.linearVelocityY = linearVelocityY;
+	}
+
+	public float getLinearVelocityZ() {
+		return linearVelocityZ;
+	}
+
+	public void setLinearVelocityZ(float linearVelocityZ) {
+		this.linearVelocityZ = linearVelocityZ;
 	}
 }

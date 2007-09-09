@@ -31,16 +31,17 @@
  *
  * Created: Feb 20, 2007
  */
-package com.captiveimagination.jgn.sync.message;
+package com.captiveimagination.jgn.synchronization.message;
 
 /**
- * Support for dead-reckoning
+ * Support for 3D Dead-Reckoning
  * 
  * @author Matthew D. Hicks
  */
-public class SynchronizeDead2DMessage extends Synchronize2DMessage {
+public class SynchronizeDead3DMessage extends Synchronize3DMessage {
 	private float velocityX;
 	private float velocityY;
+	private float velocityZ;
 
 	public float getVelocityX() {
 		return velocityX;
@@ -56,5 +57,13 @@ public class SynchronizeDead2DMessage extends Synchronize2DMessage {
 
 	public void setVelocityY(float velocityY) {
 		this.velocityY = velocityY;
+	}
+
+	public float getVelocityZ() {
+		return velocityZ;
+	}
+
+	public void setVelocityZ(float velocityZ) {
+		this.velocityZ = velocityZ;
 	}
 }

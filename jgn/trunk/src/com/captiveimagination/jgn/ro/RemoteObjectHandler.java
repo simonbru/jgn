@@ -71,6 +71,9 @@ public class RemoteObjectHandler extends MessageAdapter implements InvocationHan
 		request.setRemoteObjectName(remoteClass.getName());
 		request.setMethodName(method.getName());
 		// make _sure_ args are serializable
+		if (args == null) {
+			args = new Object[0];
+		}
 		for (Object a : args) {
 			Class ac = a.getClass();
 			if (! (ac.isPrimitive() || Serializable.class.isAssignableFrom(ac))) {
@@ -80,6 +83,7 @@ public class RemoteObjectHandler extends MessageAdapter implements InvocationHan
 		}
 
 		request.setParameters(args);
+		System.out.println("SENDING MESSAGE: " + request);
 		client.sendMessage(request);
 
 		long time = System.currentTimeMillis();

@@ -29,37 +29,34 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Created: Jul 29, 2006
+ * Created: Jul 28, 2006
  */
-package com.captiveimagination.jgn.sync;
+package com.captiveimagination.jgn.synchronization.message;
 
-import com.captiveimagination.jgn.event.*;
 import com.captiveimagination.jgn.message.*;
-import com.captiveimagination.jgn.sync.message.*;
+import com.captiveimagination.jgn.message.type.*;
 
 /**
+ * All messages used for synchronization should extend this message.
+ * 
  * @author Matthew D. Hicks
  */
-public class SynchronizationListener extends MessageAdapter {
-	protected Synchronizer synchronizer;
-	protected boolean validate;
-	
-	public SynchronizationListener(Synchronizer synchronizer, boolean validate) {
-		this.synchronizer = synchronizer;
-		this.validate = validate;
+public abstract class SynchronizeMessage extends RealtimeMessage implements PlayerMessage {
+	private short syncObjectId;
+
+	public SynchronizeMessage() {
+		syncObjectId = -1;
 	}
 	
-	@SuppressWarnings("all")
-	public void messageReceived(Message message) {
-		if (message instanceof SynchronizeCreateMessage) {
-			synchronizer.create((SynchronizeCreateMessage)message);
-		} else if (message instanceof SynchronizeRemoveMessage) {
-			synchronizer.remove((SynchronizeRemoveMessage)message);
-		} else if (message instanceof SynchronizeMessage) {
-			SynchronizeMessage m = (SynchronizeMessage)message;
-			SyncObject syncObject = synchronizer.getObject(m.getSyncObjectId());
-			if ((validate) && (syncObject != null) && (!synchronizer.getController().validateMessage(m, syncObject.getObject()))) return;
-			synchronizer.getController().applySynchronizationMessage(m, syncObject.getObject());
-		}
+	public short getSyncObjectId() {
+		return syncObjectId;
+	}
+
+	public void setSyncObjectId(short syncObjectId) {
+		this.syncObjectId = syncObjectId;
+	}
+	
+	public Object getRealtimeId() {
+		return getPlayerId() + ":" + syncObjectId;
 	}
 }

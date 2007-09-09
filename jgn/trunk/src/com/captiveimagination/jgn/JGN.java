@@ -42,7 +42,7 @@ import com.captiveimagination.jgn.ro.RemoteObjectResponseMessage;
 import com.captiveimagination.jgn.so.ObjectCreateMessage;
 import com.captiveimagination.jgn.so.ObjectDeleteMessage;
 import com.captiveimagination.jgn.so.ObjectUpdateMessage;
-import com.captiveimagination.jgn.sync.message.*;
+import com.captiveimagination.jgn.synchronization.message.*;
 import com.captiveimagination.jgn.translation.TranslatedMessage;
 
 import java.lang.reflect.Constructor;
@@ -127,9 +127,6 @@ public class JGN {
 		register(Hashtable.class, n--);
 
 		systemIdCnt = idToClass.size();
-		
-		// make sure, configuration+logging system is setup
-		JGNConfig.ensureJGNConfigured();
 	}
 
 	/**

@@ -330,10 +330,6 @@ public class JGNClient implements Updatable {
 			LOG.warning("Connection to fastRemoteAddress failed.");
 			throw new IOException("Connection to fastRemoteAddress failed.");
 		}
-//		if (!isServerConnected()) {
-//			// fastClient exists and is not connected
-//			throw new IOException("Connection to fastRemoteAddress failed.");
-//		}
 	}
 
 	private boolean isServerConnected() {

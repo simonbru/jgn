@@ -29,69 +29,32 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Created: Jul 27, 2006
+ * Created: Feb 20, 2007
  */
-package com.captiveimagination.jgn.sync.message;
+package com.captiveimagination.jgn.synchronization.message;
 
 /**
- * An extension of Synchronize3DMessage that adds physics information in addition
- * to the position and rotational synchronization information.
+ * Support for dead-reckoning
  * 
  * @author Matthew D. Hicks
  */
-public class SynchronizePhysicsMessage extends Synchronize3DMessage {
-	private float linearVelocityX;
-	private float linearVelocityY;
-	private float linearVelocityZ;
-	private float angularVelocityX;
-	private float angularVelocityY;
-	private float angularVelocityZ;
+public class SynchronizeDead2DMessage extends Synchronize2DMessage {
+	private float velocityX;
+	private float velocityY;
 
-	public float getAngularVelocityX() {
-		return angularVelocityX;
+	public float getVelocityX() {
+		return velocityX;
 	}
 
-	public void setAngularVelocityX(float angularVelocityX) {
-		this.angularVelocityX = angularVelocityX;
+	public void setVelocityX(float velocityX) {
+		this.velocityX = velocityX;
 	}
 
-	public float getAngularVelocityY() {
-		return angularVelocityY;
+	public float getVelocityY() {
+		return velocityY;
 	}
 
-	public void setAngularVelocityY(float angularVelocityY) {
-		this.angularVelocityY = angularVelocityY;
-	}
-
-	public float getAngularVelocityZ() {
-		return angularVelocityZ;
-	}
-
-	public void setAngularVelocityZ(float angularVelocityZ) {
-		this.angularVelocityZ = angularVelocityZ;
-	}
-
-	public float getLinearVelocityX() {
-		return linearVelocityX;
-	}
-
-	public void setLinearVelocityX(float linearVelocityX) {
-		this.linearVelocityX = linearVelocityX;
-	}
-
-	public float getLinearVelocityY() {
-		return linearVelocityY;
-	}
-
-	public void setLinearVelocityY(float linearVelocityY) {
-		this.linearVelocityY = linearVelocityY;
-	}
-
-	public float getLinearVelocityZ() {
-		return linearVelocityZ;
-	}
-
-	public void setLinearVelocityZ(float linearVelocityZ) {
-		this.linearVelocityZ = linearVelocityZ;
+	public void setVelocityY(float velocityY) {
+		this.velocityY = velocityY;
 	}
 }

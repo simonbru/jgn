@@ -29,42 +29,32 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Created: Jul 27, 2006
+ * Created: Aug 23, 2007
  */
-package com.captiveimagination.jgn.sync.message;
+package com.captiveimagination.jgn.synchronization.message;
+
+import com.captiveimagination.jgn.message.Message;
+import com.captiveimagination.jgn.message.type.CertifiedMessage;
+import com.captiveimagination.jgn.message.type.PlayerMessage;
 
 /**
- * An extension of Synchronize2DMessage simply providing the third dimension (z) for positioning
- * synchronization and third and fourth for rotational synchronization (z and w).
+ * Instantiated or extended to tell remote machine to create an object and connect it
+ * to the synchronization system.
  * 
  * @author Matthew D. Hicks
  */
-public class Synchronize3DMessage extends Synchronize2DMessage {
-	private float positionZ;
-	private float rotationZ;
-	private float rotationW;
+public class SynchronizeCreateMessage extends Message implements CertifiedMessage, PlayerMessage {
+	private short syncObjectId;
 
-	public float getPositionZ() {
-		return positionZ;
-	}
-
-	public void setPositionZ(float z) {
-		this.positionZ = z;
-	}
-
-	public float getRotationZ() {
-		return rotationZ;
-	}
-
-	public void setRotationZ(float rotationZ) {
-		this.rotationZ = rotationZ;
-	}
-
-	public float getRotationW() {
-		return rotationW;
+	public SynchronizeCreateMessage() {
+		syncObjectId = -1;
 	}
 	
-	public void setRotationW(float rotationW) {
-		this.rotationW = rotationW;
+	public short getSyncObjectId() {
+		return syncObjectId;
+	}
+
+	public void setSyncObjectId(short syncObjectId) {
+		this.syncObjectId = syncObjectId;
 	}
 }

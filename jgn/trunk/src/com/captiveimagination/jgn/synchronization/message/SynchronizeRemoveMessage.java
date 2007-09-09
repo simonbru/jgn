@@ -29,18 +29,32 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Created: Aug 24, 2007
+ * Created: Aug 23, 2007
  */
-package com.captiveimagination.jgn.sync;
+package com.captiveimagination.jgn.synchronization.message;
 
-import com.captiveimagination.jgn.ro.RemoteObject;
+import com.captiveimagination.jgn.message.Message;
+import com.captiveimagination.jgn.message.type.CertifiedMessage;
+import com.captiveimagination.jgn.message.type.PlayerMessage;
 
 /**
+ * The converse of the purpose of the CreateMessage this is responsible for removing
+ * a synchronized object from the synchronization system.
+ * 
  * @author Matthew D. Hicks
- *
  */
-public interface SyncObjectIDManager extends RemoteObject {
-	public short next();
+public class SynchronizeRemoveMessage extends Message  implements CertifiedMessage, PlayerMessage {
+	private short syncObjectId;
+
+	public SynchronizeRemoveMessage() {
+		syncObjectId = -1;
+	}
 	
-	public void release(short id);
+	public short getSyncObjectId() {
+		return syncObjectId;
+	}
+
+	public void setSyncObjectId(short syncObjectId) {
+		this.syncObjectId = syncObjectId;
+	}
 }

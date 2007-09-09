@@ -606,6 +606,7 @@ public final class MessageClient implements MessageSender {
 	 * @param message
 	 */
 	protected void receiveMessage(Message message) {
+		if (message == null) throw new MessageException("Received null message.");
 		getIncomingMessageQueue().add(message);
 		receivedCount++;
 	}

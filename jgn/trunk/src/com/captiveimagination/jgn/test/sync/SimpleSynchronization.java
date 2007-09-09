@@ -35,13 +35,17 @@ package com.captiveimagination.jgn.test.sync;
 import java.awt.*;
 import java.awt.event.*;
 import java.net.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.swing.*;
 
 import com.captiveimagination.jgn.*;
 import com.captiveimagination.jgn.clientserver.*;
-import com.captiveimagination.jgn.sync.*;
-import com.captiveimagination.jgn.sync.swing.*;
+import com.captiveimagination.jgn.synchronization.*;
+import com.captiveimagination.jgn.synchronization.message.SynchronizeCreateMessage;
+import com.captiveimagination.jgn.synchronization.message.SynchronizeRemoveMessage;
+import com.captiveimagination.jgn.synchronization.swing.*;
 
 /**
  * @author Matthew D. Hicks
@@ -75,19 +79,36 @@ public class SimpleSynchronization extends JFrame implements KeyListener {
 		panel.setLayout(null);
 		panel.addKeyListener(this);
 		
-		serverPanel = new JPanel();
-		serverPanel.addKeyListener(this);
-		serverPanel.setBounds(0, 0, 50, 50);
-		serverPanel.setBackground(Color.BLUE);
-		
-		clientPanel = new JPanel();
-		clientPanel.addKeyListener(this);
-		clientPanel.setBounds(300, 300, 50, 50);
-		clientPanel.setBackground(Color.RED);
-		panel.add(serverPanel);
-		panel.add(clientPanel);
+		if (type == SERVER_OBJECT) {
+			serverPanel = new JPanel();
+			serverPanel.addKeyListener(this);
+			serverPanel.setBounds(0, 0, 50, 50);
+			serverPanel.setBackground(Color.BLUE);
+			panel.add(serverPanel);
+		} else {
+			clientPanel = new JPanel();
+			clientPanel.addKeyListener(this);
+			clientPanel.setBounds(300, 300, 50, 50);
+			clientPanel.setBackground(Color.RED);
+			panel.add(clientPanel);
+		}
 		
 		this.type = type;
+	}
+	
+	public JPanel createPanel(int x, int y) {
+		JPanel panel = new JPanel();
+		panel.addKeyListener(this);
+		panel.setBounds(x, y, 50, 50);
+		panel.setBackground(Color.GREEN);
+		panel.setVisible(true);
+		this.panel.add(panel);
+		this.panel.repaint();
+		return panel;
+	}
+	
+	public void removePanel(JPanel panel) {
+		this.panel.remove(panel);
 	}
 	
 	protected JPanel getServerPanel() {
@@ -126,7 +147,7 @@ public class SimpleSynchronization extends JFrame implements KeyListener {
 	
 	public static void main(String[] args) throws Exception {
 		// Instantiate the SimpleSynchronization GUI for the server
-		SimpleSynchronization ssServer = new SimpleSynchronization(SERVER_OBJECT);
+		final SimpleSynchronization ssServer = new SimpleSynchronization(SERVER_OBJECT);
 		ssServer.setVisible(true);
 		
 		// Instantiate an instance of a SwingGraphicalController
@@ -136,29 +157,68 @@ public class SimpleSynchronization extends JFrame implements KeyListener {
 		InetSocketAddress serverReliable = new InetSocketAddress(InetAddress.getLocalHost(), 1000);
 		InetSocketAddress serverFast = new InetSocketAddress(InetAddress.getLocalHost(), 2000);
 		JGNServer server = new JGNServer(serverReliable, serverFast);
-		JGN.createThread(server).start();
-		ServerSynchronizer sSynchronizer = new ServerSynchronizer(controller, server);
-		sSynchronizer.register((short)0, ssServer.getServerPanel(), 50, 0);		// Register the server panel to send updates to the client every 50ms
-		sSynchronizer.register((short)1, ssServer.getClientPanel());			// Register the client panel to be able to receive updates
-		JGN.createThread(sSynchronizer).start();
-		ServerSynchronizationListener serverListener = new ServerSynchronizationListener(sSynchronizer, false, server);
-		server.addMessageListener(serverListener);
+		SynchronizationManager serverSyncManager = new SynchronizationManager(server, controller);
+		serverSyncManager.addSyncObjectManager(new SyncObjectManager() {
+			public Object create(SynchronizeCreateMessage scm) {
+				return ssServer.createPanel(300, 300);
+			}
+
+			public boolean remove(SynchronizeRemoveMessage srm, Object object) {
+				ssServer.removePanel((JPanel)object);
+				return true;
+			}
+		});
+		JGN.createThread(server, serverSyncManager).start();
+		
+		// Register our server object with the synchronization manager
+		serverSyncManager.register(controller, ssServer.getServerPanel(), new SynchronizeCreateMessage(), 50);
 		
 		// Instantiate the SimpleSynchronization GUI for the client
-		SimpleSynchronization ssClient = new SimpleSynchronization(CLIENT_OBJECT);
+		final SimpleSynchronization ssClient = new SimpleSynchronization(CLIENT_OBJECT);
 		ssClient.setLocation(410, 0);
 		ssClient.setVisible(true);
 		
 		// Start the client
 		JGNClient client = new JGNClient(new InetSocketAddress(InetAddress.getLocalHost(), 3000), new InetSocketAddress(InetAddress.getLocalHost(), 4000));
-		JGN.createThread(client).start();
+		SynchronizationManager clientSyncManager = new SynchronizationManager(client, controller);
+		clientSyncManager.addSyncObjectManager(new SyncObjectManager() {
+			public Object create(SynchronizeCreateMessage scm) {
+				return ssClient.createPanel(0, 0);
+			}
+
+			public boolean remove(SynchronizeRemoveMessage srm, Object object) {
+				ssClient.removePanel((JPanel)object);
+				return true;
+			}
+		});
+		JGN.createThread(client, clientSyncManager).start();
 		client.connectAndWait(serverReliable, serverFast, 5000);
-		System.out.println("**** Connected! ****");
-		ClientSynchronizer cSynchronizer = new ClientSynchronizer(controller, client);
-		cSynchronizer.register((short)0, ssClient.getServerPanel());			// Register the server panel to be able to receive updates
-		cSynchronizer.register((short)1, ssClient.getClientPanel(), 50, 0);		// Register the client panel to send send updates to the server every 50ms
-		JGN.createThread(cSynchronizer).start();
-		SynchronizationListener clientListener = new SynchronizationListener(cSynchronizer, false);
-		client.addMessageListener(clientListener);
+		
+		// Register our client object with the synchronization manager
+		clientSyncManager.register(controller, ssClient.getClientPanel(), new SynchronizeCreateMessage(), 50);
+
+//		ServerSynchronizer sSynchronizer = new ServerSynchronizer(controller, server);
+//		sSynchronizer.register((short)0, ssServer.getServerPanel(), 50, 0);		// Register the server panel to send updates to the client every 50ms
+//		sSynchronizer.register((short)1, ssServer.getClientPanel());			// Register the client panel to be able to receive updates
+//		JGN.createThread(sSynchronizer).start();
+//		ServerSynchronizationListener serverListener = new ServerSynchronizationListener(sSynchronizer, false, server);
+//		server.addMessageListener(serverListener);
+//		
+//		// Instantiate the SimpleSynchronization GUI for the client
+//		SimpleSynchronization ssClient = new SimpleSynchronization(CLIENT_OBJECT);
+//		ssClient.setLocation(410, 0);
+//		ssClient.setVisible(true);
+//		
+//		// Start the client
+//		JGNClient client = new JGNClient(new InetSocketAddress(InetAddress.getLocalHost(), 3000), new InetSocketAddress(InetAddress.getLocalHost(), 4000));
+//		JGN.createThread(client).start();
+//		client.connectAndWait(serverReliable, serverFast, 5000);
+//		System.out.println("**** Connected! ****");
+//		ClientSynchronizer cSynchronizer = new ClientSynchronizer(controller, client);
+//		cSynchronizer.register((short)0, ssClient.getServerPanel());			// Register the server panel to be able to receive updates
+//		cSynchronizer.register((short)1, ssClient.getClientPanel(), 50, 0);		// Register the client panel to send send updates to the server every 50ms
+//		JGN.createThread(cSynchronizer).start();
+//		SynchronizationListener clientListener = new SynchronizationListener(cSynchronizer, false);
+//		client.addMessageListener(clientListener);
 	}
 }

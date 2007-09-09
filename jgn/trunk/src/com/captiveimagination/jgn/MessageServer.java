@@ -78,11 +78,6 @@ import java.util.logging.Logger;
  * @author Alfons Seul
  */
 public abstract class MessageServer implements Updatable {
-	static {
-		// do this FIRST !!
-		JGNConfig.ensureJGNConfigured();
-	}
-
 	public enum ServerType {
 		Unknown, TCP, UDP }		 // set by subclasses
 

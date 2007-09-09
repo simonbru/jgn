@@ -29,32 +29,51 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Created: Aug 23, 2007
+ * Created: Jul 27, 2006
  */
-package com.captiveimagination.jgn.sync.message;
-
-import com.captiveimagination.jgn.message.Message;
-import com.captiveimagination.jgn.message.type.CertifiedMessage;
-import com.captiveimagination.jgn.message.type.PlayerMessage;
+package com.captiveimagination.jgn.synchronization.message;
 
 /**
- * Instantiated or extended to tell remote machine to create an object and connect it
- * to the synchronization system.
+ * This message provides synchronization information for two-dimensional objects. The application
+ * of this synchronization information is not assumed by JGN.
  * 
  * @author Matthew D. Hicks
  */
-public class SynchronizeCreateMessage extends Message implements CertifiedMessage, PlayerMessage {
-	private short syncObjectId;
+public class Synchronize2DMessage extends SynchronizeMessage {
+	private float positionX;
+	private float positionY;
+	private float rotationX;
+	private float rotationY;
 
-	public SynchronizeCreateMessage() {
-		syncObjectId = -1;
-	}
-	
-	public short getSyncObjectId() {
-		return syncObjectId;
+	public float getPositionX() {
+		return positionX;
 	}
 
-	public void setSyncObjectId(short syncObjectId) {
-		this.syncObjectId = syncObjectId;
+	public void setPositionX(float x) {
+		this.positionX = x;
+	}
+
+	public float getPositionY() {
+		return positionY;
+	}
+
+	public void setPositionY(float y) {
+		this.positionY = y;
+	}
+
+	public float getRotationX() {
+		return rotationX;
+	}
+
+	public void setRotationX(float rotationX) {
+		this.rotationX = rotationX;
+	}
+
+	public float getRotationY() {
+		return rotationY;
+	}
+
+	public void setRotationY(float rotationY) {
+		this.rotationY = rotationY;
 	}
 }

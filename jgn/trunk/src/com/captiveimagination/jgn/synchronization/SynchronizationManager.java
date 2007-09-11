@@ -356,7 +356,14 @@ public class SynchronizationManager implements Updatable, MessageListener, JGNCo
 				return;
 			}
 			Object obj = wrapper.getObject();
-			controller.applySynchronizationMessage(m, obj);
+			if (controller.validateMessage(m, obj)) {
+				// Successfully validated synchronization message
+				controller.applySynchronizationMessage(m, obj);
+			} else {
+				// Failed validation, so we ignore the message and send back our own
+				m = controller.createSynchronizationMessage(obj);
+				message.getMessageClient().sendMessage(m);
+			}
 		}
 	}
 
@@ -382,7 +389,9 @@ public class SynchronizationManager implements Updatable, MessageListener, JGNCo
 		short playerId = connection.getPlayerId();
 		for (SyncWrapper wrapper : passive) {
 			if (wrapper.getOwnerPlayerId() == playerId) {
-				unregister(wrapper.getObject());
+				SynchronizeRemoveMessage removeMessage = new SynchronizeRemoveMessage();
+				removeMessage.setSyncObjectId(wrapper.getId());
+				removeQueue.add(removeMessage);
 			}
 		}
 	}

@@ -38,23 +38,32 @@ import com.captiveimagination.jgn.message.type.CertifiedMessage;
 import com.captiveimagination.jgn.message.type.PlayerMessage;
 
 /**
- * Instantiated or extended to tell remote machine to create an object and connect it
- * to the synchronization system.
+ * Instantiated or extended to tell remote machine to create an object and
+ * connect it to the synchronization system.
  * 
  * @author Matthew D. Hicks
  */
 public class SynchronizeCreateMessage extends Message implements CertifiedMessage, PlayerMessage {
 	private short syncObjectId;
+	private long syncObjectType;
 
 	public SynchronizeCreateMessage() {
 		syncObjectId = -1;
 	}
-	
+
 	public short getSyncObjectId() {
 		return syncObjectId;
 	}
 
 	public void setSyncObjectId(short syncObjectId) {
 		this.syncObjectId = syncObjectId;
+	}
+
+	public long getSyncObjectType() {
+		return syncObjectType;
+	}
+
+	public void setSyncObjectType(long syncObjectType) {
+		this.syncObjectType = syncObjectType;
 	}
 }

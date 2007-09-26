@@ -34,6 +34,7 @@
 package com.captiveimagination.jgn.queue;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import com.captiveimagination.jgn.message.*;
 
@@ -43,48 +44,32 @@ import com.captiveimagination.jgn.message.*;
  * @author Matthew D. Hicks
  */
 public class RealtimeMessageQueue implements MessageQueue {
-	private LinkedList<Object> active;
-	private HashMap<Object,Message> objectToMessages;
-	private volatile int size = 0;
-	private volatile long total = 0;
+	private Queue<RealtimeMessage> queue;
+	private volatile int total;
 	
 	public RealtimeMessageQueue() {
-		active = new LinkedList<Object>();
-		objectToMessages = new HashMap<Object,Message>();
+		queue = new ConcurrentLinkedQueue<RealtimeMessage>();
 	}
 	
 	public void add(Message message) {
 		if (message == null) throw new NullPointerException("Message must not be null");
 		
 		RealtimeMessage m = (RealtimeMessage)message;
-		synchronized(this) {
-			if (objectToMessages.containsKey(m.getRealtimeId())) {
-				if (objectToMessages.get(m.getRealtimeId()).getId() > m.getId()) {
-					// Message is older than currently in the queue
-					return;
-				}
-			}
-			objectToMessages.put(m.getRealtimeId(), m);
-			active.add(m.getRealtimeId());
-			size++;
-			total++;
+		if (queue.contains(m)) {
+			queue.remove(m);
 		}
+		queue.add(m);
+		total++;
 	}
 
 	public Message poll() {
 		if (isEmpty()) return null;
 		
-		synchronized(this) {
-			Object o = active.poll();
-			Message m = objectToMessages.get(o);
-			objectToMessages.remove(o);
-			if (m != null) size--;
-			return m;
-		}
+		return queue.poll();
 	}
 
 	public boolean isEmpty() {
-		return size == 0;
+		return queue.size() == 0;
 	}
 
 	public long getTotal() {
@@ -92,6 +77,6 @@ public class RealtimeMessageQueue implements MessageQueue {
 	}
 
 	public int getSize() {
-		return size;
+		return queue.size();
 	}
 }

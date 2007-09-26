@@ -50,4 +50,12 @@ public abstract class RealtimeMessage extends Message implements UniqueMessage {
 	public Object getRealtimeId() {
 		return getClass();
 	}
+	
+	public boolean equals(Object o) {
+		if (o instanceof RealtimeMessage) {
+			RealtimeMessage m = (RealtimeMessage)o;
+			return getRealtimeId().equals(m.getRealtimeId());
+		}
+		return false;
+	}
 }

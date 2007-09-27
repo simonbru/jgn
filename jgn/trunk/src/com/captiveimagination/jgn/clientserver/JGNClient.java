@@ -404,14 +404,14 @@ public class JGNClient implements Updatable {
 	 *
 	 * @param message
 	 */
-	public void sendToServer(Message message) {
+	public long sendToServer(Message message) {
 		if (! (message instanceof PlayerMessage)) {
 			LOG.log(Level.WARNING, "message is not a playermessage: {0}", message);
 		}
 		message.setPlayerId(playerId);
 		message.setDestinationPlayerId((short) -1);
 		LOG.log(Level.FINEST, "sending {0}", message);
-		getServerConnection().sendMessage(message);	 // this is a direct connection
+		return getServerConnection().sendMessage(message);	 // this is a direct connection
 	}
 
 	/**

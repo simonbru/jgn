@@ -29,17 +29,40 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Created: Aug 24, 2007
+ * Created: Sep 26, 2007
  */
-package com.captiveimagination.jgn.synchronization;
+package com.captiveimagination.jgn.synchronization.message;
 
-import com.captiveimagination.jgn.ro.RemoteObject;
+import com.captiveimagination.jgn.message.Message;
+import com.captiveimagination.jgn.message.type.CertifiedMessage;
+import com.captiveimagination.jgn.message.type.UniqueMessage;
 
 /**
+ * Used internally to request an object id for synchronization objects.
+ * 
  * @author Matthew D. Hicks
  */
-public interface SyncObjectIDManager extends RemoteObject {
-	public short next() throws Exception;
-	
-	public void release(short id);
+public class SynchronizeRequestIDMessage extends Message implements CertifiedMessage, UniqueMessage {
+	public static final short REQUEST_ID = (short) 1;
+	public static final short RELEASE_ID = (short) 2;
+	public static final short RESPONSE_ID = (short) 3;
+
+	private short syncObjectId;
+	private short requestType;
+
+	public short getSyncObjectId() {
+		return syncObjectId;
+	}
+
+	public void setSyncObjectId(short syncObjectId) {
+		this.syncObjectId = syncObjectId;
+	}
+
+	public short getRequestType() {
+		return requestType;
+	}
+
+	public void setRequestType(short requestType) {
+		this.requestType = requestType;
+	}
 }

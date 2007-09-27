@@ -171,7 +171,7 @@ public class SimpleSynchronization extends JFrame implements KeyListener {
 		JGN.createThread(server, serverSyncManager).start();
 		
 		// Register our server object with the synchronization manager
-		serverSyncManager.register(controller, ssServer.getServerPanel(), new SynchronizeCreateMessage(), 50);
+		serverSyncManager.register(ssServer.getServerPanel(), new SynchronizeCreateMessage(), 50);
 		
 		// Instantiate the SimpleSynchronization GUI for the client
 		final SimpleSynchronization ssClient = new SimpleSynchronization(CLIENT_OBJECT);
@@ -195,7 +195,7 @@ public class SimpleSynchronization extends JFrame implements KeyListener {
 		client.connectAndWait(serverReliable, serverFast, 5000);
 		
 		// Register our client object with the synchronization manager
-		clientSyncManager.register(controller, ssClient.getClientPanel(), new SynchronizeCreateMessage(), 50);
+		clientSyncManager.register(ssClient.getClientPanel(), new SynchronizeCreateMessage(), 50);
 
 //		ServerSynchronizer sSynchronizer = new ServerSynchronizer(controller, server);
 //		sSynchronizer.register((short)0, ssServer.getServerPanel(), 50, 0);		// Register the server panel to send updates to the client every 50ms

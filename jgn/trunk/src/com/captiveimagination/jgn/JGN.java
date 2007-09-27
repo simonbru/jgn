@@ -95,6 +95,7 @@ public class JGN {
 		register(SynchronizePhysicsMessage.class, n--);
 		register(SynchronizeDead2DMessage.class, n--);
 		register(SynchronizeDead3DMessage.class, n--);
+		register(SynchronizeRequestIDMessage.class, n--);
 		// SharedObject Messages
 		register(ObjectCreateMessage.class, n--);
 		register(ObjectUpdateMessage.class, n--);

@@ -50,6 +50,7 @@ import com.captiveimagination.jgn.ro.RemoteObjectManager;
 import com.captiveimagination.jgn.synchronization.message.SynchronizeCreateMessage;
 import com.captiveimagination.jgn.synchronization.message.SynchronizeMessage;
 import com.captiveimagination.jgn.synchronization.message.SynchronizeRemoveMessage;
+import com.captiveimagination.jgn.synchronization.message.SynchronizeRequestIDMessage;
 
 /**
  * Instantiate for each synchronization session you want to maintain.
@@ -60,6 +61,9 @@ public class SynchronizationManager implements Updatable, MessageListener, JGNCo
 	private JGNServer server;
 	private JGNClient client;
 	
+	private Queue<Short> used;				// Only used by server
+	private Queue<SyncWrapper> idQueue;		// Client only - when waiting for a syncObjectId
+	
 	private GraphicalController controller;
 	
 	private Queue<SyncWrapper> queue;
@@ -68,8 +72,6 @@ public class SynchronizationManager implements Updatable, MessageListener, JGNCo
 	
 	private Queue<SynchronizeCreateMessage> createQueue;
 	private Queue<SynchronizeRemoveMessage> removeQueue;
-	
-	private SyncObjectIDManager idManager;
 	
 	private Queue<SyncObjectManager> objectManagers;
 	
@@ -81,12 +83,7 @@ public class SynchronizationManager implements Updatable, MessageListener, JGNCo
 		server.addMessageListener(this);
 		server.addClientConnectionListener(this);
 		
-		try {
-			idManager = new SyncObjectIDManagerImpl();
-			RemoteObjectManager.registerRemoteObject(SyncObjectIDManager.class, idManager, server.getReliableServer());
-		} catch(Exception exc) {
-			exc.printStackTrace();
-		}
+		used = new ConcurrentLinkedQueue<Short>();
 		
 		init();
 	}
@@ -95,6 +92,9 @@ public class SynchronizationManager implements Updatable, MessageListener, JGNCo
 		this.client = client;
 		this.controller = controller;
 		client.addMessageListener(this);
+		
+		idQueue = new ConcurrentLinkedQueue<SyncWrapper>();
+		
 		init();
 	}
 	
@@ -118,11 +118,7 @@ public class SynchronizationManager implements Updatable, MessageListener, JGNCo
 	 * @param updateRate
 	 * @throws IOException 
 	 */
-	public void register(GraphicalController controller, Object object, SynchronizeCreateMessage createMessage, long updateRate) throws IOException {
-		// Get next id
-		short id = nextId();
-		createMessage.setSyncObjectId(id);
-		
+	public void register(Object object, SynchronizeCreateMessage createMessage, long updateRate) throws IOException {
 		// Get player id
 		short playerId = 0;
 		if (client != null) {
@@ -130,13 +126,32 @@ public class SynchronizationManager implements Updatable, MessageListener, JGNCo
 		}
 		
 		// Create SyncWrapper
-		SyncWrapper wrapper = new SyncWrapper(id, object, updateRate, createMessage, playerId);
+		SyncWrapper wrapper = new SyncWrapper(object, updateRate, createMessage, playerId);
+		if (server != null) {		// Server registering - we have the ids
+			short id = serverNextId();
+			wrapper.setId(id);
+			wrapperFinished(wrapper);
+		} else {					// Client registering - ask the server for an id
+			// Create a request message for an id
+			SynchronizeRequestIDMessage request = new SynchronizeRequestIDMessage();
+			request.setRequestType(SynchronizeRequestIDMessage.REQUEST_ID);
+			long id = client.sendToServer(request);
+			wrapper.setWaitingId(id);
+			
+			// Add it to the waiting queue
+			idQueue.add(wrapper);
+		}
+	}
+	
+	private void wrapperFinished(SyncWrapper wrapper) {
+		// Set object id
+		wrapper.getCreateMessage().setSyncObjectId(wrapper.getId());
 		
 		// Send create message onward
 		if (client != null) {
-			client.broadcast(createMessage);
+			client.broadcast(wrapper.getCreateMessage());
 		} else {
-			server.sendToAll(createMessage);
+			server.sendToAll(wrapper.getCreateMessage());
 		}
 		
 		// Add to manager to be updated
@@ -160,12 +175,18 @@ public class SynchronizationManager implements Updatable, MessageListener, JGNCo
 		remove.setSyncObjectId(wrapper.getId());
 		if (client != null) {
 			client.broadcast(remove);
+			
+			// Release id
+			SynchronizeRequestIDMessage release = new SynchronizeRequestIDMessage();
+			release.setRequestType(SynchronizeRequestIDMessage.RELEASE_ID);
+			release.setSyncObjectId(wrapper.getId());
+			client.sendToServer(release);
 		} else {
 			server.sendToAll(remove);
+			
+			// Release id
+			serverReleaseId(wrapper.getId());
 		}
-		
-		// Release id
-		releaseId(wrapper.getId());
 		
 		// Remove from self
 		if (queue.remove(wrapper)) {
@@ -196,24 +217,17 @@ public class SynchronizationManager implements Updatable, MessageListener, JGNCo
 		disabled.add(wrapper);
 	}
 	
-	public short nextId() throws IOException {
-		if (idManager == null) {
-			if (server != null) {		// Server mode
-				throw new IOException("ID Manager not properly defined!");
-			} else {					// Client mode
-				idManager = RemoteObjectManager.createRemoteObject(SyncObjectIDManager.class, client.getServerConnection().getReliableClient(), 15000);
-			}
+	private final synchronized short serverNextId() {
+		short id = (short)1;
+		while (used.contains(id)) {
+			id++;
 		}
-		try {
-			return idManager.next();
-		} catch(Throwable t) {
-			if (t instanceof IOException) throw (IOException)t;
-			throw new IOException(t);
-		}
+		used.add(id);
+		return id;
 	}
 	
-	private void releaseId(short id) {
-		idManager.release(id);
+	private final void serverReleaseId(short id) {
+		used.remove(id);
 	}
 	
 	private SyncWrapper findWrapper(Object object) {
@@ -288,7 +302,8 @@ public class SynchronizationManager implements Updatable, MessageListener, JGNCo
 			Object obj = manager.create(message);
 			if (obj != null) {
 				// Create SyncWrapper
-				SyncWrapper wrapper = new SyncWrapper(message.getSyncObjectId(), obj, 0, message, message.getPlayerId());
+				SyncWrapper wrapper = new SyncWrapper(obj, 0, message, message.getPlayerId());
+				wrapper.setId(message.getSyncObjectId());
 				passive.add(wrapper);
 				return obj;
 			}
@@ -369,6 +384,25 @@ public class SynchronizationManager implements Updatable, MessageListener, JGNCo
 				m = controller.createSynchronizationMessage(obj);
 				message.getMessageClient().sendMessage(m);
 			}
+		} else if (message instanceof SynchronizeRequestIDMessage) {
+			SynchronizeRequestIDMessage request = (SynchronizeRequestIDMessage)message;
+			if (request.getRequestType() == SynchronizeRequestIDMessage.REQUEST_ID) {
+				short id = serverNextId();
+				request.setRequestType(SynchronizeRequestIDMessage.RESPONSE_ID);
+				request.setSyncObjectId(id);
+				request.getMessageClient().sendMessage(request);
+			} else if (request.getRequestType() == SynchronizeRequestIDMessage.RESPONSE_ID) {
+				for (SyncWrapper wrapper : idQueue) {
+					if (wrapper.getWaitingId() == request.getId()) {
+						wrapper.setId(request.getSyncObjectId());
+						wrapperFinished(wrapper);
+						idQueue.remove(wrapper);
+						break;
+					}
+				}
+			} else if (request.getRequestType() == SynchronizeRequestIDMessage.RESPONSE_ID) {
+				serverReleaseId(request.getSyncObjectId());
+			}
 		}
 	}
 
@@ -399,26 +433,5 @@ public class SynchronizationManager implements Updatable, MessageListener, JGNCo
 				removeQueue.add(removeMessage);
 			}
 		}
-	}
-}
-
-class SyncObjectIDManagerImpl implements SyncObjectIDManager {
-	private Queue<Short> used;
-	
-	public SyncObjectIDManagerImpl() {
-		used = new ConcurrentLinkedQueue<Short>();
-	}
-	
-	public final synchronized short next() {
-		short id = (short)1;
-		while (used.contains(id)) {
-			id++;
-		}
-		used.add(id);
-		return id;
-	}
-	
-	public final void release(short id) {
-		used.remove(id);
 	}
 }

@@ -587,8 +587,8 @@ public final class MessageClient implements MessageSender {
 			// Ignore setting an id
 		} else
 
-		// Assign unique id if this is a UniqueMessage
-		if (m instanceof UniqueMessage) {
+		// Assign unique id if this is a UniqueMessage and it hasn't already been set
+		if ((m instanceof UniqueMessage) && (m.getId() < 1)) {
 			m.setId(Message.nextUniqueId());
 		}
 

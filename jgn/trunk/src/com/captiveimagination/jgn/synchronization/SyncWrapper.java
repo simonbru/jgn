@@ -40,6 +40,8 @@ import com.captiveimagination.jgn.synchronization.message.SynchronizeMessage;
 
 class SyncWrapper {
 	private short id;
+	private long waitingId;
+	
 	private Object object;
 	private long rate;
 	private SynchronizeCreateMessage createMessage;
@@ -47,10 +49,9 @@ class SyncWrapper {
 	
 	private long lastUpdate;
 	
-	public SyncWrapper(short id, Object object, long rate, SynchronizeCreateMessage createMessage, short ownerPlayerId) {
+	public SyncWrapper(Object object, long rate, SynchronizeCreateMessage createMessage, short ownerPlayerId) {
 		if (object == null) throw new RuntimeException("Object is null: " + id);
 		
-		this.id = id;
 		this.object = object;
 		this.rate = rate * 1000000;		// Convert to nanoseconds for better timing
 		this.createMessage = createMessage;
@@ -62,6 +63,18 @@ class SyncWrapper {
 		return id;
 	}
 
+	public void setId(short id) {
+		this.id = id;
+	}
+	
+	public long getWaitingId() {
+		return waitingId;
+	}
+	
+	public void setWaitingId(long waitingId) {
+		this.waitingId = waitingId;
+	}
+	
 	public Object getObject() {
 		return object;
 	}

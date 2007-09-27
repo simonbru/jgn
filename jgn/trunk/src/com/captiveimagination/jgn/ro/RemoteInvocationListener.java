@@ -98,12 +98,14 @@ public class RemoteInvocationListener extends MessageAdapter {
 						Object obj = method.invoke(object, parameters);
 
 						// make _sure_ result is serializable
-						Class objc = obj.getClass();
-						if (! (objc.isPrimitive() || Serializable.class.isAssignableFrom(objc))) {
-							IllegalArgumentException iAE = new IllegalArgumentException("result class is not serializable: " + objc);
-							LOG.log(Level.SEVERE, "", iAE);
-							response.setResponse(iAE);
-						} else response.setResponse(obj);
+						if (obj != null) {
+							Class objc = obj.getClass();
+							if (! (objc.isPrimitive() || Serializable.class.isAssignableFrom(objc))) {
+								IllegalArgumentException iAE = new IllegalArgumentException("result class is not serializable: " + objc);
+								LOG.log(Level.SEVERE, "", iAE);
+								response.setResponse(iAE);
+							} else response.setResponse(obj);
+						}
 					}
 				} catch (Exception exc) {
 					LOG.log(Level.SEVERE, "", exc);

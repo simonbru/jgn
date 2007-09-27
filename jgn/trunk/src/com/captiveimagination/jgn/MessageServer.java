@@ -480,6 +480,10 @@ public abstract class MessageServer implements Updatable {
 		MessageQueue incomingMessages = client.getIncomingMessageQueue();
 		while (!incomingMessages.isEmpty()) {
 			Message message = incomingMessages.poll();
+			if (message == null) {
+				System.err.println("********* SHOULDN'T HAPPEN - Message is null in MessageServer.notifyIncoming");
+				continue;
+			}
 			synchronized (client.getMessageListeners()) {
 				for (MessageListener listener : client.getMessageListeners()) {
 					sendToListener(message, listener, MessageListener.MESSAGE_EVENT.RECEIVED);

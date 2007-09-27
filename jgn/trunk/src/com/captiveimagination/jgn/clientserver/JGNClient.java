@@ -323,10 +323,10 @@ public class JGNClient implements Updatable {
 		}
 
 		// Last attempt before failing
-		if ((reliableServer != null) == (serverConnection.getReliableClient() == null)) {
+		if ((reliableServer != null) && (serverConnection.getReliableClient() == null)) {
 			LOG.warning("Connection to reliableRemoteAddress failed.");
 			throw new IOException("Connection to reliableRemoteAddress failed.");
-		} else if ((fastServer != null) == (serverConnection.getFastClient() == null)) {
+		} else if ((fastServer != null) && (serverConnection.getFastClient() == null)) {
 			LOG.warning("Connection to fastRemoteAddress failed.");
 			throw new IOException("Connection to fastRemoteAddress failed.");
 		}

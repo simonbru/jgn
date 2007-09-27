@@ -39,7 +39,7 @@ import com.captiveimagination.jgn.ro.RemoteObject;
  * @author Matthew D. Hicks
  */
 public interface SyncObjectIDManager extends RemoteObject {
-	public short next();
+	public short next() throws Exception;
 	
 	public void release(short id);
 }

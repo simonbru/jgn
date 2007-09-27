@@ -178,8 +178,10 @@ public class ServerClientConnectionController extends DefaultConnectionControlle
 	// delegate disconnect logic to my server.unregister()
 	public void disconnected(MessageClient client) {
 		JGNDirectConnection c = (JGNDirectConnection)server.unregister(client);
-		if ((c.getFastClient() == null) && (c.getReliableClient() == null)) {
-			restorePlayerId(c.getPlayerId());
+		if (c != null) {
+			if ((c.getFastClient() == null) && (c.getReliableClient() == null)) {
+				restorePlayerId(c.getPlayerId());
+			}
 		}
 	}
 

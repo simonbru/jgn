@@ -204,7 +204,12 @@ public class SynchronizationManager implements Updatable, MessageListener, JGNCo
 				idManager = RemoteObjectManager.createRemoteObject(SyncObjectIDManager.class, client.getServerConnection().getReliableClient(), 15000);
 			}
 		}
-		return idManager.next();
+		try {
+			return idManager.next();
+		} catch(Throwable t) {
+			if (t instanceof IOException) throw (IOException)t;
+			throw new IOException(t);
+		}
 	}
 	
 	private void releaseId(short id) {

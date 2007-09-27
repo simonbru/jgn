@@ -345,6 +345,7 @@ public class JGNServer implements Updatable {
 			LOG.finest("called for MessageClient " + clientAdr + " (" + client.getMessageServer().getServerType() + ")");
 		}
 		JGNDirectConnection connection = (JGNDirectConnection)getConnection(client);
+		if (connection == null) return null;
 		if (connection.getFastClient() == client) {
 			connection.setFastClient(null);
 		} else if (connection.getReliableClient() == client) {

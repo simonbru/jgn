@@ -848,7 +848,7 @@ public abstract class MessageServer implements Updatable {
 		try {
 			Converter.writeClassAndObject(message.getMessageClient(), m, buffer);
 		} catch (ConversionException ex) {
-			throw new MessageHandlingException("", null, ex);
+			throw new MessageHandlingException("Unable to serialize message: " + message.getClass().getName(), null, ex);
 		}
 	}
 

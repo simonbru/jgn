@@ -112,7 +112,6 @@ public class SynchronizationManager implements Updatable, MessageListener, JGNCo
 	/**
 	 * Register an object authoritative from this peer.
 	 * 
-	 * @param controller
 	 * @param object
 	 * @param createMessage
 	 * @param updateRate

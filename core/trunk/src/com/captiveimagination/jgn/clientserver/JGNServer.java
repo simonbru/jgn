@@ -78,13 +78,13 @@ public class JGNServer implements Updatable {
 
 	private MessageServer reliableServer;
 	private MessageServer fastServer;
+	private boolean connectionLinking;
 
 	// registry holds records for each registered playerId together with their TCP/UDP MessageClients
 	// eg. Communication endpoints.
 	private ConcurrentLinkedQueue<JGNDirectConnection> registry;
 	// listeners will be notified when a JGNClient dis/connects to this server
 	private ConcurrentLinkedQueue<JGNConnectionListener> listeners;
-	
 
 	/**
 	 * Create a new JGNServer instance, that uses either TCP, or UDP, or both. To NOT use a special
@@ -211,7 +211,7 @@ public class JGNServer implements Updatable {
 	/******************************** Connection related *********************/
 
 	/**
-	 * an array representation of my connections-list. Note, there may be upto 2 MessageClients
+	 * an array representation of my connections-list. Note, there may be up to 2 MessageClients
 	 * (one for TCP, one for UDP) for each connection. Both are associated with same playerId.
 	 *
 	 * @return all player-connection that I do hold connections to
@@ -291,6 +291,15 @@ public class JGNServer implements Updatable {
 		return false;
 	}
 	
+	/**
+	 * When true, if a client's reliable or fast MessageClient connection drops, the other connection will be disconnected
+	 * manually. When set to false and a client's connection drops, the reliable connection generally disconnects quickly but the
+	 * fast connection won't disconnect until it has timed out.
+	 */
+	public void setConnectionLinking (boolean connectionLinking) {
+		this.connectionLinking = connectionLinking;
+	}
+
 	/**************************************** Registration ***************************/
 
 	/**
@@ -351,10 +360,27 @@ public class JGNServer implements Updatable {
 		} else if (connection.getReliableClient() == client) {
 			connection.setReliableClient(null);
 		}
-		if ((connection.getFastClient() == null) && (connection.getReliableClient() == null)) {
+		boolean disconnect;
+		if (connectionLinking)
+			disconnect = (connection.getFastClient() == null) || (connection.getReliableClient() == null);
+		else
+			disconnect = (connection.getFastClient() == null) && (connection.getReliableClient() == null);
+		if (disconnect) {
 			registry.remove(connection);
 			LOG.log(Level.FINEST, "JGNDirectConnection removed for player {0}", connection.getPlayerId());
-			
+
+			// Make sure both connections are closed.
+			if (connectionLinking) {
+				if (connection.getFastClient() != null) {
+					connection.getFastClient().disconnect();
+					connection.setFastClient(null);
+				}
+				if (connection.getReliableClient() != null) {
+					connection.getReliableClient().disconnect();
+					connection.setReliableClient(null);
+				}
+			}
+
 			// Send disconnection message to all other players
 			PlayerStatusMessage psm = new PlayerStatusMessage();
 			psm.setPlayerId(connection.getPlayerId());

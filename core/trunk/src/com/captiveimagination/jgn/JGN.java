@@ -122,10 +122,6 @@ public class JGN {
 		register(Double.class, n--);
 		// Other.
 		register(String.class, n--);
-		register(ArrayList.class, n--);
-		register(HashSet.class, n--);
-		register(HashMap.class, n--);
-		register(Hashtable.class, n--);
 
 		systemIdCnt = idToClass.size();
 	}
@@ -138,13 +134,9 @@ public class JGN {
 	 * <p>
 	 * This method invokes {@link Converter#register(Class)} on the converter that will handle the registered class.
 	 * <p>
-	 * By default all primitives (including wrappers) and JGN system messages are registered as well as the following classes:
-	 * <p>
-	 * {@link String}<br>
-	 * {@link ArrayList}<br>
-	 * {@link HashSet}<br>
-	 * {@link HashMap}<br>
-	 * {@link Hashtable}<br>
+	 * By default all primitives (and primitive wrappers) and JGN system messages are registered as well as
+	 * {@link java.lang.String}. To efficiently transfer ANY other classes over the network (whether your own or JDK classes like
+	 * ArrayList, HashMap, etc), those classes must be registered.
 	 * 
 	 * @param c The class to be registered.
 	 * @throws RuntimeException if the class has no parameterless constructor or cannot be serialized.

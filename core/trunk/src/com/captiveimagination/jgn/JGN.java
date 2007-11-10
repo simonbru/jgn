@@ -148,17 +148,19 @@ public class JGN {
 
 		// Check for the existence of a parameterless constructor.
 		// Since system classes don't need this check, it's put into the public access point:
-		Constructor[] ctors = c.getConstructors();
-		boolean hasZeroArgCtor = false;
-		for (Constructor ctor : ctors) {
-			if (ctor.getParameterTypes().length == 0) {
-				hasZeroArgCtor = true;
-				break;
+		if (!Enum.class.isAssignableFrom(c)) {
+			Constructor[] ctors = c.getConstructors();
+			boolean hasZeroArgCtor = false;
+			for (Constructor ctor : ctors) {
+				if (ctor.getParameterTypes().length == 0) {
+					hasZeroArgCtor = true;
+					break;
+				}
 			}
-		}
-		if (!hasZeroArgCtor) {
-			// This class can't be serialized, this is an application error. Stop further processing.
-			throw new RuntimeException("Fatal: Class cannot be serialized (missing no arg constructor): " + c.getName());
+			if (!hasZeroArgCtor) {
+				// This class can't be serialized, this is an application error. Stop further processing.
+				throw new RuntimeException("Fatal: Class cannot be serialized (missing no arg constructor): " + c.getName());
+			}
 		}
 		short id = generateId();
 		while (idToClass.containsKey(id) || id == 0) {

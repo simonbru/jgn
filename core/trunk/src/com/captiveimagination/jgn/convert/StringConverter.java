@@ -48,7 +48,7 @@ import com.captiveimagination.jgn.MessageClient;
  * @author Matthew D. Hicks
  */
 public class StringConverter extends Converter {
-	public Object readObjectData (ByteBuffer buffer, Class type) throws ConversionException {
+	public String readObjectData (ByteBuffer buffer, Class type) throws ConversionException {
 		byte[] b = new byte[BufferUtil.readInt(buffer)];
 		buffer.get(b);
 		try {

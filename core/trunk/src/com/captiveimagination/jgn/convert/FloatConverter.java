@@ -45,7 +45,7 @@ public class FloatConverter extends Converter {
 		this.isPrimitive = isPrimitive;
 	}
 
-	public Object readObjectData (ByteBuffer buffer, Class c) throws ConversionException {
+	public Float readObjectData (ByteBuffer buffer, Class c) throws ConversionException {
 		return buffer.getFloat();
 	}
 

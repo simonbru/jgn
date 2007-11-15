@@ -45,7 +45,7 @@ public class DoubleConverter extends Converter {
 		this.isPrimitive = isPrimitive;
 	}
 
-	public Object readObjectData (ByteBuffer buffer, Class c) throws ConversionException {
+	public Double readObjectData (ByteBuffer buffer, Class c) throws ConversionException {
 		return buffer.getDouble();
 	}
 

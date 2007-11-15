@@ -45,10 +45,10 @@ public class CollectionConverter extends Converter {
 		}
 	}
 
-	public Object readObjectData (ByteBuffer buffer, Class c) throws ConversionException {
+	public <T> T readObjectData (ByteBuffer buffer, Class<T> c) throws ConversionException {
 		int length = BufferUtil.readInt(buffer);
 		Collection collection = (Collection)newInstance(c);
-		if (length == 0) return collection;
+		if (length == 0) return (T)collection;
 		if (buffer.get() == 1) {
 			Class elementClass = Converter.readClass(buffer);
 			Converter converter = Converter.getConverter(elementClass);
@@ -58,6 +58,7 @@ public class CollectionConverter extends Converter {
 			for (int i = 0; i < length; i++)
 				collection.add(Converter.readClassAndObject(buffer));
 		}
-		return collection;
+		return (T)collection;
 	}
+	
 }

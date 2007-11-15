@@ -45,7 +45,7 @@ public class ByteConverter extends Converter {
 		this.isPrimitive = isPrimitive;
 	}
 
-	public Object readObjectData (ByteBuffer buffer, Class c) throws ConversionException {
+	public Byte readObjectData (ByteBuffer buffer, Class c) throws ConversionException {
 		return buffer.get();
 	}
 

@@ -45,11 +45,11 @@ public class ShortConverter extends Converter {
 		this.isPrimitive = isPrimitive;
 	}
 
-	public final Object readObjectData (ByteBuffer buffer, Class c) throws ConversionException {
+	public Short readObjectData (ByteBuffer buffer, Class c) throws ConversionException {
 		return buffer.getShort();
 	}
 
-	public final void writeObjectData (MessageClient client, Object object, ByteBuffer buffer) throws ConversionException {
+	public void writeObjectData (MessageClient client, Object object, ByteBuffer buffer) throws ConversionException {
 		buffer.putShort((Short) object);
 	}
 }

@@ -71,10 +71,10 @@ public class MapConverter extends Converter {
 		}
 	}
 
-	public Object readObjectData (ByteBuffer buffer, Class c) throws ConversionException {
+	public <T> T readObjectData (ByteBuffer buffer, Class<T> c) throws ConversionException {
 		Map map = (Map)newInstance(c);
 		int length = BufferUtil.readInt(buffer);
-		if (length == 0) return map;
+		if (length == 0) return (T)map;
 		// Read element types and get converters.
 		Converter keyConverter = null;
 		Class keyClass = null;
@@ -102,6 +102,6 @@ public class MapConverter extends Converter {
 				value = Converter.readClassAndObject(buffer);
 			map.put(key, value);
 		}
-		return map;
+		return (T)map;
 	}
 }

@@ -45,7 +45,7 @@ public class CharConverter extends Converter {
 		this.isPrimitive = isPrimitive;
 	}
 
-	public Object readObjectData (ByteBuffer buffer, Class c) throws ConversionException {
+	public Character readObjectData (ByteBuffer buffer, Class c) throws ConversionException {
 		return buffer.getChar();
 	}
 

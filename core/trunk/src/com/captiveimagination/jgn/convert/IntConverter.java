@@ -45,11 +45,11 @@ public class IntConverter extends Converter {
 		this.isPrimitive = isPrimitive;
 	}
 
-	public final Object readObjectData (ByteBuffer buffer, Class c) throws ConversionException {
+	public Integer readObjectData (ByteBuffer buffer, Class c) throws ConversionException {
 		return buffer.getInt();
 	}
 
-	public final void writeObjectData (MessageClient client, Object object, ByteBuffer buffer) throws ConversionException {
+	public void writeObjectData (MessageClient client, Object object, ByteBuffer buffer) throws ConversionException {
 		buffer.putInt((Integer) object);
 	}
 }

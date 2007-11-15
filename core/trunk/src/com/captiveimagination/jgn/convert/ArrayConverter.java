@@ -88,7 +88,7 @@ public class ArrayConverter extends Converter {
 		}
 	}
 
-	public Object readObjectData (ByteBuffer buffer, Class c) throws ConversionException {
+	public <T> T readObjectData (ByteBuffer buffer, Class<T> c) throws ConversionException {
 		// Get dimensions.
 		byte dimensionCount = buffer.get();
 		int[] dimensions = new int[dimensionCount];
@@ -99,7 +99,7 @@ public class ArrayConverter extends Converter {
 		Class elementClass = getElementClass(c);
 		if (Modifier.isFinal(elementClass.getModifiers())) elementConverter = Converter.getConverter(elementClass);
 		// Create array and read in the data.
-		Object array = Array.newInstance(elementClass, dimensions);
+		T array = (T)Array.newInstance(elementClass, dimensions);
 		readArray(elementConverter, elementClass, buffer, array, 0, dimensions);
 		return array;
 	}

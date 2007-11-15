@@ -45,7 +45,7 @@ public class LongConverter extends Converter {
 		this.isPrimitive = isPrimitive;
 	}
 
-	public Object readObjectData (ByteBuffer buffer, Class c) throws ConversionException {
+	public Long readObjectData (ByteBuffer buffer, Class c) throws ConversionException {
 		return buffer.getLong();
 	}
 

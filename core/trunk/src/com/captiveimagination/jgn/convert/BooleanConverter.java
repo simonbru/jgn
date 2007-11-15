@@ -45,7 +45,7 @@ public class BooleanConverter extends Converter {
 		this.isPrimitive = isPrimitive;
 	}
 
-	public Object readObjectData (ByteBuffer buffer, Class c) throws ConversionException {
+	public Boolean readObjectData (ByteBuffer buffer, Class c) throws ConversionException {
 		return buffer.get() == 1;
 	}
 

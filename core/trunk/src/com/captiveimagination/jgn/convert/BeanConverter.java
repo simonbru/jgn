@@ -121,8 +121,8 @@ public class BeanConverter extends Converter {
 		}
 	}
 
-	public Object readObjectData (ByteBuffer buffer, Class c) throws ConversionException {
-		Object object = newInstance(c);
+	public <T> T readObjectData (ByteBuffer buffer, Class<T> c) throws ConversionException {
+		T object = newInstance(c);
 		try {
 			for (CachedMethod cachedMethod : getSetterMethods(object.getClass())) {
 				Object value;

@@ -47,8 +47,8 @@ public class EnumConverter extends Converter {
 		buffer.putInt(((Enum)object).ordinal());
 	}
 
-	public Object readObjectData (ByteBuffer buffer, Class c) throws ConversionException {
-		Object[] enumConstants = c.getEnumConstants();
+	public <T> T readObjectData (ByteBuffer buffer, Class<T> c) throws ConversionException {
+		T[] enumConstants = c.getEnumConstants();
 		if (enumConstants == null) throw new ConversionException("Class is not an enum: " + c.getName());
 		int ordinal = buffer.getInt();
 		if (ordinal < 0 || ordinal > enumConstants.length - 1)

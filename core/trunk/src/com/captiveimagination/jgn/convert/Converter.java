@@ -218,7 +218,7 @@ abstract public class Converter {
 	 * Reads an object from the buffer. If the object is not a primitive, first a byte is read to denote if the object is null.
 	 * @param type The type of the object to be read.
 	 */
-	public final Object readObject (ByteBuffer buffer, Class type) throws ConversionException {
+	public final <T> T readObject (ByteBuffer buffer, Class<T> type) throws ConversionException {
 		if (!isPrimitive && buffer.get() == 0) return null;
 		return readObjectData(buffer, type);
 	}
@@ -229,13 +229,13 @@ abstract public class Converter {
 	 * @param buffer Guaranteed to contain data for a non-null object.
 	 * @param type The type of the object to be read.
 	 */
-	abstract public Object readObjectData (ByteBuffer buffer, Class type) throws ConversionException;
+	abstract public <T> T readObjectData (ByteBuffer buffer, Class<T> type) throws ConversionException;
 
 	/**
 	 * Returns an instance of the specified class.
 	 * @throws ConversionException if the class could not be constructed.
 	 */
-	protected Object newInstance (Class c) throws ConversionException {
+	protected <T> T newInstance (Class<T> c) throws ConversionException {
 		try {
 			return c.newInstance();
 		} catch (Exception ex) {

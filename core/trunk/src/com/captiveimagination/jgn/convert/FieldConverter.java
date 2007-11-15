@@ -92,7 +92,7 @@ public class FieldConverter extends Converter {
 		} catch (IllegalAccessException ex) {
 			throw new ConversionException("Error accessing field in class: " + object.getClass().getName(), ex);
 		}
-		if (object instanceof FieldExternalizable) ((FieldExternalizable)object).writeObjectData(buffer);
+		if (object instanceof FieldExternalizable) ((FieldExternalizable)object).writeObjectData(client, buffer);
 	}
 
 	public Object readObjectData (ByteBuffer buffer, Class c) throws ConversionException {

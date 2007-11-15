@@ -244,7 +244,7 @@ public abstract class Message implements Cloneable, FieldExternalizable {
 		this.translated = translated;
 	}
 	
-	public void writeObjectData (ByteBuffer buffer) throws ConversionException {
+	public void writeObjectData (MessageClient client, ByteBuffer buffer) throws ConversionException {
 		if (this instanceof UniqueMessage || this instanceof IdentityMessage) buffer.putLong(id);
 		if (this instanceof PlayerMessage) {
 			buffer.putShort(playerId);

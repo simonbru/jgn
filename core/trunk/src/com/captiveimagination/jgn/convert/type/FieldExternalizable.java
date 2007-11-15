@@ -3,6 +3,7 @@ package com.captiveimagination.jgn.convert.type;
 
 import java.nio.ByteBuffer;
 
+import com.captiveimagination.jgn.MessageClient;
 import com.captiveimagination.jgn.convert.ConversionException;
 import com.captiveimagination.jgn.convert.FieldConverter;
 
@@ -14,7 +15,7 @@ import com.captiveimagination.jgn.convert.FieldConverter;
  * @author Nathan Sweet <misc@n4te.com>
  */
 public interface FieldExternalizable extends FieldSerializable {
-	public void writeObjectData (ByteBuffer buffer) throws ConversionException;
+	public void writeObjectData (MessageClient client, ByteBuffer buffer) throws ConversionException;
 
 	public void readObjectData (ByteBuffer buffer) throws ConversionException;
 }

@@ -435,8 +435,8 @@ public class JGNClient implements Updatable {
 	 * @param message
 	 * @param player
 	 */
-	public void sendToPlayer(Message message, short player) {
-		if (! (message instanceof PlayerMessage)) {
+	public <T extends Message & PlayerMessage> void sendToPlayer(T message, short player) {
+		if (!(message instanceof PlayerMessage)) {
 			LOG.log(Level.WARNING, "message is not a playermessage: {0}", message);
 			return;
 		}

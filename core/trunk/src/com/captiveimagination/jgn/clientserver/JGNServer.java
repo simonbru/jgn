@@ -424,7 +424,12 @@ public class JGNServer implements Updatable {
 	 * @param message	to be distributed. Must extend Message and implement PlayerMessage
 	 * @param playerId player to be made happy. Note: no effect if that id didn't exist
 	 */
-	public <T extends Message & PlayerMessage> void sendTo(T message, short playerId) {
+	public <T extends Message & PlayerMessage> void sendToPlayer(T message, short playerId) {
+		if (!(message instanceof PlayerMessage)) {
+			LOG.log(Level.WARNING, "message is not a playermessage: {0}", message);
+			return;
+		}
+		
 		JGNConnection[] connections = getConnections();
 		for (JGNConnection connection : connections) {
 			if (connection.getPlayerId() == playerId) {

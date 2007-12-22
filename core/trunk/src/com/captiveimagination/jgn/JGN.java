@@ -45,6 +45,7 @@ import com.captiveimagination.jgn.so.ObjectUpdateMessage;
 import com.captiveimagination.jgn.synchronization.message.*;
 import com.captiveimagination.jgn.translation.TranslatedMessage;
 
+import java.lang.Thread.UncaughtExceptionHandler;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -288,7 +289,6 @@ public class JGN {
 		return id;
 	}
 
-
 	/**
 	 * convenience routine for creating a Runnable that wraps a list of Updatables
 	 * each pass through the list will be sperated by 1 ms pause.
@@ -311,7 +311,21 @@ public class JGN {
 	 * @return Runnable - ready for wrapping into a thread and get started.
 	 */
 	public static final Runnable createRunnable(long sleep, Updatable... updatables) {
-		return new UpdatableRunnable(sleep, updatables);
+		return new UpdatableRunnable(new DefaultUncaughtExceptionHandler(), sleep, updatables);
+	}
+	
+	/**
+	 * same as createRunnable(long sleep, Updatable... updatables) but lets you specify
+	 * the UncaughtExceptionHandler to use.
+	 *
+	 * @param handler - the uncaught exception handler to use when an exception is not
+	 * 					handled internally.
+	 * @param sleep - time to snare in ms, if <=0 will instead Thread.yield()
+	 * @param updatables -one or more "tasks" to be done until they are not any more alive.
+	 * @return Runnable - ready for wrapping into a thread and get started.
+	 */
+	public static final Runnable createRunnable(UncaughtExceptionHandler handler, long sleep, Updatable... updatables) {
+		return new UpdatableRunnable(handler, sleep, updatables);
 	}
 
 	/**
@@ -340,6 +354,23 @@ public class JGN {
 		return res;
 	}
 
+	/**
+	 * same as createThread(long sleep, Updatable... updatables) but lets you specify
+	 * the UncaughtExceptionHandler to use.
+	 * 
+	 * The returned thread will have a name of "JGN_Upd"
+	 *
+	 * @param handler - the uncaught exception handler to use when an exception is not
+	 * 					handled internally.
+	 * @param sleep - time to snare in ms, if <=0 will instead Thread.yield()
+	 * @param updatables -one or more "tasks" to be done until they are not any more alive.
+	 * @return Thread - ready for getting started.
+	 */
+	public static final Thread createThread(UncaughtExceptionHandler handler, long sleep, Updatable... updatables) {
+		Thread res = new Thread(createRunnable(handler, sleep, updatables));
+		res.setName("JGN_Upd" + res.getId());
+		return res;
+	}
 }
 
 /**
@@ -347,9 +378,13 @@ public class JGN {
  * stay alive. Additionally a sleep time between cycles can be specified
  */
 class UpdatableRunnable implements Runnable {
+	public static final ThreadLocal<UpdatableRunnable> local = new ThreadLocal<UpdatableRunnable>();
+	
 	private long sleep;
 	private Updatable[] updatables;
 	private Logger log;
+	private boolean keepAlive;
+	private UncaughtExceptionHandler handler;
 
 	/**
 	 * Creates the Runnable
@@ -361,7 +396,8 @@ class UpdatableRunnable implements Runnable {
 	 *                   threads unresponsive.
 	 * @param updatables the tasks, to be run by executing their update() method.
 	 */
-	public UpdatableRunnable(long sleep, Updatable... updatables) {
+	public UpdatableRunnable(UncaughtExceptionHandler handler, long sleep, Updatable... updatables) {
+		this.handler = handler;
 		this.sleep = sleep;
 		this.updatables = updatables;
 		// note this logger is per instance (and not based on classname) !
@@ -376,6 +412,8 @@ class UpdatableRunnable implements Runnable {
 	 * currently terminate ALL tasks and the owning thread.
 	 */
 	public void run () {
+		local.set(this);
+		keepAlive = true;
 		boolean alive;
 		long threadId = Thread.currentThread().getId(); // this is as of Jdk15!
 
@@ -397,9 +435,10 @@ class UpdatableRunnable implements Runnable {
 						u.update();
 					} catch (Throwable t) {
 						// TODO ase: think again about termination
-						log.severe("Update thread " + threadId + " will die, because..");
-						log.log(Level.SEVERE, "-->", t);
-						throw new RuntimeException(t);
+//						log.severe("Update thread " + threadId + " will die, because..");
+//						log.log(Level.SEVERE, "-->", t);
+//						throw new RuntimeException(t);
+						handler.uncaughtException(Thread.currentThread(), t);
 					}
 				}
 			}
@@ -413,7 +452,24 @@ class UpdatableRunnable implements Runnable {
 			} else {
 				Thread.yield();
 			}
-		} while (alive);
+		} while ((alive) && (keepAlive));
 		log.info("JGN update thread " + threadId + " terminated");
+	}
+	
+	public void shutdown() {
+		keepAlive = false;
+	}
+}
+
+class DefaultUncaughtExceptionHandler implements UncaughtExceptionHandler {
+    private static final Logger logger = Logger.getLogger(DefaultUncaughtExceptionHandler.class.getName());
+    
+	public void uncaughtException(Thread t, Throwable e) {
+		if (e instanceof ConnectionException) {
+			logger.log(Level.WARNING, "Uncaught connection exception", e);
+		} else {
+			logger.log(Level.SEVERE, "Uncaught exception: Terminating Thread.", e);
+			UpdatableRunnable.local.get().shutdown();
+		}
 	}
 }

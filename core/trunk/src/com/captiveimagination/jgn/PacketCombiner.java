@@ -67,6 +67,9 @@ public class PacketCombiner {
 			}
 			// _TODO: ase check if this is reasonable
 			message.setMessageClient(client);
+//			if (message instanceof OrderedMessage) {
+//				OrderedMessage.assignOrderId((OrderedMessage)message);
+//			}
 			if (message.getTimestamp() == -1) {
 				message.setTimestamp(client.getRemoteTime());
 			}

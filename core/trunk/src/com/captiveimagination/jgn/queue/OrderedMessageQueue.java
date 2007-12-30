@@ -42,7 +42,7 @@ import com.captiveimagination.jgn.message.*;
  * @author Matthew D. Hicks
  */
 public class OrderedMessageQueue implements MessageQueue {
-	private final HashMap<Object,OrderedQueue> queue;
+	private final HashMap<Object, OrderedQueue> queue;
 	
 	private volatile int size;
 	private volatile long total;
@@ -57,6 +57,11 @@ public class OrderedMessageQueue implements MessageQueue {
 		if (message == null) throw new NullPointerException("Message must not be null");
 		
 		OrderedMessage m = (OrderedMessage)message;
+		
+		if (m.getOrderId() == -1) {
+			// An order id needs to be assigned
+			OrderedMessage.assignOrderId(m, this);
+		}
 		
 		synchronized (queue) {
 			if (message.getGroupId() == -1) {

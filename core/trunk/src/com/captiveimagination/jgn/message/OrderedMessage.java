@@ -36,8 +36,8 @@ package com.captiveimagination.jgn.message;
 import java.util.*;
 import java.util.concurrent.atomic.*;
 
-import com.captiveimagination.jgn.*;
 import com.captiveimagination.jgn.message.type.*;
+import com.captiveimagination.jgn.queue.OrderedMessageQueue;
 
 /**
  * Messages implementing OrderedMessage will have a guaranteed order
@@ -48,13 +48,13 @@ import com.captiveimagination.jgn.message.type.*;
  * 
  * @author Matthew D. Hicks
  */
-public abstract class OrderedMessage extends Message implements GroupMessage, CertifiedMessage, Comparable {
-	private static final HashMap<MessageClient,HashMap<Object,AtomicInteger>> orders = new HashMap<MessageClient,HashMap<Object,AtomicInteger>>();
+public abstract class OrderedMessage extends Message implements GroupMessage, CertifiedMessage, Comparable<OrderedMessage> {
+	private static final HashMap<OrderedMessageQueue, HashMap<Object, AtomicInteger>> orders = new HashMap<OrderedMessageQueue, HashMap<Object, AtomicInteger>>();
 	
 	private int orderId;
 	
 	public OrderedMessage() {
-		OrderedMessage.assignOrderId(this);
+		orderId = -1;
 	}
 	
 	public int getOrderId() {
@@ -65,18 +65,14 @@ public abstract class OrderedMessage extends Message implements GroupMessage, Ce
 		this.orderId = orderId;
 	}
 	
-	public static final synchronized void assignOrderId(OrderedMessage message) {
-		if (message.getMessageClient() == null) throw new RuntimeException("The MessageClient has not yet been set on this message, it must be done before calling this method.");
-		
-		// TODO should the setOrderId ever be overridden?
-		
+	public static final synchronized void assignOrderId(OrderedMessage message, OrderedMessageQueue queue) {
 		HashMap<Object,AtomicInteger> connectionOrders;
-		if (orders.containsKey(message.getMessageClient())) {
-			connectionOrders = orders.get(message.getMessageClient());
+		if (orders.containsKey(queue)) {
+			connectionOrders = orders.get(queue);
 			//ase: was wrong:: connectionOrders.get(message.getMessageClient());
 		} else {
 			connectionOrders = new HashMap<Object,AtomicInteger>();
-			orders.put(message.getMessageClient(), connectionOrders);
+			orders.put(queue, connectionOrders);
 		}
 		
 		if (message.getGroupId() == -1) {
@@ -102,7 +98,7 @@ public abstract class OrderedMessage extends Message implements GroupMessage, Ce
 		}
 	}
 	
-	public int compareTo(Object message) {
-		return ((Integer)getOrderId()).compareTo(((OrderedMessage)message).getOrderId());
+	public int compareTo(OrderedMessage message) {
+		return ((Integer)getOrderId()).compareTo(message.getOrderId());
 	}
 }

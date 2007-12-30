@@ -53,6 +53,10 @@ public abstract class OrderedMessage extends Message implements GroupMessage, Ce
 	
 	private int orderId;
 	
+	public OrderedMessage() {
+		OrderedMessage.assignOrderId(this);
+	}
+	
 	public int getOrderId() {
 		return orderId;
 	}

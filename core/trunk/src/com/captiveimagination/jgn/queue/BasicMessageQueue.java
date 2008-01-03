@@ -34,6 +34,7 @@
 package com.captiveimagination.jgn.queue;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import com.captiveimagination.jgn.message.*;
 
@@ -49,38 +50,30 @@ import com.captiveimagination.jgn.message.*;
  * @author Matthew D. Hicks
  */
 public class BasicMessageQueue implements MessageQueue {
-	private final LinkedList<Message> list;
-	private volatile int size;
+	private Queue<Message> list;
 	private volatile long total;
+	private List<Message> clone;
 	
 	public BasicMessageQueue() {
-		list = new LinkedList<Message>();
-		size = 0;
+		list = new ConcurrentLinkedQueue<Message>();
+		clone = new ArrayList<Message>();
 		total = 0;
 	}
 	
 	public void add(Message message) {
 		if (message == null) throw new NullPointerException("Message must not be null");
 		
-		synchronized (list) {
-			list.addLast(message);
-		}
-		size++;
+		list.add(message);
+
 		total++;
 	}
 
 	public Message poll() {
-		if (isEmpty()) return null;
-		
-		synchronized (list) {
-			Message m = list.poll();
-			if (m != null) size--;
-			return m;
-		}
+		return list.poll();
 	}
 
 	public boolean isEmpty() {
-		return size == 0;
+		return list.size() == 0;
 	}
 
 	public long getTotal() {
@@ -88,19 +81,18 @@ public class BasicMessageQueue implements MessageQueue {
 	}
 
 	public int getSize() {
-		return size;
-	}
-
-	@SuppressWarnings("all")
-	public List<Message> clonedList() {
-		return (List<Message>)list.clone();
+		return list.size();
 	}
 	
 	public void remove(Message message) {
-		synchronized(list) {
-			if (list.remove(message)) {
-				size--;
-			}
+		list.remove(message);
+	}
+	
+	public List<Message> clonedList() {
+		clone.clear();
+		for (Message m : list) {
+			clone.add(m);
 		}
+		return clone;
 	}
 }

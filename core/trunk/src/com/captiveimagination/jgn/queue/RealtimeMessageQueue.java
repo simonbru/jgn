@@ -52,14 +52,22 @@ public class RealtimeMessageQueue implements MessageQueue {
 	}
 	
 	public void add(Message message) {
+		addRemoves(message);
+	}
+	
+	public boolean addRemoves(Message message) {
 		if (message == null) throw new NullPointerException("Message must not be null");
 		
 		RealtimeMessage m = (RealtimeMessage)message;
+		boolean removes = false;
 		if (queue.contains(m)) {
 			queue.remove(m);
+			removes = true;
 		}
 		queue.add(m);
 		total++;
+		
+		return removes;
 	}
 
 	public Message poll() {

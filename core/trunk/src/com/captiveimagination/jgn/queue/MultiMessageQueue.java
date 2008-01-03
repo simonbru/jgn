@@ -60,8 +60,10 @@ public class MultiMessageQueue implements MessageQueue {
 		
 		if (size == max) throw new QueueFullException("Queue reached max size: " + max);
 		
+		boolean increment = true;
+		
 		if (message instanceof RealtimeMessage) {
-			realtimeQueue.add(message);
+			increment = !realtimeQueue.addRemoves(message);
 		} else if (message instanceof PriorityMessage) {
 			priorityQueue.add(message);
 		} else if (message instanceof OrderedMessage) {
@@ -70,7 +72,7 @@ public class MultiMessageQueue implements MessageQueue {
 			basicQueue.add(message);
 		}
 		
-		size++;
+		if (increment) size++;
 		total++;
 	}
 
@@ -87,7 +89,7 @@ public class MultiMessageQueue implements MessageQueue {
 		if (m == null) {
 			m = basicQueue.poll();
 		}
-		if (m != null) size--;
+		if (size > 0) size--;
 		
 		return m;
 	}

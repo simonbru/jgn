@@ -83,7 +83,7 @@ public class RemoteObjectHandler extends MessageAdapter implements InvocationHan
 		}
 
 		request.setParameters(args);
-		System.out.println("SENDING MESSAGE: " + request);
+//		System.out.println("SENDING MESSAGE: " + request);
 		client.sendMessage(request);
 
 		long time = System.currentTimeMillis();

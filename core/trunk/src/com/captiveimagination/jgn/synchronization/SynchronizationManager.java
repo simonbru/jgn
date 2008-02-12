@@ -381,6 +381,7 @@ public class SynchronizationManager implements Updatable, MessageListener, JGNCo
 			} else {
 				// Failed validation, so we ignore the message and send back our own
 				m = controller.createSynchronizationMessage(obj);
+				m.setSyncObjectId(((SynchronizeMessage)message).getSyncObjectId());
 				message.getMessageClient().sendMessage(m);
 			}
 		} else if (message instanceof SynchronizeRequestIDMessage) {

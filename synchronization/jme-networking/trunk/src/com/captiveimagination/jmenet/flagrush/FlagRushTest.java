@@ -32,7 +32,6 @@ public abstract class FlagRushTest implements SyncObjectManager {
 	}
 
 	public boolean remove(SynchronizeRemoveMessage srm, Object obj) {
-		System.out.println("REMOVING PLAYER!");
 		return removeRemotePlayer((Vehicle)obj);
 	}
 	

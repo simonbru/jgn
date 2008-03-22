@@ -152,7 +152,6 @@ public class JGNServer implements Updatable {
 		return (reliableServer != null) && (fastServer != null);
 	}
 
-
 	/**
 	 * ********************************* Updatable *****************************
 	 */

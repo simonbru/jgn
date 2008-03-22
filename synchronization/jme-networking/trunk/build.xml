@@ -21,6 +21,7 @@
     	<delete file="${srcjar}"/>
     	<delete file="${docjar}"/>
     	<mkdir dir="${build}"/>
+    	<mkdir dir="${lib}"/>
     </target>
 	
 	<target name="dependencies" depends="clean" description="Verify we have the latest version of all dependencies">
@@ -29,7 +30,7 @@
 	</target>
     	
     <target name="compile" depends="dependencies" description="Compiles the Task">
-        <javac srcdir="${src}" destdir="${build}" classpathref="cp" source="1.5" target="1.5" debug="true"/>
+        <javac srcdir="${src}" destdir="${build}" classpathref="cp" source="1.5" target="1.5" debug="true" excludes="com/captiveimagination/jmenet/flagrush/**"/>
     </target>
 	
 	<target name="javadoc" depends="compile" description="Generates the JavaDocs">

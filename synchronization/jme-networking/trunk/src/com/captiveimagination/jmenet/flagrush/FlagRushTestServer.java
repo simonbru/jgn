@@ -33,6 +33,7 @@ public class FlagRushTestServer extends FlagRushTest {
         InetSocketAddress serverReliable = new InetSocketAddress(InetAddress.getLocalHost(), 9100);
 		InetSocketAddress serverFast = new InetSocketAddress(InetAddress.getLocalHost(), 9200);
 		JGNServer server = new JGNServer(serverReliable, serverFast);
+		server.setConnectionLinking(true);
 		
 		// Instantiate an instance of a JMEGraphicalController
 		JMEGraphicalController controller = new JMEGraphicalController();

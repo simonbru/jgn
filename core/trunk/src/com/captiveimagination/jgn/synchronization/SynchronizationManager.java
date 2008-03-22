@@ -173,8 +173,8 @@ public class SynchronizationManager implements Updatable, MessageListener, JGNCo
 		// Remove remotely
 		SynchronizeRemoveMessage remove = new SynchronizeRemoveMessage();
 		remove.setSyncObjectId(wrapper.getId());
-		if (sendRemove) {
-			if (client != null) {
+		if (client != null) {
+			if (sendRemove) {
 				client.broadcast(remove);
 				
 				// Release id
@@ -182,12 +182,12 @@ public class SynchronizationManager implements Updatable, MessageListener, JGNCo
 				release.setRequestType(SynchronizeRequestIDMessage.RELEASE_ID);
 				release.setSyncObjectId(wrapper.getId());
 				client.sendToServer(release);
-			} else {
-				server.sendToAll(remove);
-				
-				// Release id
-				serverReleaseId(wrapper.getId());
 			}
+		} else {
+			server.sendToAll(remove);
+			
+			// Release id
+			serverReleaseId(wrapper.getId());
 		}
 		
 		// Remove from self

@@ -121,7 +121,11 @@ abstract public class Converter {
 		if (client != null) classID = client.getRegisteredClassId(c);
 		if (classID == null) {
 			buffer.putShort(JGN.ID_CLASS_STRING);
-			stringConverter.writeObjectData(client, c.getName(), buffer);
+			try {
+				stringConverter.writeObjectData(client, c.getName(), buffer);
+			} catch (ConversionException ex) {
+				throw new ConversionException("Error serializing class name: " + c.getName(), ex);
+			}
 			log.fine("Warning: Serializing unregistered class (see JGN#register(Class)): " + c.getName());
 		} else
 			buffer.putShort(classID);
@@ -145,7 +149,11 @@ abstract public class Converter {
 		}
 		Class c = object.getClass();
 		writeClass(client, c, buffer);
-		getConverter(c).writeObjectData(client, object, buffer);
+		try {
+			getConverter(c).writeObjectData(client, object, buffer);
+		} catch (ConversionException ex) {
+			throw new ConversionException("Error serializing instance of class: " + object.getClass().getName(), ex);
+		}
 	}
 
 	/**
@@ -160,7 +168,12 @@ abstract public class Converter {
 		case JGN.ID_NULL_OBJECT:
 			return null;
 		case JGN.ID_CLASS_STRING:
-			String className = (String)stringConverter.readObjectData(buffer, null);
+			String className;
+			try {
+				className = (String)stringConverter.readObjectData(buffer, null);
+			} catch (ConversionException ex) {
+				throw new ConversionException("Error deserializing class name.", ex);
+			}
 			try {
 				c = Class.forName(className);
 			} catch (ClassNotFoundException ex) {
@@ -182,7 +195,11 @@ abstract public class Converter {
 	static public Object readClassAndObject (ByteBuffer buffer) throws ConversionException {
 		Class c = readClass(buffer);
 		if (c == null) return null;
-		return getConverter(c).readObjectData(buffer, c);
+		try {
+			return getConverter(c).readObjectData(buffer, c);
+		} catch (ConversionException ex) {
+			throw new ConversionException("Error deserializing instance of class: " + c.getName(), ex);
+		}
 	}
 
 	boolean isPrimitive;
@@ -203,7 +220,11 @@ abstract public class Converter {
 			}
 			buffer.put((byte)1);
 		}
-		writeObjectData(client, object, buffer);
+		try {
+			writeObjectData(client, object, buffer);
+		} catch (ConversionException ex) {
+			throw new ConversionException("Error serializing instance of class: " + object.getClass().getName(), ex);
+		}
 	}
 
 	/**
@@ -220,7 +241,11 @@ abstract public class Converter {
 	 */
 	public final <T> T readObject (ByteBuffer buffer, Class<T> type) throws ConversionException {
 		if (!isPrimitive && buffer.get() == 0) return null;
-		return readObjectData(buffer, type);
+		try {
+			return readObjectData(buffer, type);
+		} catch (ConversionException ex) {
+			throw new ConversionException("Error deserializing instance of class: " + type.getName(), ex);
+		}
 	}
 
 	/**

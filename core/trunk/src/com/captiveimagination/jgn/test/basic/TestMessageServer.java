@@ -35,10 +35,12 @@ package com.captiveimagination.jgn.test.basic;
 
 import java.io.*;
 import java.net.*;
+import java.util.concurrent.TimeUnit;
 
 import com.captiveimagination.jgn.*;
 import com.captiveimagination.jgn.event.*;
 import com.captiveimagination.jgn.message.*;
+import com.captiveimagination.jgn.ping.Ping;
 
 /**
  * @author Matthew D. Hicks
@@ -69,6 +71,7 @@ public class TestMessageServer implements MessageListener, ConnectionListener {
 		if (client == null) throw new IOException("Connection not established!");
 		
 		System.out.println("Connection established!");
+		System.out.println("Ping: " + Ping.pingAndWait(client, TimeUnit.MILLISECONDS));
 	}
 
 	public void messageCertified(Message message) {

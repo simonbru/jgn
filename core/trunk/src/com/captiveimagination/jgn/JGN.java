@@ -82,6 +82,8 @@ public class JGN {
 		register(NoopMessage.class, n--);
 		register(Receipt.class, n--);
 		register(DisconnectMessage.class, n--);
+		register(PingMessage.class, n--);
+		register(PongMessage.class, n--);
 		// remote objects
 		register(RemoteObjectRequestMessage.class, n--);
 		register(RemoteObjectResponseMessage.class, n--);

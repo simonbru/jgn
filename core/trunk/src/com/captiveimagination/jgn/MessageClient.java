@@ -49,6 +49,8 @@ import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -116,7 +118,7 @@ public final class MessageClient implements MessageSender {
 	private final BasicMessageQueue certifiableMessages; // Waiting for a Receipt message to certify the message was received
 	private MessageQueue certifiedMessages; // Waiting for MessageListener handling
 	private MessageQueue failedMessages; // Waiting for MessageListener handling
-	private final ArrayList<MessageListener> messageListeners;
+	private final Queue<MessageListener> messageListeners;
 	private HashMap<Short, JGNInputStream> inputStreams;
 	private HashMap<Short, JGNOutputStream> outputStreams;
 	private CombinedPacket currentWrite;
@@ -149,7 +151,7 @@ public final class MessageClient implements MessageSender {
 		certifiableMessages = new BasicMessageQueue();
 		certifiedMessages = new MultiMessageQueue(-1);
 		failedMessages = new MultiMessageQueue(-1);
-		messageListeners = new ArrayList<MessageListener>();
+		messageListeners = new ConcurrentLinkedQueue<MessageListener>();
 		inputStreams = new HashMap<Short, JGNInputStream>();
 		outputStreams = new HashMap<Short, JGNOutputStream>();
 
@@ -449,7 +451,7 @@ public final class MessageClient implements MessageSender {
 		return result;
 	}
 
-	public ArrayList<MessageListener> getMessageListeners() {
+	public Queue<MessageListener> getMessageListeners() {
 		return messageListeners;
 	}
 

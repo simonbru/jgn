@@ -153,6 +153,12 @@ class InternalListener implements MessageListener, ConnectionListener {
 				m.setResponseDesired(responseDesired);
 				m.getMessageClient().sendMessage(m);
 			}
+		} else if (message instanceof PingMessage) {
+			PingMessage ping = (PingMessage)message;
+			PongMessage pong = new PongMessage();
+			pong.setSendTime(ping.getSendTime());
+			pong.setPingId(ping.getId());
+			message.getMessageClient().sendMessage(pong);
 		} else if (message instanceof DisconnectMessage) {
 			// Disconnect me from the remote client
 			if ((myClient.getStatus() == MessageClient.Status.CONNECTED) || (myClient.getStatus() == MessageClient.Status.NEGOTIATING)) {
@@ -193,7 +199,6 @@ class InternalListener implements MessageListener, ConnectionListener {
 
 	public void messageFailed(Message message) {
 	}
-
 
 	public void connected(MessageClient client) {
 	}

@@ -96,8 +96,8 @@ public abstract class MessageServer implements Updatable {
 	private final ConcurrentLinkedQueue<MessageListener> messageListeners;
 	private final ArrayList<ConnectionFilter> filters;
 	private ArrayList<DataTranslator> translators;
-  protected ArrayList<String> blacklist;            // list of blocked IP-adresses; null = no blocks at all
-  protected AbstractQueue<MessageClient> clients;
+	protected ArrayList<String> blacklist;            // list of blocked IP-adresses; null = no blocks at all
+	protected AbstractQueue<MessageClient> clients;
 	protected boolean keepAlive;
 	protected boolean alive;
 

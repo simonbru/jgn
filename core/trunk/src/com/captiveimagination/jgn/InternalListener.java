@@ -144,7 +144,8 @@ class InternalListener implements MessageListener, ConnectionListener {
 			TimeSynchronizationMessage m = (TimeSynchronizationMessage)message;
 			boolean responseDesired = true;
 			if (m.getRemoteTime() != -1) {
-				m.getMessageClient().setTimeConversion(m.getRemoteTime() - System.currentTimeMillis());
+				long lag = m.getLocalTime() - System.currentTimeMillis();
+				m.getMessageClient().setTimeConversion((m.getLocalTime() - System.currentTimeMillis()) - lag);
 				responseDesired = false;
 			}
 			if (m.isResponseDesired()) {

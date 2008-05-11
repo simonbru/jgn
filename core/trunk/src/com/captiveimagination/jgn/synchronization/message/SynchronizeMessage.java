@@ -43,9 +43,11 @@ import com.captiveimagination.jgn.message.type.*;
  */
 public abstract class SynchronizeMessage extends RealtimeMessage implements PlayerMessage {
 	private short syncObjectId;
+	private short syncManagerId;
 
 	public SynchronizeMessage() {
 		syncObjectId = -1;
+		syncManagerId = -1;
 	}
 	
 	public short getSyncObjectId() {
@@ -56,6 +58,14 @@ public abstract class SynchronizeMessage extends RealtimeMessage implements Play
 		this.syncObjectId = syncObjectId;
 	}
 	
+	public short getSyncManagerId() {
+		return syncManagerId;
+	}
+
+	public void setSyncManagerId(short syncManagerId) {
+		this.syncManagerId = syncManagerId;
+	}
+
 	public Object getRealtimeId() {
 		return getPlayerId() + ":" + syncObjectId;
 	}

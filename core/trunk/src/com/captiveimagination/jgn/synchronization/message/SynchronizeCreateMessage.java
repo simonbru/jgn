@@ -44,11 +44,20 @@ import com.captiveimagination.jgn.message.type.PlayerMessage;
  * @author Matthew D. Hicks
  */
 public class SynchronizeCreateMessage extends Message implements CertifiedMessage, PlayerMessage {
+	private short syncManagerId;
 	private short syncObjectId;
 	private long syncObjectType;
 
 	public SynchronizeCreateMessage() {
 		syncObjectId = -1;
+	}
+
+	public short getSyncManagerId() {
+		return syncManagerId;
+	}
+
+	public void setSyncManagerId(short syncManagerId) {
+		this.syncManagerId = syncManagerId;
 	}
 
 	public short getSyncObjectId() {

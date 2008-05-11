@@ -58,6 +58,8 @@ public class SynchronizationManager implements Updatable, MessageListener, JGNCo
 	private JGNServer server;
 	private JGNClient client;
 	
+	private short id;
+	
 	private Queue<Short> used;				// Only used by server
 	private Queue<SyncWrapper> idQueue;		// Client only - when waiting for a syncObjectId
 	
@@ -75,8 +77,13 @@ public class SynchronizationManager implements Updatable, MessageListener, JGNCo
 	private boolean keepAlive;
 	
 	public SynchronizationManager(JGNServer server, GraphicalController controller) {
+		this(server, controller, (short)-1);
+	}
+	
+	public SynchronizationManager(JGNServer server, GraphicalController controller, short id) {
 		this.server = server;
 		this.controller = controller;
+		this.id = id;
 		server.addMessageListener(this);
 		server.addClientConnectionListener(this);
 		
@@ -86,8 +93,13 @@ public class SynchronizationManager implements Updatable, MessageListener, JGNCo
 	}
 	
 	public SynchronizationManager(JGNClient client, GraphicalController controller) {
+		this(client, controller, (short)-1);
+	}
+	
+	public SynchronizationManager(JGNClient client, GraphicalController controller, short id) {
 		this.client = client;
 		this.controller = controller;
+		this.id = id;
 		client.addMessageListener(this);
 		
 		idQueue = new ConcurrentLinkedQueue<SyncWrapper>();
@@ -106,6 +118,10 @@ public class SynchronizationManager implements Updatable, MessageListener, JGNCo
 		removeQueue = new ConcurrentLinkedQueue<SynchronizeRemoveMessage>();
 	}
 	
+	public short getId() {
+		return id;
+	}
+	
 	/**
 	 * Register an object authoritative from this peer.
 	 * 
@@ -120,7 +136,6 @@ public class SynchronizationManager implements Updatable, MessageListener, JGNCo
 		if (client != null) {
 			playerId = client.getPlayerId();
 		}
-		System.out.println("PlayerID: " + playerId);
 		
 		// Create SyncWrapper
 		SyncWrapper wrapper = new SyncWrapper(object, updateRate, createMessage, playerId);
@@ -131,6 +146,7 @@ public class SynchronizationManager implements Updatable, MessageListener, JGNCo
 		} else {					// Client registering - ask the server for an id
 			// Create a request message for an id
 			SynchronizeRequestIDMessage request = new SynchronizeRequestIDMessage();
+			request.setSyncManagerId(getId());
 			request.setRequestType(SynchronizeRequestIDMessage.REQUEST_ID);
 			long id = client.sendToServer(request);
 			wrapper.setWaitingId(id);
@@ -144,6 +160,7 @@ public class SynchronizationManager implements Updatable, MessageListener, JGNCo
 	private void wrapperFinished(SyncWrapper wrapper) {
 		// Set object id
 		wrapper.getCreateMessage().setSyncObjectId(wrapper.getId());
+		wrapper.getCreateMessage().setSyncManagerId(getId());
 		
 		// Send create message onward
 		if (client != null) {
@@ -172,6 +189,7 @@ public class SynchronizationManager implements Updatable, MessageListener, JGNCo
 		
 		// Remove remotely
 		SynchronizeRemoveMessage remove = new SynchronizeRemoveMessage();
+		remove.setSyncManagerId(getId());
 		remove.setSyncObjectId(wrapper.getId());
 		if (client != null) {
 			if (sendRemove) {
@@ -350,9 +368,9 @@ public class SynchronizationManager implements Updatable, MessageListener, JGNCo
 		
 		for (SyncWrapper sync : queue) {
 			if (server != null) {
-				sync.update(server, controller);
+				sync.update(this, server, controller);
 			} else {
-				sync.update(client, controller);
+				sync.update(this, client, controller);
 			}
 		}
 	}
@@ -369,46 +387,56 @@ public class SynchronizationManager implements Updatable, MessageListener, JGNCo
 
 	public void messageReceived(Message message) {
 		if (message instanceof SynchronizeCreateMessage) {
-			createQueue.add((SynchronizeCreateMessage)message);
-		} else if (message instanceof SynchronizeRemoveMessage) {
-			removeQueue.add((SynchronizeRemoveMessage)message);
-		} else if (message instanceof SynchronizeMessage) {
-			SynchronizeMessage m = (SynchronizeMessage)message;
-			SyncWrapper wrapper = findWrapper(m.getSyncObjectId());
-			if (wrapper == null) {
-				System.err.println("Unable to find object: " + m.getSyncObjectId() + " on " + (server != null ? "Server" : "Client"));
-				return;
+			if (((SynchronizeCreateMessage)message).getSyncManagerId() == getId()) {
+				createQueue.add((SynchronizeCreateMessage)message);
 			}
-			Object obj = wrapper.getObject();
-			if (controller.validateMessage(m, obj)) {
-				// Successfully validated synchronization message
-				controller.applySynchronizationMessage(m, obj);
-			} else {
-				// Failed validation, so we ignore the message and send back our own
-				m = controller.createSynchronizationMessage(obj);
-				m.setSyncObjectId(((SynchronizeMessage)message).getSyncObjectId());
-				message.getMessageClient().sendMessage(m);
+		} else if (message instanceof SynchronizeRemoveMessage) {
+			if (((SynchronizeRemoveMessage)message).getSyncManagerId() == getId()) {
+				removeQueue.add((SynchronizeRemoveMessage)message);
+			}
+		} else if (message instanceof SynchronizeMessage) {
+			if (((SynchronizeMessage)message).getSyncManagerId() == getId()) {
+				SynchronizeMessage m = (SynchronizeMessage)message;
+				SyncWrapper wrapper = findWrapper(m.getSyncObjectId());
+				if (wrapper == null) {
+					System.err.println("Unable to find object: " + m.getSyncObjectId() + " on " + (server != null ? "Server" : "Client"));
+					return;
+				}
+				Object obj = wrapper.getObject();
+				if (controller.validateMessage(m, obj)) {
+					// Successfully validated synchronization message
+					controller.applySynchronizationMessage(m, obj);
+				} else {
+					// Failed validation, so we ignore the message and send back our own
+					m = controller.createSynchronizationMessage(obj);
+					m.setSyncManagerId(getId());
+					m.setSyncObjectId(((SynchronizeMessage)message).getSyncObjectId());
+					message.getMessageClient().sendMessage(m);
+				}
 			}
 		} else if (message instanceof SynchronizeRequestIDMessage) {
 			SynchronizeRequestIDMessage request = (SynchronizeRequestIDMessage)message;
-			if (request.getRequestType() == SynchronizeRequestIDMessage.REQUEST_ID) {
-				short id = serverNextId();
-				request.setRequestType(SynchronizeRequestIDMessage.RESPONSE_ID);
-				request.setSyncObjectId(id);
-				request.getMessageClient().sendMessage(request);
-				System.out.println("Server provided id: " + id);
-			} else if (request.getRequestType() == SynchronizeRequestIDMessage.RESPONSE_ID) {
-				for (SyncWrapper wrapper : idQueue) {
-					if (wrapper.getWaitingId() == request.getId()) {
-						wrapper.setId(request.getSyncObjectId());
-						System.out.println("Received id from server: " + request.getSyncObjectId());
-						wrapperFinished(wrapper);
-						idQueue.remove(wrapper);
-						break;
+			if (request.getSyncManagerId() == getId()) {
+				if (request.getRequestType() == SynchronizeRequestIDMessage.REQUEST_ID) {
+					short id = serverNextId();
+					request.setRequestType(SynchronizeRequestIDMessage.RESPONSE_ID);
+					request.setSyncManagerId(getId());
+					request.setSyncObjectId(id);
+					request.getMessageClient().sendMessage(request);
+					System.out.println("Server provided id: " + id);
+				} else if (request.getRequestType() == SynchronizeRequestIDMessage.RESPONSE_ID) {
+					for (SyncWrapper wrapper : idQueue) {
+						if (wrapper.getWaitingId() == request.getId()) {
+							wrapper.setId(request.getSyncObjectId());
+							System.out.println("Received id from server: " + request.getSyncObjectId());
+							wrapperFinished(wrapper);
+							idQueue.remove(wrapper);
+							break;
+						}
 					}
+				} else if (request.getRequestType() == SynchronizeRequestIDMessage.RESPONSE_ID) {
+					serverReleaseId(request.getSyncObjectId());
 				}
-			} else if (request.getRequestType() == SynchronizeRequestIDMessage.RESPONSE_ID) {
-				serverReleaseId(request.getSyncObjectId());
 			}
 		}
 	}
@@ -418,7 +446,6 @@ public class SynchronizationManager implements Updatable, MessageListener, JGNCo
 
 	public void connected(JGNConnection connection) {
 		// Client connected to server - send creation messages to new connection
-		System.out.println("**************** CONNECTED!");
 		for (SyncWrapper wrapper : queue) {
 			connection.sendMessage(wrapper.getCreateMessage());
 		}

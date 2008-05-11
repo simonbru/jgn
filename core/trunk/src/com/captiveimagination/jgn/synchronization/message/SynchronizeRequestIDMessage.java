@@ -47,8 +47,17 @@ public class SynchronizeRequestIDMessage extends Message implements CertifiedMes
 	public static final short RELEASE_ID = (short) 2;
 	public static final short RESPONSE_ID = (short) 3;
 
+	private short syncManagerId;
 	private short syncObjectId;
 	private short requestType;
+
+	public short getSyncManagerId() {
+		return syncManagerId;
+	}
+
+	public void setSyncManagerId(short syncManagerId) {
+		this.syncManagerId = syncManagerId;
+	}
 
 	public short getSyncObjectId() {
 		return syncObjectId;

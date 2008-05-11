@@ -29,31 +29,51 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Created: Jul 5, 2006
+ * Created: May 11, 2008
  */
 package com.captiveimagination.jgn.test.basic;
 
-import java.io.*;
-import java.net.*;
-import java.util.concurrent.TimeUnit;
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
-import com.captiveimagination.jgn.*;
-import com.captiveimagination.jgn.event.*;
-import com.captiveimagination.jgn.message.*;
-import com.captiveimagination.jgn.ping.Ping;
+import com.captiveimagination.jgn.JGN;
+import com.captiveimagination.jgn.MessageClient;
+import com.captiveimagination.jgn.MessageServer;
+import com.captiveimagination.jgn.TCPMessageServer;
+import com.captiveimagination.jgn.Updatable;
+import com.captiveimagination.jgn.event.MessageListener;
+import com.captiveimagination.jgn.message.Message;
 
 /**
- * @author Matthew D. Hicks
+ * Tests the scalability of JGN with multiple servers.
+ * 
+ * @author Matt Hicks
  */
-public class TestMessageServer implements MessageListener, ConnectionListener {
-	private int id;
+public class TestScalability {
+	protected static final int TOTAL = 1000;
+	protected static final int DELAY = 200;
+	protected static final int BASE_PORT = 9000;
 	
-	public TestMessageServer(int id) {
-		this.id = id;
-	}
-	
-	public static void main(String[] args) throws Exception {
+	public TestScalability() throws Exception {
 		JGN.register(BasicMessage.class);
+		
+		Thread.sleep(10000);
+		
+		for (int i = 0; i < TOTAL; i++) {
+			createServer(i);
+			
+			if (i % 10 == 0) {
+				System.out.println("Created: " + i);
+			}
+			
+			Thread.sleep(DELAY);
+		}
 		
 		MessageServer server1 = new TCPMessageServer(new InetSocketAddress(InetAddress.getLocalHost(), 1000));
 		TestMessageServer tms1 = new TestMessageServer(1);
@@ -69,40 +89,66 @@ public class TestMessageServer implements MessageListener, ConnectionListener {
 		
 		MessageClient client = server2.connectAndWait(new InetSocketAddress(InetAddress.getLocalHost(), 1000), 5000);
 		if (client == null) throw new IOException("Connection not established!");
+	}
+	
+	private void createServer(int n) throws UnknownHostException, IOException {
+		new ScalabilityInstance(BASE_PORT + n);
+	}
+	
+	public static void main(String[] args) throws Exception {
+		new TestScalability();
+	}
+}
+
+class ScalabilityInstance implements MessageListener, Updatable {
+	private int port;
+	private MessageServer server;
+	private AtomicLong received;
+	
+	private MessageClient client;
+	
+	public ScalabilityInstance(int port) throws UnknownHostException, IOException {
+		this.port = port;
 		
-		System.out.println("Connection established!");
-		System.out.println("Ping: " + Ping.pingAndWait(client, TimeUnit.MILLISECONDS));
+		received = new AtomicLong(-1);
+		
+		server = new TCPMessageServer(new InetSocketAddress(InetAddress.getLocalHost(), port));
+		server.addMessageListener(this);
+		JGN.createThread(server, this).start();
+		
+		if (port != TestScalability.BASE_PORT) {
+			// Connect to previous server
+			client = server.connectAndWait(new InetSocketAddress(InetAddress.getLocalHost(), port - 1), 10000);
+			if (client == null) {
+				System.err.println("Failed to connect: " + (port - 1));
+			} else {
+				client.sendMessage(new BasicMessage());
+			}
+		}
 	}
 
 	public void messageCertified(Message message) {
-		System.out.println("MessageCertified(" + id + "): " + message);
 	}
 
 	public void messageFailed(Message message) {
-		System.out.println("MessageFailed(" + id + "): " + message);
 	}
 
 	public void messageReceived(Message message) {
-		System.out.println("MessageReceived(" + id + "): " + message);
+		if (message instanceof BasicMessage) {
+			received.set(System.currentTimeMillis());
+		}
 	}
 
 	public void messageSent(Message message) {
-		System.out.println("MessageSent(" + id + "): " + message);
 	}
 
-	public void connected(MessageClient client) {
-		System.out.println("Connected(" + id + "): " + ((InetSocketAddress)client.getAddress()).getPort());
+	public boolean isAlive() {
+		return true;
 	}
 
-	public void disconnected(MessageClient client) {
-		System.out.println("Disconnected(" + id + "): " + ((InetSocketAddress)client.getAddress()).getPort());
-	}
-
-	public void negotiationComplete(MessageClient client) {
-		System.out.println("Negotiated(" + id + "): " + ((InetSocketAddress)client.getAddress()).getPort());
-	}
-	
-	public void kicked(MessageClient client, String reason) {
-		System.out.println("Kicked(" + id + "):" + ((InetSocketAddress)client.getAddress()).getPort());
+	public void update() throws Exception {
+		if ((received.get() != -1) && (System.currentTimeMillis() > received.get() + TestScalability.DELAY) && (client != null)) {
+			client.sendMessage(new BasicMessage());
+		}
 	}
 }

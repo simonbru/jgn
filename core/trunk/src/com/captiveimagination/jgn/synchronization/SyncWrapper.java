@@ -91,10 +91,11 @@ class SyncWrapper {
 		return ownerPlayerId;
 	}
 	
-	protected void update(JGNServer server, GraphicalController controller) {
+	protected void update(SynchronizationManager manager, JGNServer server, GraphicalController controller) {
 		if (lastUpdate + rate < System.nanoTime()) {
 			if (server.getConnections().length > 0) {
 				SynchronizeMessage message = controller.createSynchronizationMessage(getObject());
+				message.setSyncManagerId(manager.getId());
 				message.setSyncObjectId(getId());
 				server.sendToAll(message);
 			}
@@ -103,9 +104,10 @@ class SyncWrapper {
 		}
 	}
 	
-	protected void update(JGNClient client, GraphicalController controller) {
+	protected void update(SynchronizationManager manager, JGNClient client, GraphicalController controller) {
 		if (lastUpdate + rate < System.nanoTime()) {
 			SynchronizeMessage message = controller.createSynchronizationMessage(getObject());
+			message.setSyncManagerId(manager.getId());
 			message.setSyncObjectId(getId());
 			client.broadcast(message);
 			

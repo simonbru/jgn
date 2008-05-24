@@ -204,6 +204,16 @@ public class ServerClientConnectionController extends DefaultConnectionControlle
 	// if the message is a PlayerMessage, find the connection for the destinationPlayerId
 	// and send it thereto.
 	public void messageReceived(Message message) {
+		if (server == null) {
+			return;
+		} else if (message == null) {
+			return;
+		} else if (message.getMessageClient() == null) {
+			return;
+		} else if (server.getConnection(message.getMessageClient()) == null) {
+			return;
+		}
+		
 		if (message instanceof PlayerMessage) {
 			short dp = message.getDestinationPlayerId();
 			if ((message.getPlayerId() != -1) && (message.getPlayerId() != server.getConnection(message.getMessageClient()).getPlayerId())) {

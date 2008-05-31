@@ -2,6 +2,10 @@ package com.captiveimagination.jgn.translation.encryption.keybased;
 
 import java.math.BigInteger;
 
+/**
+ * @author Matt Hicks
+ * @author Riven (craterstudio.encryption)
+ */
 public class PublicKey {
 	public final int bits;
 	public final BigInteger n;

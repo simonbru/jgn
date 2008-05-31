@@ -2,6 +2,10 @@ package com.captiveimagination.jgn.translation.encryption.keybased;
 
 import java.util.Random;
 
+/**
+ * @author Matt Hicks
+ * @author Riven (craterstudio.encryption)
+ */
 public class PrettyRandom extends Random {
 	private static final long serialVersionUID = -1L;
 

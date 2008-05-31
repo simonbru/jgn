@@ -4,6 +4,10 @@ import java.math.BigInteger;
 import java.util.List;
 import java.util.Random;
 
+/**
+ * @author Matt Hicks
+ * @author Riven (craterstudio.encryption)
+ */
 public class ByteArrayUtil {
 	public static final BigInteger smallPrime = new BigInteger("17");
 	private static final Random wheel = new PrettyRandom();

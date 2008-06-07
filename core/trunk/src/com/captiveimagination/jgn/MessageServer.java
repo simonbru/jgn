@@ -192,7 +192,7 @@ public abstract class MessageServer implements Updatable {
 		return disconnectedConnections;
 	}
 
-	protected AbstractQueue<MessageClient> getMessageClients() {
+	public AbstractQueue<MessageClient> getMessageClients() {
 		return clients;
 	}
 
@@ -204,7 +204,6 @@ public abstract class MessageServer implements Updatable {
 	public ArrayList<String> getBlacklist() {
 		return blacklist;
 	}
-
 
   /**
 	 * Sends <code>message</code> to all connected clients.
@@ -228,7 +227,6 @@ public abstract class MessageServer implements Updatable {
 		log.finest("finished broadcasting. Sent: " + sent);
 		return sent;
 	}
-
 
 	public MessageClient getMessageClient(SocketAddress address) {
 		for (MessageClient client : getMessageClients()) {

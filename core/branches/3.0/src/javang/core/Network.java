@@ -15,15 +15,14 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.concurrent.Future;
 
 public class Network {
 	private final Selector selector;
-	private final Map<SelectionKey, TCPDataQueue> tcpKey2queue;
-	private final Map<SelectionKey, UDPDataQueue> udpKey2queue;
+	private final Map<SelectionKey, SelectionKeyLocal> key2local;
 	private final ByteBuffer buffer;
 	private final Thread accessThread;
 	private NetworkHandlerProvider provider;
-	private final Map<SelectionKey, NetworkHandler> key2handler;
 
 	public Network(NetworkHandlerProvider provider) {
 		this(provider, 64 * 1024);
@@ -32,12 +31,8 @@ public class Network {
 	public Network(NetworkHandlerProvider provider, int bufferSize) {
 		this.provider = provider;
 		this.accessThread = Thread.currentThread();
-
-		this.tcpKey2queue = new HashMap<SelectionKey, TCPDataQueue>();
-		this.udpKey2queue = new HashMap<SelectionKey, UDPDataQueue>();
-
 		this.buffer = ByteBuffer.allocate(bufferSize);
-		this.key2handler = new HashMap<SelectionKey, NetworkHandler>();
+		this.key2local = new HashMap<SelectionKey, SelectionKeyLocal>();
 
 		try {
 			this.selector = Selector.open();
@@ -97,8 +92,9 @@ public class Network {
 			dgc.configureBlocking(false);
 
 			SelectionKey key = dgc.register(selector, SelectionKey.OP_READ);
-			udpKey2queue.put(key, new UDPDataQueue());
-			key2handler.put(key, provider.provide(this, key));
+			SelectionKeyLocal local = new SelectionKeyLocal();
+			local.udpQueue = new UDPDataQueue();
+			local.handler = provider.provide(this, key);
 
 			return key;
 		} catch (Exception exc) {
@@ -122,16 +118,13 @@ public class Network {
 			if (udp_max_len_warn)
 				System.out.println("WARNING: UDP-packet is " + len + "B, advised size is < " + udp_max_len + "B");
 
-		UDPDataQueue writeQueue = udpKey2queue.get(key);
-		if (writeQueue == null) {
-			if (tcpKey2queue.containsKey(key)) // probably user typo
-				throw new IllegalStateException("you must not specify the target host for a TCP write");
+		SelectionKeyLocal local = key2local.get(key);
+		if (local.udpQueue == null)
 			throw new IllegalStateException("write udp-packet failed due to lack of write-queue");
-		}
 
 		byte[] data = new byte[len];
 		System.arraycopy(buf, off, data, 0, len);
-		writeQueue.addLast(new UDPPacket(data, target));
+		local.udpQueue.addLast(new UDPPacket(data, target));
 
 		this.adjustInterestOp(key, SelectionKey.OP_WRITE, true);
 	}
@@ -145,20 +138,17 @@ public class Network {
 	public final int write(SelectionKey key, byte[] buf, int off, int len) {
 		this.checkThreadAccess();
 
-		TCPDataQueue writeQueue = tcpKey2queue.get(key);
-		if (writeQueue == null) {
-			if (udpKey2queue.containsKey(key)) // probably user typo
-				throw new IllegalStateException("you must specify the target host for an UDP write");
+		SelectionKeyLocal local = key2local.get(key);
+		if (local.tcpQueue == null)
 			throw new IllegalStateException("write tcp-packet failed due to lack of write-queue");
-		}
 
 		byte[] data = new byte[len];
 		System.arraycopy(buf, off, data, 0, len);
-		writeQueue.addLast(data);
+		local.tcpQueue.addLast(data);
 
 		this.adjustInterestOp(key, SelectionKey.OP_WRITE, true);
 
-		return writeQueue.totalEnqueued += data.length;
+		return local.tcpQueue.totalEnqueued += data.length;
 	}
 
 	//
@@ -166,12 +156,13 @@ public class Network {
 	public final int countPendingOutboundBytes(SelectionKey key) {
 		this.checkThreadAccess();
 
-		if (key.channel() instanceof SocketChannel) return tcpKey2queue.get(key).pending();
+		SelectionKeyLocal local = key2local.get(key);
+
+		if (key.channel() instanceof SocketChannel) return local.tcpQueue.pending();
 
 		if (key.channel() instanceof DatagramChannel) {
-			UDPDataQueue writeQueue = udpKey2queue.get(key);
 			int sum = 0;
-			for (UDPPacket p : writeQueue)
+			for (UDPPacket p : local.udpQueue)
 				sum += p.data.length;
 			return sum;
 		}
@@ -182,33 +173,32 @@ public class Network {
 	public final boolean hasPendingOutboundBytes(SelectionKey key) {
 		this.checkThreadAccess();
 
+		SelectionKeyLocal local = key2local.get(key);
+
 		if (key.channel() instanceof SocketChannel) {
-			return tcpKey2queue.get(key).pending() > 0;
+			return local.tcpQueue.pending() > 0;
 		}
 
 		if (key.channel() instanceof DatagramChannel) {
-			UDPDataQueue writeQueue = udpKey2queue.get(key);
-			for (UDPPacket p : writeQueue)
+			for (UDPPacket p : local.udpQueue)
 				if (p.data.length > 0) return true;
 			return false;
 		}
 
 		throw new IllegalStateException();
 	}
-	
-	public final boolean hasSent(SelectionKey key, int totalBytes)
-	{
+
+	public final boolean hasSent(SelectionKey key, int totalBytes) {
 		this.checkThreadAccess();
 
+		SelectionKeyLocal local = key2local.get(key);
+
 		if (key.channel() instanceof SocketChannel) {
-			return tcpKey2queue.get(key).totalSent >= totalBytes;
+			return local.tcpQueue.totalSent >= totalBytes;
 		}
 
 		if (key.channel() instanceof DatagramChannel) {
-			UDPDataQueue writeQueue = udpKey2queue.get(key);
-			for (UDPPacket p : writeQueue)
-				if (p.data.length > 0) return true;
-			return false;
+			throw new UnsupportedOperationException();
 		}
 
 		throw new IllegalStateException();
@@ -232,9 +222,12 @@ public class Network {
 
 		this.selector.selectNow();
 
-		for (SelectionKey key : key2handler.keySet()) {
-			if (key.isValid()) this.fireExecute(key);
-			else this.fireDisconnected(key, null);
+		for (SelectionKey key : key2local.keySet()) {
+			if (key.isValid()) {
+				this.fireExecute(key);
+			} else {
+				this.fireDisconnected(key, null);
+			}
 		}
 
 		Iterator<SelectionKey> keys = selector.selectedKeys().iterator();
@@ -271,6 +264,14 @@ public class Network {
 		}
 	}
 
+	public final void registerCallback(SelectionKey key, Runnable callback, int totalSentBytes) {
+		this.checkThreadAccess();
+
+		SelectionKeyLocal local = key2local.get(key);
+		SentCallback sf = new SentCallback(callback, totalSentBytes);
+		local.sendCallbacks.addLast(sf);
+	}
+
 	private final void readTCP(SelectionKey key) {
 		try {
 			buffer.clear();
@@ -290,16 +291,30 @@ public class Network {
 	}
 
 	private final void writeTCP(SelectionKey key) {
-		TCPDataQueue queue = tcpKey2queue.get(key);
+		SelectionKeyLocal local = key2local.get(key);
+		TCPDataQueue queue = local.tcpQueue;
 		if (queue.isEmpty()) {
 			this.adjustInterestOp(key, SelectionKey.OP_WRITE, false);
 		} else {
 			try {
-				this.joinQueueWriteTCP(key, queue);
+				if (this.joinQueueWriteTCP(key, queue) > 0) {
+					this.tcpCallbacks(local);
+				}
 			} catch (IOException exc) {
 				this.fireDisconnected(key, exc);
 				key.attach(null);
 				key.cancel();
+			}
+		}
+	}
+
+	private final void tcpCallbacks(SelectionKeyLocal local) {
+		Iterator<SentCallback> it = local.sendCallbacks.iterator();
+		while (it.hasNext()) {
+			SentCallback sf = it.next();
+			if (local.tcpQueue.totalSent >= sf.totalSent) {
+				sf.callback.run();
+				it.remove();
 			}
 		}
 	}
@@ -325,7 +340,8 @@ public class Network {
 
 	private final void writeUDP(SelectionKey key) {
 		try {
-			UDPDataQueue queue = udpKey2queue.get(key);
+			SelectionKeyLocal local = key2local.get(key);
+			UDPDataQueue queue = local.udpQueue;
 
 			if (queue.isEmpty()) {
 				this.adjustInterestOp(key, SelectionKey.OP_WRITE, false);
@@ -353,7 +369,8 @@ public class Network {
 
 	private final void fireConnected(SelectionKey key) {
 		NetworkHandler handler = provider.provide(this, key);
-		key2handler.put(key, handler);
+		SelectionKeyLocal local = key2local.get(key);
+		local.handler = handler;
 
 		try {
 			handler.onConnected(this, key);
@@ -364,7 +381,7 @@ public class Network {
 
 	private final void fireExecute(SelectionKey key) {
 		try {
-			key2handler.get(key).onExecute(this, key);
+			key2local.get(key).handler.onExecute(this, key);
 		} catch (Exception exc) {
 			exc.printStackTrace();
 		}
@@ -372,7 +389,7 @@ public class Network {
 
 	private final void fireReceivedTCP(SelectionKey key, byte[] data) {
 		try {
-			key2handler.get(key).onReceivedTCP(this, key, data);
+			key2local.get(key).handler.onReceivedTCP(this, key, data);
 		} catch (Exception exc) {
 			exc.printStackTrace();
 		}
@@ -380,7 +397,7 @@ public class Network {
 
 	private final void fireReceivedUDP(SelectionKey key, byte[] data, InetSocketAddress source) {
 		try {
-			key2handler.get(key).onReceivedUDP(this, key, data, source);
+			key2local.get(key).handler.onReceivedUDP(this, key, data, source);
 		} catch (Exception exc) {
 			exc.printStackTrace();
 		}
@@ -388,24 +405,21 @@ public class Network {
 
 	private final void fireSent(SelectionKey key, int bytes) {
 		try {
-			key2handler.get(key).onSent(this, key, bytes);
+			key2local.get(key).handler.onSent(this, key, bytes);
 		} catch (Exception exc) {
 			exc.printStackTrace();
 		}
 	}
 
 	private final void fireDisconnected(SelectionKey key, IOException cause) {
-		tcpKey2queue.remove(key);
-		udpKey2queue.remove(key);
-
 		try {
-			key2handler.remove(key).onDisconnected(this, key, cause);
+			key2local.remove(key).handler.onDisconnected(this, key, cause);
 		} catch (Exception exc) {
 			exc.printStackTrace();
 		}
 	}
 
-	private final void joinQueueWriteTCP(SelectionKey key, TCPDataQueue queue) throws IOException {
+	private final int joinQueueWriteTCP(SelectionKey key, TCPDataQueue queue) throws IOException {
 		buffer.clear();
 
 		// copy byte[]s
@@ -429,10 +443,12 @@ public class Network {
 		buffer.flip();
 		if (buffer.hasRemaining()) ((SocketChannel) key.channel()).write(buffer);
 
+		int sent = buffer.position();
+
 		// did we even send anything?
 		if (buffer.position() != 0) {
-			queue.totalSent += buffer.position();
-			this.fireSent(key, buffer.position());
+			queue.totalSent += sent;
+			this.fireSent(key, sent);
 		}
 
 		// put unsent data back in queue
@@ -442,6 +458,8 @@ public class Network {
 			buffer.get(rem);
 			queue.addFirst(rem);
 		}
+
+		return sent;
 	}
 
 	private final SelectionKey setupClient(SocketChannel sc) throws IOException {
@@ -453,7 +471,9 @@ public class Network {
 		ops |= SelectionKey.OP_CONNECT;
 		SelectionKey key = sc.register(selector, ops);
 
-		tcpKey2queue.put(key, new TCPDataQueue());
+		SelectionKeyLocal local = new SelectionKeyLocal();
+		local.tcpQueue = new TCPDataQueue();
+		key2local.put(key, local);
 
 		return key;
 	}
@@ -471,6 +491,15 @@ public class Network {
 
 	}
 
+	class SelectionKeyLocal {
+		NetworkHandler handler;
+
+		TCPDataQueue tcpQueue;
+		UDPDataQueue udpQueue;
+
+		LinkedList<SentCallback> sendCallbacks = new LinkedList<SentCallback>();
+	}
+
 	// classes for readability
 	class TCPDataQueue extends LinkedList<byte[]> {
 		public int totalEnqueued = 0;
@@ -483,5 +512,15 @@ public class Network {
 
 	class UDPDataQueue extends LinkedList<UDPPacket> {
 		//
+	}
+
+	class SentCallback {
+		public final Runnable callback;
+		public final int totalSent;
+
+		public SentCallback(Runnable callback, int totalSent) {
+			this.callback = callback;
+			this.totalSent = totalSent;
+		}
 	}
 }

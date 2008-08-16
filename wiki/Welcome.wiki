@@ -1,0 +1,20 @@
+= Welcome to the Java Game Networking Project =
+
+There's not much to see here yet, but hopefully in the near future plenty of content will be available.
+
+== Documentation ==
+
+ * [DocumentationStart Documentation Start Page]
+ * [FAQ Frequently Asked Questions]
+
+== Forum ==
+
+ * http://forum.captiveimagination.com/index.php/board,4.0.html
+
+== Extras ==
+
+ * [GamesUsingJGN Games Using JGN]
+
+== Queue Performance Testing ==
+ * [OriginalBasicMessageQueue JGN BasicMessageQueue]
+ * [ConcurrentBasicMessageQueue Concurrent BasicMessageQueue]

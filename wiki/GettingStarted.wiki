@@ -1,4 +1,4 @@
-You can get the latest source code by typing, "svn co http://svn.javagn.org jgn," on your command line.  If you don't have SVN, Google will help you get it.
+You can get the latest source code by typing, "svn co http://jgn.googlecode.com/svn/ jgn," on your command line.  If you don't have SVN, Google will help you get it.
 
 I'm not going to lie: when I began using JGN, I had a fair amount of trouble getting JGN's jme-networking component to compile.  Perhaps I made a critical oversight of some sort; or perhaps the jme-networking source code has become out-of-sync with JME's development.  In any event, several dependencies did not go where they were supposed to go during the build process; and I had to place them there manually.  This page will probably not serve as an exhaustive list, but rather as a list of all the gotchas that I can remember at the moment.  Someone who knows more about the process (and perhaps can see that I did indeed make a critical oversight) should edit this page and give a simpler way to build the jme-networking component.
 

@@ -22,7 +22,6 @@ For example:
 The code you are about to see consists of several "import" statements which Java requires in order to find the classes you reference in your program.  You will also notice the construction of a ShadowRenderPass, which you can read about in jME's documentation.
 
 {{{
-
 package com.captiveimagination.jmenet.flagrush;
  
 import java.lang.reflect.Field;
@@ -53,7 +52,6 @@ First, we run the FlagRush application in a seperate thread.  It will run in the
 
 
 {{{
-#!java
         final FlagRush app = new FlagRush();
         app.setDialogBehaviour(2, Lesson9.class.getClassLoader().getResource("jmetest/data/images/FlagRush.png"));
         new ShadowTweaker(shadowPass).setVisible(true);
@@ -69,8 +67,6 @@ First, we run the FlagRush application in a seperate thread.  It will run in the
 Next, we need to initialize the server.  The [wiki:JGNServer]'s constructor takes two addresses (either of which you can make "null.")  The server will use TCP protocol for traffic on the first socket you pass to its constructor and UDP protocol for traffic on the second.  (It decides internally what kind of messages get sent on which socket.)
 
 {{{
-#!java
- 
         // Initialize networking
         InetSocketAddress serverReliable = new InetSocketAddress(InetAddress.getLocalHost(), 9100);
         InetSocketAddress serverFast = new InetSocketAddress(InetAddress.getLocalHost(), 9200);
@@ -84,8 +80,6 @@ The JMEGraphicalController helps to keep the location and rotation of the Spatia
 
  
 {{{
-#!java
-
         // Instantiate an instance of a JMEGraphicalController
         JMEGraphicalController controller = new JMEGraphicalController();
 
@@ -96,8 +90,6 @@ The JMEGraphicalController helps to keep the location and rotation of the Spatia
 Whereas the [wiki:JMEGraphicalController] deals with the generation and application of messages, the actual sending and receiving of messages happens in the [wiki:JGNServer] and in the SynchronizationManager.  The latter keeps track of objects in need of network synchronization, by wrapping them each in a SyncWrapper (to hold information about their id, time of last update, owner, etc.)  We'll create a SynchronizationManager in the code below.  And later we'll see how we can tell the manager to register and begin synchronizing an object.
  
 {{{
-#!java
-
         // Create SynchronizationManager instance for this server
         SynchronizationManager serverSyncManager = new SynchronizationManager(server, controller);
         serverSyncManager.addSyncObjectManager(this);
@@ -119,8 +111,6 @@ NOTE: We can't just yank the Vehicle out without first checking to see if it exi
 Than, after getting the Vehicle, we grab the scene node.
  
 {{{
-#!java
-
         // Get the vehicle instance out of the application without making any changes
         Field field = FlagRush.class.getDeclaredField("player");
         field.setAccessible(true);
@@ -147,8 +137,6 @@ Than, after getting the Vehicle, we grab the scene node.
 Finally, we register the vehicle object with the SynchronizationManager.  As mentioned before, the object will go into a SyncWrapper, which will in turn go into a queue whose contents get periodically updated.  When the client logs on, our server-side SynchronizationManager will send a SynchronizeCreateMessage to the client-side SynchronizeManager, eventually telling the client to place a Vehicle (which we'll call "Vehicle X") on the client's scene graph.  Let's call the Vehicle we just grabbed from our own scene graph "Vehicle Y."  The server-side SynchronizationManager will send periodic updates about Vehicle Y, which will tell the client-side SynchronizationManager to update the position and rotation of Vehicle X.
 
 {{{
-#!java
- 
         // Register server vehicle
         serverSyncManager.register(vehicle, new SynchronizeCreateMessage(), 50);
     }

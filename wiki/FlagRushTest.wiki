@@ -26,7 +26,6 @@ For example:
 The code you are about to see consists of several "import" statements which Java requires in order to find the classes you reference in your program.
 
 {{{
-#!java
 package com.captiveimagination.jmenet.flagrush;
 
 import java.io.IOException;

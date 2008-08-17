@@ -16,17 +16,17 @@ The above classes exhibit points of contact between JGN and JME, as does this on
 
 After examining the files listed above, you may wish to understand the following important classes:
 
-   * JGN
-   * JGNClient
-   * JGNServer
+   * [JGN JGN]
+   * [JGNClient JGNClient]
+   * [JGNServer JGNServer]
    * SynchronizationManager
    * GameTaskQueueManager
    * MessageListener
    * SyncObjectManager
    * SynchronizeMessage
    * SyncWrapper
-   * Future
-   * Callable
-   * Field
+   * [Future Future]
+   * [Callable Callable]
+   * [Field Field]
 
-Some of these classes (such as [wiki:Future] and [wiki:Callable]) do not lie within the explicit domain of the JGN software.  Nevertheless, an understanding of each of them will yield a deeper understanding of concurrency, network programming, reflection, and how JGN and JME relate.
+Some of these classes (such as [Future Future] and [Callable Callable]) do not lie within the explicit domain of the JGN software.  Nevertheless, an understanding of each of them will yield a deeper understanding of concurrency, network programming, reflection, and how JGN and JME relate.

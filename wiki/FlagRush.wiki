@@ -16,8 +16,6 @@ CodeCopyrightNotice
 == FlagRush Code ==
 
 {{{
-#!java
-
 package com.captiveimagination.jmenet.flagrush;
 
 import com.jme.util.GameTaskQueue;

@@ -72,10 +72,10 @@ After setting this up we have succesfully created a secure connection. To proof 
 
 
 The insecure connection, as you can see at the bottom, the message is visible. Imagine that to be someone's username or password. You don't want that to be in the open like that if you're serious about your networking[[BR]]
-[[Image(insecCon.png)]]
+http://img529.imageshack.us/img529/4833/insecconnr4.png
 
 The secure connection, there appears to be a little bit of overhead in the data , 7 bytes to be exact but the message is now unreadable.[[BR]]
-[[Image(secureCon.png)]]
+http://img185.imageshack.us/img185/4814/secureconsi3.png
 
 After this small test one might realise it would be more safe to avoid sending meaningfull strings in your custom messages and rather use integers/shorts to obscure it more. Though security thru obscurity is never a good solution so it's a must-have to have a message validator at the receiving side when there is the slightest doubt a side might be compromised. The message validator would check each message if the values being passed are allowed.
 

@@ -22,7 +22,6 @@ For example:
 The code you are about to see consists of several "import" statements which Java requires in order to find the classes you reference in your program.  You will also notice the construction of a ShadowRenderPass, which you can read about in jME's documentation.
 
 {{{
-#!java
 
 package com.captiveimagination.jmenet.flagrush;
  

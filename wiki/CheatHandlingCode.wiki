@@ -30,7 +30,7 @@ public interface CheatHandler {
 
 
 Now that we have the interface, we want to have acces to it. We do that by adding the following
-code to [b]JGNServer[/b]
+code to *JGNServer*
 
 {{{
     /**
@@ -70,7 +70,7 @@ code to [b]JGNServer[/b]
 
 }}}
 
-The underlying [b]MessageServer[/b] will need the following code.
+The underlying *MessageServer* will need the following code.
 {{{
 
 private final ConcurrentLinkedQueue<CheatHandler> cheatHandlers;
@@ -115,7 +115,7 @@ private final ConcurrentLinkedQueue<CheatHandler> cheatHandlers;
 
 With the above set up, the handler is done. Now we can add a cheat situation to JGN's code.
 
-Inside [b]ServerClientConnectionController[/b] we [u]replace[/u] this:
+Inside *ServerClientConnectionController* we _replace_ this:
 
 {{{
  if ((message.getPlayerId() != -1) && (message.getPlayerId() != server.getConnection(message.getMessageClient()).getPlayerId()))
@@ -141,7 +141,7 @@ with this:
 }}}
 
 
-We add this to [b]JGNServer[/b]:
+We add this to *JGNServer*:
 
 {{{
     public void executeCheatHandling(short cheatingId, MessageClient cheatingClient, CheatHandler.CHEAT_EVENT type)
@@ -156,7 +156,7 @@ We add this to [b]JGNServer[/b]:
     }
 }}}
 
-And these 2 methods to [b]MessageServer[/b]
+And these 2 methods to *MessageServer*
 {{{
     public void executeCheatHandler(short cheatingId, MessageClient cheatingClient, CheatHandler.CHEAT_EVENT type)
     {

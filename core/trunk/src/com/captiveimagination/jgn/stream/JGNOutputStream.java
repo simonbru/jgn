@@ -51,12 +51,14 @@ public class JGNOutputStream extends OutputStream {
 	private StreamMessage message;
 	private boolean streamClosed;
 	
+	private int bufferSize = 512;
+	
 	public JGNOutputStream(MessageClient client, short streamId) throws IOException {
 		this.client = client;
 		this.streamId = streamId;
 		message = new StreamMessage();
 		message.setStreamId(streamId);
-		setBufferSize(512);
+		setBufferSize(bufferSize);
 	}
 	
 	public MessageClient getMessageClient() {
@@ -71,6 +73,8 @@ public class JGNOutputStream extends OutputStream {
 		if (streamClosed) throw new IOException("This stream has been closed already (" + streamId + ").");
 		if (position >= buffer.length) {
 			flush();
+			buffer = new byte[bufferSize];
+			message.setData(buffer);
 		}
 		buffer[position++] = (byte)b;
 	}

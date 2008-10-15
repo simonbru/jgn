@@ -141,17 +141,21 @@ class InternalListener implements MessageListener, ConnectionListener {
 				myClient.getMessageServer().getConnectionController().negotiate(myClient);
 			}
 		} else if (message instanceof TimeSynchronizationMessage) {
-			TimeSynchronizationMessage m = (TimeSynchronizationMessage)message;
-			boolean responseDesired = true;
+			TimeSynchronizationMessage m = (TimeSynchronizationMessage) message;
 			if (m.getRemoteTime() != -1) {
-				long lag = m.getLocalTime() - System.currentTimeMillis();
-				m.getMessageClient().setTimeConversion((m.getLocalTime() - System.currentTimeMillis()) - lag);
-				responseDesired = false;
+				long actualTime = System.currentTimeMillis();
+				long lag = (actualTime - m.getLocalTime()) / 2;
+				if (actualTime >= m.getRemoteTime()
+						&& m.getRemoteTime() >= m.getLocalTime())
+					m.getMessageClient().setTimeConversion(0);
+				else
+					m.getMessageClient().setTimeConversion(
+							(m.getRemoteTime() + lag - actualTime));
 			}
 			if (m.isResponseDesired()) {
-				m.setRemoteTime(m.getLocalTime());
-				m.setLocalTime(System.currentTimeMillis());
-				m.setResponseDesired(responseDesired);
+				m.setRemoteTime(System.currentTimeMillis());
+				m.setLocalTime(m.getLocalTime());
+				m.setResponseDesired(false);
 				m.getMessageClient().sendMessage(m);
 			}
 		} else if (message instanceof PingMessage) {

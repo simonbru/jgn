@@ -39,7 +39,7 @@ package com.captiveimagination.jgn.message;
  * 
  * @author Matthew D. Hicks
  */
-public class StreamMessage extends Message {
+public class StreamMessage extends PriorityMessage {
 	private short streamId;
 	private byte[] data;
 	private int dataLength;

@@ -50,49 +50,61 @@ public class JGNOutputStream extends OutputStream {
 	private int position;
 	private StreamMessage message;
 	private boolean streamClosed;
-	
+
 	private int bufferSize = 512;
-	
-	public JGNOutputStream(MessageClient client, short streamId) throws IOException {
+
+	public JGNOutputStream(MessageClient client, short streamId)
+			throws IOException {
 		this.client = client;
 		this.streamId = streamId;
 		message = new StreamMessage();
 		message.setStreamId(streamId);
 		setBufferSize(bufferSize);
 	}
-	
+
 	public MessageClient getMessageClient() {
 		return client;
 	}
-	
+
 	public short getStreamId() {
 		return streamId;
 	}
-	
+
 	public void write(int b) throws IOException {
-		if (streamClosed) throw new IOException("This stream has been closed already (" + streamId + ").");
+		if (streamClosed)
+			throw new IOException("This stream has been closed already ("
+					+ streamId + ").");
 		if (position >= buffer.length) {
 			flush();
 			buffer = new byte[bufferSize];
 			message.setData(buffer);
 		}
-		buffer[position++] = (byte)b;
+		buffer[position++] = (byte) b;
 	}
-	
+
 	public void setBufferSize(int length) throws IOException {
 		flush();
 		buffer = new byte[length];
 		message.setData(buffer);
 	}
-	
+
 	public void flush() throws IOException {
 		if (position > 0) {
+			
+			if (position < 512) {
+				byte[] tempBuffer = new byte[position];
+				for (int i = 0; i < position; i++) {
+					tempBuffer[i] = buffer[i];
+				}
+
+				message.setData(tempBuffer);
+			}
 			message.setDataLength(position);
 			sendMessage();
 			position = 0;
 		}
 	}
-	
+
 	public void close() throws IOException {
 		flush();
 		message.setData(null);
@@ -101,23 +113,23 @@ public class JGNOutputStream extends OutputStream {
 		streamClosed = true;
 		client.closeOutputStream(streamId);
 	}
-	
+
 	public boolean isClosed() {
 		return streamClosed;
 	}
-	
+
 	private void sendMessage() {
 		boolean keepTrying = true;
 		while (keepTrying) {
 			try {
 				client.sendMessage(message);
 				keepTrying = false;
-			} catch(QueueFullException exc) {
+			} catch (QueueFullException exc) {
 				// do nothing *now*
 			}
 			try {
 				Thread.sleep(1);
-			} catch(InterruptedException exc) {
+			} catch (InterruptedException exc) {
 				// ok
 			}
 		}

@@ -12,12 +12,12 @@ To run the examples in the test folder located in jgn.jar download, which should
 	* Create a batch file by opening a blank text document in notepad and adding the following lines to it...
 	java com.captiveimagination.jgn.test.clientserver.vm.!BasicServer<br>
 	pause
-	* Now save it in the vm folder to test the BasicServer.class program as BasicServ.bat.
-	* after double clicking the BasicServ.bat, the server started.
+	* Now save it in the vm folder to test the !BasicServer.class program as BasicServ.bat.
+	* after double clicking the !BasicServ.bat, the server started.
 
 *For starting the client in jgn\com\captiveimagination\jgn\test\clientserver\vm folder*
 	* Create another batch file as outline above and put the following lines in it...
-	java com.captiveimagination.jgn.test.clientserver.vm.BasicClient<br>
+	java com.captiveimagination.jgn.test.clientserver.vm.!BasicClient<br>
 	pause
-	* Now save it in the vm folder to test the BasicClient.class program as BasicClient.bat
-	* after double clicking the BasicClient.bat, the client started, the server will catch it and everything will be merry andjoyous!
+	* Now save it in the vm folder to test the !BasicClient.class program as !BasicClient.bat
+	* after double clicking the !BasicClient.bat, the client started, the server will catch it and everything will be merry andjoyous!

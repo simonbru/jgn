@@ -47,7 +47,7 @@ public class BasicClient implements JGNConnectionListener {
 	
 	public void init(){
 		try {
-			client = new JGNClient(new InetSocketAddress(InetAddress.getLocalHost(), 0), new InetSocketAddress(InetAddress.getLocalHost(), 0));
+			client = new JGNClient();
 			client.addServerConnectionListener(this);
 			JGN.createThread(client).start();
 			

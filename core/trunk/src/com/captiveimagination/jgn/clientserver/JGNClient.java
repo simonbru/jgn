@@ -99,35 +99,22 @@ public class JGNClient implements Updatable {
 	private final ConcurrentLinkedQueue<JGNConnection> connections;
 	
 	/**
-	 * Create a new JGNClient instance, that uses either TCP, or UDP, or both. To NOT use a special
-	 * transport, just set its address parameter = null. Although it's possible to set both parameters
-	 * to null, this is not overly senseful...
+	 * Create a new JGNClient instance, that can use both TCP and UDP
 	 * <p/>
 	 * The JGNClient is not connected yet, and it's updateThread must still be started().
-	 *
-	 * @param reliableAddress SocketAddress where the reliable(TCPMessage)Server should work, or null
-	 * @param fastAddress		 where the unreliableButFast(UDPMessage)Server should work, or null
-	 * @throws IOException when problems in creating one of the MessageServers
-	 */
-	public JGNClient(SocketAddress reliableAddress, SocketAddress fastAddress) throws IOException {
-		this(reliableAddress != null ? new TCPMessageServer(reliableAddress) : null, fastAddress != null ? new UDPMessageServer(fastAddress) : null);
-	}
-
-	/**
-	 * given a previously created TCP- and/or UDP-Server, create a JGNClient.
+	 * 
 	 * Internally it will setup the lists used for listening to connections, establish an internal
 	 * Messagelistener that looks after LocalRegistrationMessage (for setting the playerID) and for
 	 * PlayerStatusMessages (to inform connection listeners on the dis/connect state of others). It
 	 * also installs a ClientServerConnectionController for controlling the only connection (to the JGNServer).
 	 *
-	 * @param reliableServer
-	 * @param fastServer
+	 * @throws IOException when problems in creating one of the MessageServers
 	 */
-	public JGNClient(MessageServer reliableServer, MessageServer fastServer) {
+	public JGNClient() throws IOException {
 		id = JGN.generateUniqueId(); // this will be re-set after negotiation to be playerId
 
-		this.reliableServer = reliableServer;
-		this.fastServer = fastServer;
+		this.reliableServer = new TCPMessageServer(null);
+		this.fastServer = new UDPMessageServer(null);
 		
 		connections = new ConcurrentLinkedQueue<JGNConnection>();
 		listeners = new ConcurrentLinkedQueue<JGNConnectionListener>();

@@ -66,7 +66,8 @@ public abstract class NIOMessageServer extends MessageServer {
 	public NIOMessageServer(SocketAddress address, int maxQueueSize) throws IOException {
 		super(address, maxQueueSize);
 		selector = Selector.open();
-		bindServer(address);
+		if (address != null)
+			bindServer(address);
 		problems = new ArrayList<MessageClient>();
 	}
 

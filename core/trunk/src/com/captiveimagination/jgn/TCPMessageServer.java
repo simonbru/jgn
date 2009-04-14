@@ -58,9 +58,8 @@ public final class TCPMessageServer extends NIOMessageServer {
 	public TCPMessageServer(SocketAddress address, int maxQueueSize)
 			throws IOException {
 		super(address, maxQueueSize);
-		log.log(Level.INFO, " create TCPMessageServer (id=" + serverId
-				+ ") at {0}, queuesize= {1}", new Object[] { address,
-				maxQueueSize, serverId });
+		log.log(Level.INFO, " create TCPMessageServer (id={0}){1}, queuesize= {2}",
+				new Object[] { serverId, address != null ? " at "+address : "", maxQueueSize });
 		setServerType(ServerType.TCP);
 	}
 

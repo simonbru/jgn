@@ -58,8 +58,8 @@ public final class UDPMessageServer extends NIOMessageServer {
 
 	public UDPMessageServer(SocketAddress address, int maxQueueSize) throws IOException {
 		super(address, maxQueueSize);
-		log.log(Level.INFO, " create UDPMessageServer (id=" + serverId + ") at {0}, queuesize= {1}",
-				new Object[]{address, maxQueueSize});
+		log.log(Level.INFO, " create UDPMessageServer (id={0}){1}, queuesize= {2}",
+				new Object[] { serverId, address != null ? " at "+address : "", maxQueueSize });
 		setServerType(ServerType.UDP);
 		readLookup = ByteBuffer.allocateDirect(1024 * 5);
 	}

@@ -61,7 +61,7 @@ public class BasicClientServer {
 		JGN.createThread(server).start();
 		
 		// Create Client1
-		JGNClient client1 = new JGNClient(new InetSocketAddress(InetAddress.getLocalHost(), 1100), new InetSocketAddress(InetAddress.getLocalHost(), 2100));
+		JGNClient client1 = new JGNClient();
 		//client1.getFastServer().addMessageListener(new DebugListener("FastClient1"));
 		//client1.getReliableServer().addMessageListener(new DebugListener("ReliableClient1"));
 		//client1.addMessageListener(DebugListener.getInstance());
@@ -79,7 +79,7 @@ public class BasicClientServer {
 		System.out.println("Client1 PlayerID: " + client1.getPlayerId());
 		
 		// Create Client2
-		JGNClient client2 = new JGNClient(new InetSocketAddress(InetAddress.getLocalHost(), 1200), new InetSocketAddress(InetAddress.getLocalHost(), 2200));
+		JGNClient client2 = new JGNClient();
 		//client2.addMessageListener(DebugListener.getInstance());
 		client2.addClientConnectionListener(new JGNConnectionListener() {
 			public void connected(JGNConnection connection) {

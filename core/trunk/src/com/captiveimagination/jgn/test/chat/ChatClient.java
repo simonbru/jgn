@@ -57,9 +57,7 @@ public class ChatClient extends DynamicMessageAdapter implements ActionListener 
 	public ChatClient() throws Exception {
 		JGN.register(NamedChatMessage.class);
 
-		InetSocketAddress reliableAddress = new InetSocketAddress(InetAddress.getLocalHost(), 0);
-		InetSocketAddress fastAddress = new InetSocketAddress(InetAddress.getLocalHost(), 0);
-		client = new JGNClient(reliableAddress, fastAddress);
+		client = new JGNClient();
 		client.addMessageListener(this);
 		client.addMessageListener(new DebugListener("ChatClient>"));
 		JGN.createThread(client).start();

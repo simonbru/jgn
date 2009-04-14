@@ -184,7 +184,7 @@ public class TestLots {
 
 	private static void testClientServer() throws Exception {
 		final JGNServer server = new JGNServer(new InetSocketAddress(InetAddress.getLocalHost(), 1000), null);
-		final JGNClient client = new JGNClient(new InetSocketAddress(InetAddress.getLocalHost(), 2000), null);
+		final JGNClient client = new JGNClient();
 		
 		MessageListener listener = new MessageListener() {
 			public void messageCertified(Message message) {

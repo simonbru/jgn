@@ -35,9 +35,6 @@ package com.captiveimagination.jgn.test.sync;
 import java.awt.*;
 import java.awt.event.*;
 import java.net.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 import javax.swing.*;
 
 import com.captiveimagination.jgn.*;
@@ -179,7 +176,7 @@ public class SimpleSynchronization extends JFrame implements KeyListener {
 		ssClient.setVisible(true);
 		
 		// Start the client
-		JGNClient client = new JGNClient(new InetSocketAddress(InetAddress.getLocalHost(), 3000), new InetSocketAddress(InetAddress.getLocalHost(), 4000));
+		JGNClient client = new JGNClient();
 		SynchronizationManager clientSyncManager = new SynchronizationManager(client, controller);
 		clientSyncManager.addSyncObjectManager(new SyncObjectManager() {
 			public Object create(SynchronizeCreateMessage scm) {

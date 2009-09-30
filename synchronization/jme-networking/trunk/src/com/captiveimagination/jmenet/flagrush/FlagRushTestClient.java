@@ -19,6 +19,7 @@ import com.captiveimagination.jgn.message.Message;
 import com.captiveimagination.jgn.synchronization.SynchronizationManager;
 import com.captiveimagination.jgn.synchronization.message.SynchronizeCreateMessage;
 import com.captiveimagination.jmenet.JMEGraphicalController;
+import com.jme.app.AbstractGame.ConfigShowMode;
 import com.jme.renderer.pass.ShadowedRenderPass;
 import com.jme.scene.Node;
 
@@ -27,7 +28,9 @@ public class FlagRushTestClient extends FlagRushTest {
 		// Set up the game just like in the lesson
 		ShadowedRenderPass shadowPass = new ShadowedRenderPass();
 		final FlagRush app = new FlagRush();
-        app.setDialogBehaviour(2, Lesson9.class.getClassLoader().getResource("jmetest/data/images/FlagRush.png"));
+		app.setConfigShowMode(ConfigShowMode.AlwaysShow, FlagRushTestClient.class
+                .getClassLoader().getResource(
+                        "jmetest/data/images/FlagRush.png"));
         new ShadowTweaker(shadowPass).setVisible(true);
         new Thread() {
         	public void run() {

@@ -35,11 +35,7 @@ import com.jme.util.GameTaskQueueManager;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.logging.Level;
@@ -53,7 +49,6 @@ import jmetest.flagrushtut.lesson9.FlagRushHandler;
 import jmetest.flagrushtut.lesson9.ForceFieldFence;
 import jmetest.flagrushtut.lesson9.Lesson9;
 import jmetest.flagrushtut.lesson9.Vehicle;
-import jmetest.renderer.ShadowTweaker;
 import jmetest.renderer.TestSkybox;
 import jmetest.terrain.TestTerrain;
 
@@ -216,14 +211,14 @@ public class FlagRush extends BaseGame {
      */
     protected void initSystem() {
         // store the properties information
-        width = properties.getWidth();
-        height = properties.getHeight();
-        depth = properties.getDepth();
-        freq = properties.getFreq();
-        fullscreen = properties.getFullscreen();
+    	width = settings.getWidth();
+        height = settings.getHeight();
+        depth = settings.getDepth();
+        freq = settings.getFrequency();
+        fullscreen = settings.isFullscreen();
         
         try {
-            display = DisplaySystem.getDisplaySystem(properties.getRenderer());
+        	display = DisplaySystem.getDisplaySystem(settings.getRenderer());
             display.setMinStencilBits(8);
             display.createWindow(width, height, depth, freq, fullscreen);
 
@@ -266,13 +261,13 @@ public class FlagRush extends BaseGame {
         /** Create a ZBuffer to display pixels closest to the camera above farther ones.  */
         ZBufferState buf = display.getRenderer().createZBufferState();
         buf.setEnabled(true);
-        buf.setFunction(ZBufferState.CF_LEQUAL);
+        buf.setFunction(ZBufferState.TestFunction.LessThanOrEqualTo);
         scene.setRenderState(buf);
         
         //Time for a little optimization. We don't need to render back face triangles, so lets
         //not. This will give us a performance boost for very little effort.
         CullState cs = display.getRenderer().createCullState();
-        cs.setCullMode(CullState.CS_BACK);
+        cs.setCullFace(CullState.Face.Back);
         scene.setRenderState(cs);
         
         //Add terrain to the scene
@@ -303,7 +298,7 @@ public class FlagRush extends BaseGame {
     private void buildPassManager() {
         passManager = new BasicPassManager();
 
-        // Add skybox first to make sure it is in the background
+        // Add sky box first to make sure it is in the background
         RenderPass rPass = new RenderPass();
         rPass.add(skybox);
         passManager.add(rPass);
@@ -312,7 +307,7 @@ public class FlagRush extends BaseGame {
         shadowPass.addOccluder(player);
 //        shadowPass.addOccluder(flag);
         shadowPass.setRenderShadows(true);
-        shadowPass.setLightingMethod(ShadowedRenderPass.MODULATIVE);
+        shadowPass.setLightingMethod(ShadowedRenderPass.LightingMethod.Modulative);
         passManager.add(shadowPass);
     }
 
@@ -412,92 +407,37 @@ public class FlagRush extends BaseGame {
      * build the height map and terrain block.
      */
     private void buildTerrain() {
-        
-        
-//        MidPointHeightMap heightMap = new MidPointHeightMap(64, 1f);
-        
-        int[] heightMap = null;
-        ImageIcon imageIcon = null;
-        try {
-        	ObjectInputStream ois = new ObjectInputStream(getClass().getClassLoader().getResourceAsStream("resource/heightmap.data"));
-        	heightMap = (int[])ois.readObject();
-        	imageIcon = (ImageIcon)ois.readObject();
-        	ois.close();
-        } catch(Exception exc) {
-        	throw new RuntimeException(exc);
-        }
-        
+    	MidPointHeightMap heightMap = new MidPointHeightMap(64, 1f);
         // Scale the data
         Vector3f terrainScale = new Vector3f(4, 0.0575f, 4);
-        // create a terrainblock
-         tb = new TerrainBlock("Terrain", 64, terrainScale,
-                heightMap, new Vector3f(0, 0, 0), false);
+        // create a terrain block
+         tb = new TerrainBlock("Terrain", heightMap.getSize(), terrainScale,
+                heightMap.getHeightMap(), new Vector3f(0, 0, 0));
 
         tb.setModelBound(new BoundingBox());
         tb.updateModelBound();
 
         // generate a terrain texture with 2 textures
-//        ProceduralTextureGenerator pt = new ProceduralTextureGenerator(
-//                heightMap);
-//        pt.addTexture(new ImageIcon(TestTerrain.class.getClassLoader()
-//                .getResource("jmetest/data/texture/grassb.png")), -128, 0, 128);
-//        pt.addTexture(new ImageIcon(TestTerrain.class.getClassLoader()
-//                .getResource("jmetest/data/texture/dirt.jpg")), 0, 128, 255);
-//        pt.addTexture(new ImageIcon(TestTerrain.class.getClassLoader()
-//                .getResource("jmetest/data/texture/highest.jpg")), 128, 255,
-//                384);
-//        pt.createTexture(32);
-        
-//        try {
-//        	ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(new File("heightmap.data")));
-//        	oos.writeObject(heightMap.getHeightMap());
-//        	oos.writeObject(pt.getImageIcon());
-//        	oos.flush();
-//        	oos.close();
-//        	System.out.println("Size: " + heightMap.getSize());
-//        } catch(Exception exc) {
-//        	exc.printStackTrace();
-//        }
+        ProceduralTextureGenerator pt = new ProceduralTextureGenerator(
+                heightMap);
+        pt.addTexture(new ImageIcon(TestTerrain.class.getClassLoader()
+                .getResource("jmetest/data/texture/grassb.png")), -128, 0, 128);
+        pt.addTexture(new ImageIcon(TestTerrain.class.getClassLoader()
+                .getResource("jmetest/data/texture/dirt.jpg")), 0, 128, 255);
+        pt.addTexture(new ImageIcon(TestTerrain.class.getClassLoader()
+                .getResource("jmetest/data/texture/highest.jpg")), 128, 255,
+                384);
+        pt.createTexture(32);
         
         // assign the texture to the terrain
         TextureState ts = display.getRenderer().createTextureState();
-        Texture t1 = TextureManager.loadTexture(imageIcon.getImage(),
-                Texture.MM_LINEAR_LINEAR, Texture.FM_LINEAR, true);
+        Texture t1 = TextureManager.loadTexture(pt.getImageIcon().getImage(),
+                Texture.MinificationFilter.Trilinear, Texture.MagnificationFilter.Bilinear, true);
         ts.setTexture(t1, 0);
-        
-        //load a detail texture and set the combine modes for the two terrain textures.
-        Texture t2 = TextureManager.loadTexture(
-                TestTerrain.class.getClassLoader().getResource(
-                "jmetest/data/texture/Detail.jpg"),
-                Texture.MM_LINEAR_LINEAR,
-                Texture.FM_LINEAR);
-
-        ts.setTexture(t2, 1);
-        t2.setWrap(Texture.WM_WRAP_S_WRAP_T);
-
-        t1.setApply(Texture.AM_COMBINE);
-        t1.setCombineFuncRGB(Texture.ACF_MODULATE);
-        t1.setCombineSrc0RGB(Texture.ACS_TEXTURE);
-        t1.setCombineOp0RGB(Texture.ACO_SRC_COLOR);
-        t1.setCombineSrc1RGB(Texture.ACS_PRIMARY_COLOR);
-        t1.setCombineOp1RGB(Texture.ACO_SRC_COLOR);
-        t1.setCombineScaleRGB(1.0f);
-
-        t2.setApply(Texture.AM_COMBINE);
-        t2.setCombineFuncRGB(Texture.ACF_ADD_SIGNED);
-        t2.setCombineSrc0RGB(Texture.ACS_TEXTURE);
-        t2.setCombineOp0RGB(Texture.ACO_SRC_COLOR);
-        t2.setCombineSrc1RGB(Texture.ACS_PREVIOUS);
-        t2.setCombineOp1RGB(Texture.ACO_SRC_COLOR);
-        t2.setCombineScaleRGB(1.0f);
 
         tb.setRenderState(ts);
-        //set the detail parameters.
-        tb.setDetailTexture(1, 16);
         tb.setRenderQueueMode(Renderer.QUEUE_OPAQUE);
         scene.attachChild(tb);
-        
-        
     }
     
     /**
@@ -506,48 +446,47 @@ public class FlagRush extends BaseGame {
      *
      */
     private void buildSkyBox() {
-        skybox = new Skybox("skybox", 10, 10, 10);
+    	skybox = new Skybox("skybox", 10, 10, 10);
 
         Texture north = TextureManager.loadTexture(
             TestSkybox.class.getClassLoader().getResource(
             "jmetest/data/texture/north.jpg"),
-            Texture.MM_LINEAR,
-            Texture.FM_LINEAR);
+            Texture.MinificationFilter.BilinearNearestMipMap,
+            Texture.MagnificationFilter.Bilinear);
         Texture south = TextureManager.loadTexture(
             TestSkybox.class.getClassLoader().getResource(
             "jmetest/data/texture/south.jpg"),
-            Texture.MM_LINEAR,
-            Texture.FM_LINEAR);
+            Texture.MinificationFilter.BilinearNearestMipMap,
+            Texture.MagnificationFilter.Bilinear);
         Texture east = TextureManager.loadTexture(
             TestSkybox.class.getClassLoader().getResource(
             "jmetest/data/texture/east.jpg"),
-            Texture.MM_LINEAR,
-            Texture.FM_LINEAR);
+            Texture.MinificationFilter.BilinearNearestMipMap,
+            Texture.MagnificationFilter.Bilinear);
         Texture west = TextureManager.loadTexture(
             TestSkybox.class.getClassLoader().getResource(
             "jmetest/data/texture/west.jpg"),
-            Texture.MM_LINEAR,
-            Texture.FM_LINEAR);
+            Texture.MinificationFilter.BilinearNearestMipMap,
+            Texture.MagnificationFilter.Bilinear);
         Texture up = TextureManager.loadTexture(
             TestSkybox.class.getClassLoader().getResource(
             "jmetest/data/texture/top.jpg"),
-            Texture.MM_LINEAR,
-            Texture.FM_LINEAR);
+            Texture.MinificationFilter.BilinearNearestMipMap,
+            Texture.MagnificationFilter.Bilinear);
         Texture down = TextureManager.loadTexture(
             TestSkybox.class.getClassLoader().getResource(
             "jmetest/data/texture/bottom.jpg"),
-            Texture.MM_LINEAR,
-            Texture.FM_LINEAR);
+            Texture.MinificationFilter.BilinearNearestMipMap,
+            Texture.MagnificationFilter.Bilinear);
 
-        skybox.setTexture(Skybox.NORTH, north);
-        skybox.setTexture(Skybox.WEST, west);
-        skybox.setTexture(Skybox.SOUTH, south);
-        skybox.setTexture(Skybox.EAST, east);
-        skybox.setTexture(Skybox.UP, up);
-        skybox.setTexture(Skybox.DOWN, down);
+        skybox.setTexture(Skybox.Face.North, north);
+        skybox.setTexture(Skybox.Face.West, west);
+        skybox.setTexture(Skybox.Face.South, south);
+        skybox.setTexture(Skybox.Face.East, east);
+        skybox.setTexture(Skybox.Face.Up, up);
+        skybox.setTexture(Skybox.Face.Down, down);
         skybox.preloadTextures();
-        skybox.updateRenderState();
-       // scene.attachChild(skybox);
+        scene.attachChild(skybox);
     }
     
     /**
@@ -577,7 +516,7 @@ public class FlagRush extends BaseGame {
      *
      */
     private void buildInput() {
-        input = new FlagRushHandler(player, properties.getRenderer());
+        input = new FlagRushHandler(player, null);
     }
     
     /**

@@ -306,6 +306,14 @@ public class SynchronizationManager implements Updatable, MessageListener, JGNCo
 		return wrapper;
 	}
 	
+	public short findSyncObjectId(Object obj) {
+		SyncWrapper sync = findWrapper(obj);
+		if(sync != null) {
+			return sync.getId();
+		}
+		return -1;
+	}
+	
 	public void addSyncObjectManager(SyncObjectManager som) {
 		objectManagers.add(som);
 	}
@@ -406,6 +414,10 @@ public class SynchronizationManager implements Updatable, MessageListener, JGNCo
 				if (controller.validateMessage(m, obj)) {
 					// Successfully validated synchronization message
 					controller.applySynchronizationMessage(m, obj);
+					// Check to see if we should send the message on
+					if(server != null) {
+						wrapper.update(this, server, controller);
+					}
 				} else {
 					// Failed validation, so we ignore the message and send back our own
 					m = controller.createSynchronizationMessage(obj);

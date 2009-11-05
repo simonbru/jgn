@@ -33,7 +33,10 @@
  */
 package com.captiveimagination.jgn.synchronization;
 
+import java.util.HashMap;
+
 import com.captiveimagination.jgn.clientserver.JGNClient;
+import com.captiveimagination.jgn.clientserver.JGNConnection;
 import com.captiveimagination.jgn.clientserver.JGNServer;
 import com.captiveimagination.jgn.synchronization.message.SynchronizeCreateMessage;
 import com.captiveimagination.jgn.synchronization.message.SynchronizeMessage;
@@ -48,6 +51,7 @@ class SyncWrapper {
 	private short ownerPlayerId;
 	
 	private long lastUpdate;
+	private HashMap<Short, Long> lastServerUpdate = new HashMap<Short, Long>();
 	
 	public SyncWrapper(Object object, long rate, SynchronizeCreateMessage createMessage, short ownerPlayerId) {
 		if (object == null) throw new RuntimeException("Object is null: " + id);
@@ -92,25 +96,34 @@ class SyncWrapper {
 	}
 	
 	protected void update(SynchronizationManager manager, JGNServer server, GraphicalController controller) {
-		if (lastUpdate + rate < System.nanoTime()) {
-			if (server.getConnections().length > 0) {
-				SynchronizeMessage message = controller.createSynchronizationMessage(getObject());
-				message.setSyncManagerId(manager.getId());
-				message.setSyncObjectId(getId());
-				server.sendToAll(message);
+		long updateRate = rate;
+		SynchronizeMessage message = controller.createSynchronizationMessage(getObject());
+		message.setSyncManagerId(manager.getId());
+		message.setSyncObjectId(getId());
+		for(JGNConnection conn : server.getConnections()) {
+			if(controller.proximity(getObject(), conn.getPlayerId()) > 0f) {
+				updateRate = (long) (rate/controller.proximity(getObject(), conn.getPlayerId()));
+				if(!lastServerUpdate.containsKey(conn.getPlayerId())) {
+					lastServerUpdate.put(conn.getPlayerId(), (long)0);
+				}
+				if (lastServerUpdate.get(conn.getPlayerId()) + updateRate < System.nanoTime()) {
+					if (server.getConnections().length > 0) {
+						server.sendToPlayer(message, conn.getPlayerId());
+					}
+					
+					lastServerUpdate.put(conn.getPlayerId(), System.nanoTime());
+				}
 			}
-			
-			lastUpdate = System.nanoTime();
 		}
 	}
 	
 	protected void update(SynchronizationManager manager, JGNClient client, GraphicalController controller) {
-		if (lastUpdate + rate < System.nanoTime()) {
-			SynchronizeMessage message = controller.createSynchronizationMessage(getObject());
-			message.setSyncManagerId(manager.getId());
-			message.setSyncObjectId(getId());
-			client.broadcast(message);
-			
+		SynchronizeMessage message = controller.createSynchronizationMessage(getObject());
+		message.setSyncManagerId(manager.getId());
+		message.setSyncObjectId(getId());
+		
+		if(lastUpdate + rate < System.nanoTime()) {
+			client.sendToServer(message);
 			lastUpdate = System.nanoTime();
 		}
 	}

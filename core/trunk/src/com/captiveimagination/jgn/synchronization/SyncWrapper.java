@@ -101,7 +101,7 @@ class SyncWrapper {
 		message.setSyncManagerId(manager.getId());
 		message.setSyncObjectId(getId());
 		for(JGNConnection conn : server.getConnections()) {
-			if(controller.proximity(getObject(), conn.getPlayerId()) > 0f) {
+			if(controller.proximity(getObject(), conn.getPlayerId()) > 0f && conn.getPlayerId() != getOwnerPlayerId()) {
 				updateRate = (long) (rate/controller.proximity(getObject(), conn.getPlayerId()));
 				if(!lastServerUpdate.containsKey(conn.getPlayerId())) {
 					lastServerUpdate.put(conn.getPlayerId(), (long)0);

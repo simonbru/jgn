@@ -132,7 +132,7 @@ public class SynchronizationManager implements Updatable, MessageListener, JGNCo
 	 */
 	public void register(Object object, SynchronizeCreateMessage createMessage, long updateRate) throws IOException {
 		// Get player id
-		short playerId = 0;
+		short playerId = -1;
 		if (client != null) {
 			playerId = client.getPlayerId();
 		}
@@ -446,7 +446,7 @@ public class SynchronizationManager implements Updatable, MessageListener, JGNCo
 							break;
 						}
 					}
-				} else if (request.getRequestType() == SynchronizeRequestIDMessage.RESPONSE_ID) {
+				} else if (request.getRequestType() == SynchronizeRequestIDMessage.RELEASE_ID) {
 					serverReleaseId(request.getSyncObjectId());
 				}
 			}

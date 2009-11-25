@@ -176,7 +176,7 @@ public class SimpleSynchronization extends JFrame implements KeyListener {
 		ssClient.setVisible(true);
 		
 		// Start the client
-		JGNClient client = new JGNClient();
+		JGNClient client = new JGNClient(new InetSocketAddress(InetAddress.getLocalHost(), 0), new InetSocketAddress(InetAddress.getLocalHost(), 0));
 		SynchronizationManager clientSyncManager = new SynchronizationManager(client, controller);
 		clientSyncManager.addSyncObjectManager(new SyncObjectManager() {
 			public Object create(SynchronizeCreateMessage scm) {

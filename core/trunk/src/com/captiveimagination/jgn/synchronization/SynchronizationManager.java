@@ -164,9 +164,15 @@ public class SynchronizationManager implements Updatable, MessageListener, JGNCo
 		
 		// Send create message onward
 		if (client != null) {
-			client.broadcast(wrapper.getCreateMessage());
+			client.sendToServer(wrapper.getCreateMessage());
 		} else {
-			server.sendToAll(wrapper.getCreateMessage());
+			for(JGNConnection conn : server.getConnections()) {
+				if(controller.proximity(wrapper.getObject(), conn.getPlayerId()) > 0f) {
+					System.out.println("Sending create for "+wrapper.getId());
+					wrapper.setLastAction(conn.getPlayerId(), (short)1);
+					server.sendToPlayer(wrapper.getCreateMessage(), conn.getPlayerId());
+				}
+			}
 		}
 		
 		// Add to manager to be updated
@@ -202,7 +208,16 @@ public class SynchronizationManager implements Updatable, MessageListener, JGNCo
 				client.sendToServer(release);
 			}
 		} else {
-			server.sendToAll(remove);
+			//Check which players are near this object
+			for(JGNConnection conn : server.getConnections()) {
+				if(controller.proximity(wrapper.getObject(), conn.getPlayerId()) > 0f) {
+					if(wrapper.hasLastAction(conn.getPlayerId())) {
+						if(wrapper.getLastAction(conn.getPlayerId()) != 2) {
+							server.sendToPlayer(remove, conn.getPlayerId());
+						}
+					}
+				}
+			}
 			
 			// Release id
 			serverReleaseId(wrapper.getId());
@@ -335,6 +350,16 @@ public class SynchronizationManager implements Updatable, MessageListener, JGNCo
 				SyncWrapper wrapper = new SyncWrapper(obj, 0, message, message.getPlayerId());
 				wrapper.setId(message.getSyncObjectId());
 				passive.add(wrapper);
+				if(server != null) {
+					// Forward create message to clients
+					for(JGNConnection conn : server.getConnections()) {
+						if(controller.proximity(wrapper.getObject(), conn.getPlayerId()) > 0f && conn.getPlayerId() != wrapper.getOwnerPlayerId()) {
+							System.out.println("Sending create for "+wrapper.getId());
+							wrapper.setLastAction(conn.getPlayerId(), (short)1);
+							server.sendToPlayer(wrapper.getCreateMessage(), conn.getPlayerId());
+						}
+					}
+				}
 				return obj;
 			}
 		}
@@ -459,25 +484,76 @@ public class SynchronizationManager implements Updatable, MessageListener, JGNCo
 	public void connected(JGNConnection connection) {
 		// Client connected to server - send creation messages to new connection
 		for (SyncWrapper wrapper : queue) {
-			connection.sendMessage(wrapper.getCreateMessage());
+			if(controller.proximity(wrapper.getObject(), connection.getPlayerId()) > 0f) {
+				if(wrapper.hasLastAction(connection.getPlayerId())) {
+					if(wrapper.getLastAction(connection.getPlayerId()) != 1) {
+						connection.sendMessage(wrapper.getCreateMessage());
+						wrapper.setLastAction(connection.getPlayerId(), (short)1);
+						System.out.println("Sending create for "+wrapper.getId());
+					}
+				}
+				else {
+					connection.sendMessage(wrapper.getCreateMessage());
+					wrapper.setLastAction(connection.getPlayerId(), (short)1);
+					System.out.println("Sending create for "+wrapper.getId());
+				}
+			}
 		}
 		for (SyncWrapper wrapper : disabled) {
-			connection.sendMessage(wrapper.getCreateMessage());
+			if(controller.proximity(wrapper.getObject(), connection.getPlayerId()) > 0f) {
+				if(wrapper.hasLastAction(connection.getPlayerId())) {
+					if(wrapper.getLastAction(connection.getPlayerId()) != 1) {
+						connection.sendMessage(wrapper.getCreateMessage());
+						wrapper.setLastAction(connection.getPlayerId(), (short)1);
+						System.out.println("Sending create for "+wrapper.getId());
+					}
+				}
+				else {
+					connection.sendMessage(wrapper.getCreateMessage());
+					wrapper.setLastAction(connection.getPlayerId(), (short)1);
+					System.out.println("Sending create for "+wrapper.getId());
+				}
+			}
 		}
 		for (SyncWrapper wrapper : passive) {
-			connection.sendMessage(wrapper.getCreateMessage());
+			if(controller.proximity(wrapper.getObject(), connection.getPlayerId()) > 0f) {
+				if(wrapper.hasLastAction(connection.getPlayerId())) {
+					if(wrapper.getLastAction(connection.getPlayerId()) != 1) {
+						connection.sendMessage(wrapper.getCreateMessage());
+						wrapper.setLastAction(connection.getPlayerId(), (short)1);
+						System.out.println("Sending create for "+wrapper.getId()+" to "+connection.getPlayerId());
+					}
+				}
+				else {
+					connection.sendMessage(wrapper.getCreateMessage());
+					wrapper.setLastAction(connection.getPlayerId(), (short)1);
+					System.out.println("Sending create for "+wrapper.getId()+" to "+connection.getPlayerId());
+				}
+			}
 		}
 	}
 
 	public void disconnected(JGNConnection connection) {
 		// Remove all connections associated with this player
-		short playerId = connection.getPlayerId();
 		for (SyncWrapper wrapper : passive) {
-			if (wrapper.getOwnerPlayerId() == playerId) {
+			if (wrapper.getOwnerPlayerId() == connection.getPlayerId()) {
 				SynchronizeRemoveMessage removeMessage = new SynchronizeRemoveMessage();
 				removeMessage.setSyncObjectId(wrapper.getId());
 				removeQueue.add(removeMessage);
 			}
+		}
+		//Remove values for lastServerUpdate and lastAction for this connection
+		for (SyncWrapper wrapper : passive) {
+			wrapper.removeLastServerUpdateKey(connection.getPlayerId());
+			wrapper.removeLastActionKey(connection.getPlayerId());
+		}
+		for (SyncWrapper wrapper : queue) {
+			wrapper.removeLastServerUpdateKey(connection.getPlayerId());
+			wrapper.removeLastActionKey(connection.getPlayerId());
+		}
+		for (SyncWrapper wrapper : disabled) {
+			wrapper.removeLastServerUpdateKey(connection.getPlayerId());
+			wrapper.removeLastActionKey(connection.getPlayerId());
 		}
 	}
 }

@@ -361,4 +361,76 @@ Here we do an important thing, we register our object from this side with the Sy
 
 In the rest of the code we do the same thing for the client, so we get one server window with a server object and a representation of the client object (after the client connects) and one client window with a client object and a representation of the server object (after the client connects). The are continually updated as you move one of them around.
 
+Note:
+If you want to do more advanced sync'ing than this, you can extend SynchronizeCreateMessage to add your own fields and methods.
+Some rules apply that you need to be aware of:
+*All messages need to have a "no-args constructor" (a constructor with no arguments) for the reflection used by JGN.
+*All messages need to have getters for every field (possibly also setters).
+*All messages need to be registered with JGN:
+{{{
+JGN.register(MyMessage.class);
+}}}
+
+With your extended message you can do the following e.g. (compare with the code above):
+{{{
+public Object create(SynchronizeCreateMessage scm) {
+   if(scm instanceof MySyncCreateMessage) {
+      MySyncCreateMessage m = (MySyncCreateMessage) scm;
+      return new MyObject(m.getObjectId(), m.getModelPath());
+   }
+   else if(scm instanceof OtherSyncMessage) {
+      return new OtherObject();
+   }
+}
+
+public boolean remove(SynchronizeRemoveMessage srm, Object object) {
+   if(object == thisObject) {
+      thisObject.remove();
+      return true;
+   }
+   else if(object == thatObject) {
+      thatObject.removeFromParent();
+      return true;
+   }
+   return false;
+}
+}}}
+The object you return in the create-method is the object that gets sync'ed.
+The boolean you return in the remove-method tells the sync manager whether the object was removed or not.
+
+An example of an extended SynchronizeCreateMessage could be:
+{{{
+import com.captiveimagination.jgn.synchronization.message.SynchronizeCreateMessage;
+
+public class MySyncCreateMessage extends SynchronizeCreateMessage{
+	private int objectId;
+	private String modelPath;
+	
+	public MySyncCreateMessage() {
+		//No-args constructor for reflection
+	}
+	
+	public MySyncCreateMessage(int objectId, String modelPath) {
+		this.objectId = objectId;
+		this.modelPath = modelPath;
+	}
+	
+	public void setObjectId(int num) {
+		this.objectId = num;
+	}
+	
+	public int getObjectId() {
+		return objectId;
+	}
+	
+	public void setModelPath(String str) {
+		this.modelPath = str;
+	}
+	
+	public String getModelPath() {
+		return modelPath;
+	}
+}
+}}}
+
 I hope this has been a useful tutorial and that you enjoy using JGN!

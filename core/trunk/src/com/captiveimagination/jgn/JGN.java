@@ -49,9 +49,8 @@ import java.lang.Thread.UncaughtExceptionHandler;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Hashtable;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -66,7 +65,7 @@ public class JGN {
 	static public final short ID_CLASS_STRING = 0;
 	static public final short ID_NULL_OBJECT = -1;
 
-	private static final Map<Short, Class<?>> idToClass = new HashMap<Short, Class<?>>();
+	private static final Map<Short, Class<?>> idToClass = new ConcurrentHashMap<Short, Class<?>>();
 	private static final Map<Class<?>, Short> classToId = new HashMap<Class<?>, Short>();
 	// hierarchy maps a messageclass --> List of superclasses, interfaces upto Message.class
 	private static final Map<Class<? extends Message>, ArrayList<Class<?>>> hierarchy = new HashMap<Class<? extends Message>, ArrayList<Class<?>>>();
